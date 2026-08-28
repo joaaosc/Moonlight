@@ -3,13 +3,13 @@ import AppIntents
 public struct MoonlightAppShortcuts: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
         AppShortcut(
-            intent: CaptureNoteIntent(),
+            intent: RunMoonlightCommandIntent(),
             phrases: [
-                "Capture a note in \(.applicationName)",
-                "Save a note with \(.applicationName)",
+                "Run \(.applicationName)",
+                "Use \(.applicationName)",
             ],
-            shortTitle: "Capture Note",
-            systemImageName: "note.text.badge.plus"
+            shortTitle: "Moonlight",
+            systemImageName: "moon.stars"
         )
     }
 }

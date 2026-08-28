@@ -80,6 +80,21 @@ struct ActionRunnerTests {
         #expect(await store.execution(id: identifier) == execution)
     }
 
+    @Test("Registers and persists color picker executions")
+    func opensColorPicker() async throws {
+        let store = InMemoryExecutionStore()
+        let runner = makeRunner(store: store)
+
+        let execution = try await runner.execute(
+            ActionRequest(actionID: MoonlightActionID.openColorPicker, input: "")
+        )
+
+        #expect(execution.status == .succeeded)
+        #expect(execution.actionTitle == "Open Color Picker")
+        #expect(execution.summary == "Color picker opened")
+        #expect(await store.execution(id: identifier) == execution)
+    }
+
     @Test("Propagates storage failures")
     func propagatesStorageFailure() async {
         let store = FirstWriteFailsExecutionStore()
@@ -100,6 +115,36 @@ struct ActionRunnerTests {
             clock: { instant },
             identifierGenerator: { identifier }
         )
+    }
+}
+
+@Suite("Moonlight command parser")
+struct MoonlightCommandParserTests {
+    private let parser = MoonlightCommandParser()
+
+    @Test("Parses note commands and preserves their text")
+    func parsesNote() throws {
+        #expect(try parser.parse("  note Cafe\u{301} ☾  ") == .captureNote("Café ☾"))
+        #expect(try parser.parse("nota comprar leite") == .captureNote("comprar leite"))
+    }
+
+    @Test("Parses color picker aliases")
+    func parsesColorPicker() throws {
+        #expect(try parser.parse("color") == .openColorPicker)
+        #expect(try parser.parse("cor") == .openColorPicker)
+    }
+
+    @Test("Rejects empty and unsupported commands")
+    func rejectsInvalidCommands() {
+        #expect(throws: MoonlightCommandError.emptyCommand) {
+            try parser.parse("  \n ")
+        }
+        #expect(throws: MoonlightCommandError.missingNoteText) {
+            try parser.parse("note")
+        }
+        #expect(throws: MoonlightCommandError.unsupportedCommand("launch")) {
+            try parser.parse("launch rocket")
+        }
     }
 }
 

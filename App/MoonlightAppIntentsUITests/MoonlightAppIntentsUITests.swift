@@ -20,8 +20,8 @@ final class MoonlightAppIntentsUITests: XCTestCase {
     func testCaptureNoteThroughSystemInfrastructure() async throws {
         let note = "Intent test \(UUID().uuidString)"
         _ = try await definitions
-            .intents["CaptureNoteIntent"]
-            .makeIntent(text: note)
+            .intents["RunMoonlightCommandIntent"]
+            .makeIntent(command: "note \(note)")
             .run()
 
         app.activate()
@@ -35,14 +35,26 @@ final class MoonlightAppIntentsUITests: XCTestCase {
         app.terminate()
 
         _ = try await definitions
-            .intents["CaptureNoteIntent"]
-            .makeIntent(text: note)
+            .intents["RunMoonlightCommandIntent"]
+            .makeIntent(command: "note \(note)")
             .run()
 
         app.launch()
 
         let didAppear = try await waitForNote(note, in: app)
         XCTAssertTrue(didAppear)
+    }
+
+    @MainActor
+    func testColorPanelPresentationThroughSystemInfrastructure() async throws {
+        _ = try await definitions
+            .intents["PresentColorPickerForTestingIntent"]
+            .makeIntent()
+            .run()
+
+        app.activate()
+        let colorPanel = app.windows["moonlight-color-picker"]
+        XCTAssertTrue(colorPanel.waitForExistence(timeout: 5))
     }
 
     @MainActor

@@ -2,6 +2,64 @@ import Foundation
 
 public enum MoonlightActionID {
     public static let captureNote = "capture-note"
+    public static let openColorPicker = "open-color-picker"
+}
+
+public enum MoonlightCommand: Equatable, Sendable {
+    case captureNote(String)
+    case openColorPicker
+}
+
+public enum MoonlightCommandError: Error, Equatable, LocalizedError, Sendable {
+    case emptyCommand
+    case missingNoteText
+    case unsupportedCommand(String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .emptyCommand:
+            "Enter a command, such as ‘note Buy milk’ or ‘color’."
+        case .missingNoteText:
+            "Add text after the note command."
+        case let .unsupportedCommand(command):
+            "Moonlight doesn’t recognize ‘\(command)’. Try ‘note’ or ‘color’."
+        }
+    }
+}
+
+public struct MoonlightCommandParser: Sendable {
+    public init() {}
+
+    public func parse(_ input: String) throws -> MoonlightCommand {
+        let normalized = input
+            .precomposedStringWithCanonicalMapping
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !normalized.isEmpty else {
+            throw MoonlightCommandError.emptyCommand
+        }
+
+        let parts = normalized.split(
+            maxSplits: 1,
+            whereSeparator: { $0.isWhitespace }
+        )
+        let verb = parts[0].lowercased()
+        let argument = parts.count > 1
+            ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            : ""
+
+        switch verb {
+        case "note", "nota", "capture", "capturar":
+            guard !argument.isEmpty else {
+                throw MoonlightCommandError.missingNoteText
+            }
+            return .captureNote(argument)
+        case "color", "colour", "cor", "picker":
+            return .openColorPicker
+        default:
+            throw MoonlightCommandError.unsupportedCommand(String(parts[0]))
+        }
+    }
 }
 
 public struct ActionDescriptor: Codable, Equatable, Identifiable, Sendable {
@@ -121,6 +179,23 @@ public struct CaptureNoteAction: ActionHandler {
     }
 }
 
+public struct OpenColorPickerAction: ActionHandler {
+    public let descriptor = ActionDescriptor(
+        id: MoonlightActionID.openColorPicker,
+        title: "Open Color Picker",
+        summary: "Open the system color picker"
+    )
+
+    public init() {}
+
+    public func perform(input: String) async throws -> ActionOutput {
+        ActionOutput(
+            summary: "Color picker opened",
+            detail: "Moonlight continued in the foreground."
+        )
+    }
+}
+
 public struct ActionRegistry: Sendable {
     private let handlers: [any ActionHandler]
 
@@ -128,7 +203,9 @@ public struct ActionRegistry: Sendable {
         self.handlers = handlers
     }
 
-    public static let standard = ActionRegistry(handlers: [CaptureNoteAction()])
+    public static let standard = ActionRegistry(
+        handlers: [CaptureNoteAction(), OpenColorPickerAction()]
+    )
 
     public var descriptors: [ActionDescriptor] {
         handlers.map(\.descriptor)

@@ -8,11 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		06A40124B24202891BA3AED3 /* MoonlightAppIntentsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342C9AE7CD224FFD94861942 /* MoonlightAppIntentsExtension.swift */; };
-		09BA3EB580AFC292AF025A6F /* MoonlightAppUI in Frameworks */ = {isa = PBXBuildFile; productRef = 32307D81CCE55E823F22CCDF /* MoonlightAppUI */; };
+		09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 5A8968A0E43DAC7C7082B13B /* MoonlightIntents */; };
 		35D6801E0A693FD96FE917A4 /* MoonlightAppIntentsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27548081BDA52A212CC8269F /* MoonlightAppIntentsUITests.swift */; };
 		3DAB85971989121814DF2C9A /* MoonlightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A849AD3732D5A9AF723CA6E3 /* MoonlightApp.swift */; };
 		5E85E6AF58B23D4893CE6AF4 /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 85F85B6F49B3D4149A9F6C8B /* MoonlightIntents */; };
 		BE2F05378BACC0D75022C4BC /* MoonlightAppUI in Frameworks */ = {isa = PBXBuildFile; productRef = 05BF1993C6EA595C294A0073 /* MoonlightAppUI */; };
+		C2F8658FE1E9A4A7733FF677 /* MoonlightAppUI in Frameworks */ = {isa = PBXBuildFile; productRef = 32307D81CCE55E823F22CCDF /* MoonlightAppUI */; };
 		CDCC825C06332EDA50D15EB2 /* MoonlightAppIntentsExtension.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 3EF0F5D2E29F2CCE6AEAC9E7 /* MoonlightAppIntentsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F64E0EBF218294EBEB279625 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B8B45C1CB364C7385D476D /* SmokeTests.swift */; };
 /* End PBXBuildFile section */
@@ -92,7 +93,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				09BA3EB580AFC292AF025A6F /* MoonlightAppUI in Frameworks */,
+				09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */,
+				C2F8658FE1E9A4A7733FF677 /* MoonlightAppUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,6 +213,7 @@
 			);
 			name = Moonlight;
 			packageProductDependencies = (
+				5A8968A0E43DAC7C7082B13B /* MoonlightIntents */,
 				32307D81CCE55E823F22CCDF /* MoonlightAppUI */,
 			);
 			productName = Moonlight;
@@ -440,7 +443,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -532,7 +535,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -730,6 +733,10 @@
 		32307D81CCE55E823F22CCDF /* MoonlightAppUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MoonlightAppUI;
+		};
+		5A8968A0E43DAC7C7082B13B /* MoonlightIntents */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MoonlightIntents;
 		};
 		85F85B6F49B3D4149A9F6C8B /* MoonlightIntents */ = {
 			isa = XCSwiftPackageProductDependency;
