@@ -1,3 +1,4 @@
+import CoreFoundation
 import Foundation
 import MoonlightDomain
 import MoonlightInfrastructure
@@ -13,6 +14,8 @@ public final class MoonlightModel {
     public private(set) var isLoading = false
 
     private let clientResult: Result<MoonlightRuntimeClient, MoonlightRuntimeError>
+    private let historyFileURL: URL?
+    @ObservationIgnored private var historyObserver: DarwinNotificationToken?
 
     public var inputCharacterCount: Int {
         normalizedInput.count
@@ -34,10 +37,13 @@ public final class MoonlightModel {
 
     public init() {
         clientResult = MoonlightRuntime.liveClient
+        historyFileURL = try? FileExecutionStore.defaultFileURL()
+        observeExternalHistoryChanges()
     }
 
     public init(client: MoonlightRuntimeClient) {
         clientResult = .success(client)
+        historyFileURL = nil
     }
 
     public func load() async {
@@ -82,5 +88,66 @@ public final class MoonlightModel {
         text
             .precomposedStringWithCanonicalMapping
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var historyRevision: String? {
+        guard
+            let historyFileURL,
+            let attributes = try? FileManager.default.attributesOfItem(
+                atPath: historyFileURL.path
+            )
+        else {
+            return nil
+        }
+
+        let modificationDate = (attributes[.modificationDate] as? Date)?
+            .timeIntervalSinceReferenceDate ?? 0
+        let fileSize = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
+        let fileNumber = (attributes[.systemFileNumber] as? NSNumber)?.uint64Value ?? 0
+        return "\(fileNumber):\(fileSize):\(modificationDate)"
+    }
+
+    private func observeExternalHistoryChanges() {
+        historyObserver = DarwinNotificationToken(
+            name: MoonlightStorage.historyDidChangeDarwinName
+        ) { [weak self] in
+            Task { @MainActor [weak self] in
+                await self?.load()
+            }
+        }
+    }
+}
+
+private final class DarwinNotificationToken: @unchecked Sendable {
+    private let name: CFNotificationName
+    private let onChange: @Sendable () -> Void
+
+    init(name: String, onChange: @escaping @Sendable () -> Void) {
+        self.name = CFNotificationName(rawValue: name as CFString)
+        self.onChange = onChange
+
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            { _, observer, _, _, _ in
+                guard let observer else { return }
+                let token = Unmanaged<DarwinNotificationToken>
+                    .fromOpaque(observer)
+                    .takeUnretainedValue()
+                token.onChange()
+            },
+            self.name.rawValue,
+            nil,
+            .deliverImmediately
+        )
+    }
+
+    deinit {
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            name,
+            nil
+        )
     }
 }

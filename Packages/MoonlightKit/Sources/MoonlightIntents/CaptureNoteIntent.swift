@@ -7,7 +7,7 @@ public struct CaptureNoteIntent: AppIntent {
         "Saves a note in Moonlight and presents the result."
     )
     public static var supportedModes: IntentModes { [.background] }
-    public static var supportedExecutionTargets: IntentExecutionTargets { [.main] }
+    public static var allowedExecutionTargets: IntentExecutionTargets { [.appIntentsExtension] }
 
     @Parameter(
         title: "Text",
@@ -26,14 +26,13 @@ public struct CaptureNoteIntent: AppIntent {
         self.text = text
     }
 
-    public func perform() async throws -> some IntentResult & ReturnsValue<ExecutionEntity> & ShowsSnippetIntent {
+    public func perform() async throws -> some IntentResult & ShowsSnippetIntent {
         let execution = try await MoonlightIntentExecutor.execute(
             actionID: MoonlightActionID.captureNote,
             input: text
         )
         return .result(
-            value: execution,
-            snippetIntent: ExecutionSnippetIntent(execution: execution)
+            snippetIntent: ExecutionSnippetIntent(executionID: execution.id)
         )
     }
 }

@@ -18,8 +18,8 @@ struct FileExecutionStoreTests {
         try await store.upsert(replacement)
 
         let reopened = try FileExecutionStore(fileURL: fixture.fileURL)
-        #expect(await reopened.execution(id: identifier) == replacement)
-        #expect(await reopened.recent(limit: 10) == [replacement])
+        #expect(try await reopened.execution(id: identifier) == replacement)
+        #expect(try await reopened.recent(limit: 10) == [replacement])
     }
 
     @Test("Rejects invalid JSON without replacing the file")
@@ -79,7 +79,7 @@ struct FileExecutionStoreTests {
             )
         }
 
-        let recent = await store.recent(limit: 10)
+        let recent = try await store.recent(limit: 10)
         #expect(recent.count == 3)
         #expect(recent.map(\.detail) == ["4", "3", "2"])
     }
@@ -101,19 +101,35 @@ struct FileExecutionStoreTests {
             makeExecution(id: UUID(), detail: "fourth", seconds: 1)
         )
 
-        #expect(await reopened.recent(limit: 10).map(\.detail) == [
+        #expect(try await reopened.recent(limit: 10).map(\.detail) == [
             "fourth",
             "third",
             "second",
         ])
     }
 
+    @Test("Reloads and merges changes made by another store instance")
+    func coordinatesAcrossStoreInstances() async throws {
+        let fixture = try TemporaryStoreFixture()
+        defer { fixture.remove() }
+        let first = try FileExecutionStore(fileURL: fixture.fileURL)
+        let second = try FileExecutionStore(fileURL: fixture.fileURL)
+        let firstExecution = makeExecution(id: UUID(), detail: "first", seconds: 1)
+        let secondExecution = makeExecution(id: UUID(), detail: "second", seconds: 2)
+
+        try await first.upsert(firstExecution)
+        try await second.upsert(secondExecution)
+
+        #expect(try await first.recent(limit: 10) == [secondExecution, firstExecution])
+        #expect(try await second.execution(id: firstExecution.id) == firstExecution)
+    }
+
     @Test("Uses an isolated temporary store for a valid App Intents test session")
-    func isolatedAppIntentsTestStore() {
+    func isolatedAppIntentsTestStore() throws {
         let sessionID = UUID()
         let temporaryDirectory = URL(fileURLWithPath: "/tmp/moonlight-tests", isDirectory: true)
 
-        let fileURL = FileExecutionStore.defaultFileURL(
+        let fileURL = try FileExecutionStore.defaultFileURL(
             environment: [
                 "MOONLIGHT_APP_INTENTS_TEST_SESSION_ID": sessionID.uuidString,
             ],
@@ -123,6 +139,25 @@ struct FileExecutionStoreTests {
         #expect(fileURL == temporaryDirectory
             .appending(path: "MoonlightAppIntentsTests")
             .appending(path: sessionID.uuidString)
+            .appending(path: "executions-v1.json"))
+    }
+
+    @Test("Uses the shared application-group container outside test sessions")
+    func sharedAppGroupStore() throws {
+        let groupContainer = URL(fileURLWithPath: "/tmp/moonlight-group", isDirectory: true)
+
+        let fileURL = try FileExecutionStore.defaultFileURL(
+            environment: [:],
+            groupContainerResolver: { identifier in
+                #expect(identifier == MoonlightStorage.appGroupIdentifier)
+                return groupContainer
+            }
+        )
+
+        #expect(fileURL == groupContainer
+            .appending(path: "Library")
+            .appending(path: "Application Support")
+            .appending(path: "Moonlight")
             .appending(path: "executions-v1.json"))
     }
 

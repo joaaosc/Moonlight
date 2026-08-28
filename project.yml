@@ -31,8 +31,6 @@ targets:
       properties:
         CFBundleDisplayName: Moonlight
         LSApplicationCategoryType: public.app-category.productivity
-        INIntentsSupported:
-          - CaptureNoteIntent
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight
@@ -43,8 +41,34 @@ targets:
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: YES
     dependencies:
+      - target: MoonlightAppIntentsExtension
       - package: MoonlightKit
         product: MoonlightAppUI
+
+  MoonlightAppIntentsExtension:
+    type: extensionkit-extension
+    platform: macOS
+    deploymentTarget: "27.0"
+    sources:
+      - path: App/MoonlightAppIntentsExtension
+    info:
+      path: App/MoonlightAppIntentsExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Moonlight App Intents
+        EXAppExtensionAttributes:
+          EXExtensionPointIdentifier: com.apple.appintents-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight.AppIntentsExtension
+        PRODUCT_NAME: MoonlightAppIntentsExtension
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 33FPG9442W
+        CODE_SIGN_ENTITLEMENTS: App/MoonlightAppIntentsExtension/MoonlightAppIntentsExtension.entitlements
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+    dependencies:
       - package: MoonlightKit
         product: MoonlightIntents
 
@@ -87,6 +111,7 @@ schemes:
     build:
       targets:
         Moonlight: all
+        MoonlightAppIntentsExtension: all
         MoonlightTests: [test]
         MoonlightAppIntentsUITests: [test]
     run:

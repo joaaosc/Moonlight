@@ -6,52 +6,19 @@ import Testing
 
 @Suite("App Intents adapters")
 struct AppIntentsAdapterTests {
-    @Test("Action query returns requested known identifiers")
-    func actionQueryFiltersIdentifiers() async throws {
-        let descriptors = [
-            ActionDescriptor(id: "one", title: "One", summary: "First"),
-            ActionDescriptor(id: "two", title: "Two", summary: "Second"),
-        ]
-        let query = ActionQuery(descriptors: descriptors)
-
-        let entities = try await query.entities(for: ["two", "missing"])
-
-        #expect(entities.map(\.id) == ["two"])
-        #expect(try await query.suggestedEntities().map(\.id) == ["one", "two"])
-    }
-
-    @Test("Execution query resolves persisted entities and omits missing identifiers")
-    func executionQueryResolvesStoredExecutions() async throws {
-        let client = MoonlightRuntimeClient.inMemory()
-        let execution = try await client.execute(
-            ActionRequest(actionID: MoonlightActionID.captureNote, input: "From intent test")
-        )
-        let query = ExecutionQuery(client: client)
-
-        let entities = try await query.entities(for: [UUID(), execution.id])
-
-        #expect(entities.map(\.id) == [execution.id])
-        #expect(try await query.suggestedEntities().map(\.id) == [execution.id])
-    }
-
-    @Test("Execution presentation is a hidden main-process snippet intent")
+    @Test("Execution presentation is a hidden extension snippet intent")
     func snippetContract() {
         requireSnippetIntent(ExecutionSnippetIntent.self)
         #expect(!ExecutionSnippetIntent.isDiscoverable)
-        #expect(ExecutionSnippetIntent.supportedExecutionTargets.contains(.main))
+        #expect(ExecutionSnippetIntent.allowedExecutionTargets.contains(.appIntentsExtension))
+        #expect(!ExecutionSnippetIntent.allowedExecutionTargets.contains(.main))
     }
 
-    @Test("Capture Note is the discoverable main-process action")
+    @Test("Capture Note executes independently in the App Intents extension")
     func captureNoteContract() {
         requireAppIntent(CaptureNoteIntent.self)
-        #expect(CaptureNoteIntent.supportedExecutionTargets.contains(.main))
-    }
-
-    @Test("Generic execution remains available without appearing in system discovery")
-    func genericExecutionContract() {
-        requireAppIntent(ExecuteActionIntent.self)
-        #expect(!ExecuteActionIntent.isDiscoverable)
-        #expect(ExecuteActionIntent.supportedExecutionTargets.contains(.main))
+        #expect(CaptureNoteIntent.allowedExecutionTargets.contains(.appIntentsExtension))
+        #expect(!CaptureNoteIntent.allowedExecutionTargets.contains(.main))
     }
 }
 

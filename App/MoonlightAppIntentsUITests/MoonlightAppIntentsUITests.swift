@@ -11,7 +11,6 @@ final class MoonlightAppIntentsUITests: XCTestCase {
 
         app = XCUIApplication()
         app.terminate()
-        app.launchEnvironment["MOONLIGHT_APP_INTENTS_TEST_SESSION_ID"] = UUID().uuidString
         app.launch()
 
         definitions = IntentDefinitions(bundleIdentifier: "com.joaocosta.Moonlight")
@@ -19,33 +18,45 @@ final class MoonlightAppIntentsUITests: XCTestCase {
 
     @MainActor
     func testCaptureNoteThroughSystemInfrastructure() async throws {
-        let note = "Captured through App Intents Testing"
-        let result = try await definitions
+        let note = "Intent test \(UUID().uuidString)"
+        _ = try await definitions
             .intents["CaptureNoteIntent"]
             .makeIntent(text: note)
             .run()
 
-        let execution: AnyAppEntity = try result.value
-        let actionTitle: String = try execution.actionTitle
-        let summary: String = try execution.summary
-        let detail: String = try execution.detail
-        let status: String = try execution.status
-
-        XCTAssertEqual(actionTitle, "Capture Note")
-        XCTAssertEqual(summary, "Note captured")
-        XCTAssertEqual(detail, note)
-        XCTAssertEqual(status, "succeeded")
+        app.activate()
+        let didAppear = try await waitForNote(note, in: app)
+        XCTAssertTrue(didAppear)
     }
 
     @MainActor
-    func testActionEntityQueryThroughSystemInfrastructure() async throws {
-        let actions = try await definitions
-            .entities["ActionEntity"]
-            .suggestedEntities()
-        let names: [String] = try actions.map { action in
-            try action.name
-        }
+    func testCaptureNoteWhileApplicationIsTerminated() async throws {
+        let note = "Cold intent test \(UUID().uuidString)"
+        app.terminate()
 
-        XCTAssertEqual(names, ["Capture Note"])
+        _ = try await definitions
+            .intents["CaptureNoteIntent"]
+            .makeIntent(text: note)
+            .run()
+
+        app.launch()
+
+        let didAppear = try await waitForNote(note, in: app)
+        XCTAssertTrue(didAppear)
+    }
+
+    @MainActor
+    private func waitForNote(_ note: String, in app: XCUIApplication) async throws -> Bool {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        let latestExecution = app.descendants(matching: .any)["latest-execution"]
+
+        repeat {
+            if latestExecution.exists, latestExecution.label.contains(note) {
+                return true
+            }
+            try await Task.sleep(for: .milliseconds(100))
+        } while ContinuousClock.now < deadline
+
+        return false
     }
 }

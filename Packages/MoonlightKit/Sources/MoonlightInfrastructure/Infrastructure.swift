@@ -1,3 +1,4 @@
+import CoreFoundation
 import Foundation
 import MoonlightDomain
 
@@ -5,6 +6,7 @@ public enum FileExecutionStoreError: Error, Equatable, LocalizedError, Sendable 
     case invalidDocument
     case unsupportedVersion(Int)
     case duplicateExecutionID(UUID)
+    case sharedContainerUnavailable(String)
 
     public var errorDescription: String? {
         switch self {
@@ -14,7 +16,34 @@ public enum FileExecutionStoreError: Error, Equatable, LocalizedError, Sendable 
             "Execution history version \(version) is not supported."
         case let .duplicateExecutionID(identifier):
             "Execution history contains duplicate identifier \(identifier.uuidString)."
+        case let .sharedContainerUnavailable(identifier):
+            "The shared container \(identifier) is unavailable."
         }
+    }
+}
+
+public enum MoonlightStorage {
+    public static let appGroupIdentifier = "33FPG9442W.com.joaocosta.Moonlight"
+    public static let historyDidChangeNotification = Notification.Name(
+        "com.joaocosta.Moonlight.execution-history-did-change"
+    )
+    public static let historyDidChangeDarwinName =
+        "com.joaocosta.Moonlight.execution-history-did-change"
+
+    static func postHistoryDidChange() {
+        DistributedNotificationCenter.default().postNotificationName(
+            historyDidChangeNotification,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName(rawValue: historyDidChangeDarwinName as CFString),
+            nil,
+            nil,
+            true
+        )
     }
 }
 
@@ -28,22 +57,171 @@ public actor FileExecutionStore: ExecutionStore {
 
     public let fileURL: URL
     private let retentionLimit: Int
-    private var executions: [UUID: Execution]
-    private var insertionOrder: [UUID: UInt64]
-    private var nextSequence: UInt64
 
     public init(
-        fileURL: URL = FileExecutionStore.defaultFileURL(),
+        fileURL: URL? = nil,
         retentionLimit: Int = 500
     ) throws {
-        self.fileURL = fileURL
+        if let fileURL {
+            self.fileURL = fileURL
+        } else {
+            self.fileURL = try Self.defaultFileURL()
+        }
         self.retentionLimit = max(1, retentionLimit)
+        try Self.ensureDocumentExists(at: self.fileURL)
+        _ = try Self.readExecutions(at: self.fileURL)
+    }
 
+    public func upsert(_ execution: Execution) throws {
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+
+        var coordinationError: NSError?
+        var operationResult: Result<Void, Error>?
+        let coordinator = NSFileCoordinator()
+        coordinator.coordinate(
+            writingItemAt: fileURL,
+            options: [],
+            error: &coordinationError
+        ) { coordinatedURL in
+            operationResult = Result {
+                var existing = try Self.readExecutionsWithoutCoordination(at: coordinatedURL)
+                existing.removeAll { $0.id == execution.id }
+
+                let ordered = ([execution] + existing)
+                    .enumerated()
+                    .sorted { lhs, rhs in
+                        if lhs.element.createdAt != rhs.element.createdAt {
+                            return lhs.element.createdAt > rhs.element.createdAt
+                        }
+                        return lhs.offset < rhs.offset
+                    }
+                    .prefix(retentionLimit)
+                    .map(\.element)
+
+                try Self.writeExecutionsWithoutCoordination(ordered, to: coordinatedURL)
+            }
+        }
+
+        if let coordinationError {
+            throw coordinationError
+        }
+        guard let operationResult else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        try operationResult.get()
+
+        MoonlightStorage.postHistoryDidChange()
+    }
+
+    public func execution(id: UUID) throws -> Execution? {
+        try Self.readExecutions(at: fileURL).first { $0.id == id }
+    }
+
+    public func recent(limit: Int) throws -> [Execution] {
+        guard limit > 0 else { return [] }
+        return try Self.readExecutions(at: fileURL)
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    public static func defaultFileURL(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        temporaryDirectory: URL = .temporaryDirectory,
+        groupContainerResolver: (String) -> URL? = {
+            FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: $0
+            )
+        }
+    ) throws -> URL {
+#if DEBUG
+        if
+            let rawSessionID = environment["MOONLIGHT_APP_INTENTS_TEST_SESSION_ID"],
+            let sessionID = UUID(uuidString: rawSessionID)
+        {
+            return temporaryDirectory
+                .appending(path: "MoonlightAppIntentsTests")
+                .appending(path: sessionID.uuidString)
+                .appending(path: "executions-v1.json")
+        }
+#endif
+
+        guard let containerURL = groupContainerResolver(MoonlightStorage.appGroupIdentifier) else {
+            throw FileExecutionStoreError.sharedContainerUnavailable(
+                MoonlightStorage.appGroupIdentifier
+            )
+        }
+
+        return containerURL
+            .appending(path: "Library")
+            .appending(path: "Application Support")
+            .appending(path: "Moonlight")
+            .appending(path: "executions-v1.json")
+    }
+
+    private static func readExecutions(at fileURL: URL) throws -> [Execution] {
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            executions = [:]
-            insertionOrder = [:]
-            nextSequence = 0
-            return
+            return []
+        }
+
+        var coordinationError: NSError?
+        var operationResult: Result<[Execution], Error>?
+        let coordinator = NSFileCoordinator()
+        coordinator.coordinate(
+            readingItemAt: fileURL,
+            options: [],
+            error: &coordinationError
+        ) { coordinatedURL in
+            operationResult = Result {
+                try readExecutionsWithoutCoordination(at: coordinatedURL)
+            }
+        }
+
+        if let coordinationError {
+            throw coordinationError
+        }
+        guard let operationResult else {
+            throw CocoaError(.fileReadUnknown)
+        }
+        return try operationResult.get()
+    }
+
+    private static func ensureDocumentExists(at fileURL: URL) throws {
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+
+        var coordinationError: NSError?
+        var operationResult: Result<Void, Error>?
+        let coordinator = NSFileCoordinator()
+        coordinator.coordinate(
+            writingItemAt: fileURL,
+            options: [],
+            error: &coordinationError
+        ) { coordinatedURL in
+            operationResult = Result {
+                guard !FileManager.default.fileExists(atPath: coordinatedURL.path) else {
+                    return
+                }
+                try writeExecutionsWithoutCoordination([], to: coordinatedURL)
+            }
+        }
+
+        if let coordinationError {
+            throw coordinationError
+        }
+        guard let operationResult else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        try operationResult.get()
+    }
+
+    private static func readExecutionsWithoutCoordination(at fileURL: URL) throws -> [Execution] {
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return []
         }
 
         let data = try Data(contentsOf: fileURL)
@@ -57,99 +235,32 @@ public actor FileExecutionStore: ExecutionStore {
             throw FileExecutionStoreError.invalidDocument
         }
 
-        guard document.version == Self.currentVersion else {
+        guard document.version == currentVersion else {
             throw FileExecutionStoreError.unsupportedVersion(document.version)
         }
 
-        var loaded: [UUID: Execution] = [:]
-        var loadedOrder: [UUID: UInt64] = [:]
-        let count = UInt64(document.executions.count)
-        for (offset, execution) in document.executions.enumerated() {
-            guard loaded[execution.id] == nil else {
+        var identifiers = Set<UUID>()
+        for execution in document.executions {
+            guard identifiers.insert(execution.id).inserted else {
                 throw FileExecutionStoreError.duplicateExecutionID(execution.id)
             }
-            loaded[execution.id] = execution
-            loadedOrder[execution.id] = count - UInt64(offset)
         }
-        executions = loaded
-        insertionOrder = loadedOrder
-        nextSequence = count
+        return document.executions
     }
 
-    public func upsert(_ execution: Execution) throws {
-        var updated = executions
-        var updatedOrder = insertionOrder
-        let sequence = nextSequence + 1
-        updated[execution.id] = execution
-        updatedOrder[execution.id] = sequence
-
-        let retained = updated.values
-            .sorted {
-                if $0.createdAt != $1.createdAt {
-                    return $0.createdAt > $1.createdAt
-                }
-                return updatedOrder[$0.id, default: 0] > updatedOrder[$1.id, default: 0]
-            }
-            .prefix(retentionLimit)
-            .map { $0 }
+    private static func writeExecutionsWithoutCoordination(
+        _ executions: [Execution],
+        to fileURL: URL
+    ) throws {
         let document = Document(
-            version: Self.currentVersion,
-            executions: retained
+            version: currentVersion,
+            executions: executions
         )
-
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(document)
-
-        try FileManager.default.createDirectory(
-            at: fileURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
         try data.write(to: fileURL, options: .atomic)
-        executions = Dictionary(uniqueKeysWithValues: retained.map { ($0.id, $0) })
-        insertionOrder = Dictionary(
-            uniqueKeysWithValues: retained.map { ($0.id, updatedOrder[$0.id, default: 0]) }
-        )
-        nextSequence = sequence
-    }
-
-    public func execution(id: UUID) -> Execution? {
-        executions[id]
-    }
-
-    public func recent(limit: Int) -> [Execution] {
-        guard limit > 0 else { return [] }
-        return executions.values
-            .sorted {
-                if $0.createdAt != $1.createdAt {
-                    return $0.createdAt > $1.createdAt
-                }
-                return insertionOrder[$0.id, default: 0] > insertionOrder[$1.id, default: 0]
-            }
-            .prefix(limit)
-            .map { $0 }
-    }
-
-    public static func defaultFileURL(
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        temporaryDirectory: URL = .temporaryDirectory
-    ) -> URL {
-#if DEBUG
-        if
-            let rawSessionID = environment["MOONLIGHT_APP_INTENTS_TEST_SESSION_ID"],
-            let sessionID = UUID(uuidString: rawSessionID)
-        {
-            return temporaryDirectory
-                .appending(path: "MoonlightAppIntentsTests")
-                .appending(path: sessionID.uuidString)
-                .appending(path: "executions-v1.json")
-        }
-#endif
-
-        return URL.applicationSupportDirectory
-            .appending(path: "Moonlight")
-            .appending(path: "executions-v1.json")
     }
 }
 
@@ -206,8 +317,8 @@ public enum MoonlightRuntime {
                 MoonlightRuntimeClient(
                     descriptors: { registry.descriptors },
                     execute: { request in try await runner.execute(request) },
-                    execution: { identifier in await store.execution(id: identifier) },
-                    recent: { limit in await store.recent(limit: limit) }
+                    execution: { identifier in try await store.execution(id: identifier) },
+                    recent: { limit in try await store.recent(limit: limit) }
                 )
             )
         } catch {

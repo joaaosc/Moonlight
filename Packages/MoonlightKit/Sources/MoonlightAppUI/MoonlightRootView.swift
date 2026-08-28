@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import MoonlightDomain
 import SwiftUI
@@ -6,6 +7,13 @@ public struct MoonlightRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: MoonlightModel
     @State private var selectedExecutionID: Execution.ID?
+    @State private var historyRevision: String?
+
+    private let historyTimer = Timer.publish(
+        every: 0.25,
+        on: .main,
+        in: .common
+    ).autoconnect()
 
     public init(model: MoonlightModel = MoonlightModel()) {
         _model = State(initialValue: model)
@@ -38,6 +46,9 @@ public struct MoonlightRootView: View {
         .task {
             await load()
         }
+        .onReceive(historyTimer) { _ in
+            refreshWhenHistoryChanges()
+        }
         .onChange(of: scenePhase) { _, newPhase in
             refreshWhenActive(newPhase)
         }
@@ -50,7 +61,18 @@ public struct MoonlightRootView: View {
 
     private func load() async {
         await model.load()
+        historyRevision = model.historyRevision
         if !model.executions.contains(where: { $0.id == selectedExecutionID }) {
+            selectedExecutionID = model.executions.first?.id
+        }
+    }
+
+    private func refreshWhenHistoryChanges() {
+        let nextRevision = model.historyRevision
+        guard nextRevision != historyRevision, !model.isLoading else { return }
+        historyRevision = nextRevision
+        Task {
+            await model.load()
             selectedExecutionID = model.executions.first?.id
         }
     }

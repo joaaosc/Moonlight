@@ -10,6 +10,11 @@ struct ExecutionHistoryView: View {
         List(executions, selection: $selection) { execution in
             ExecutionRowView(execution: execution)
                 .tag(execution.id)
+                .accessibilityIdentifier(
+                    execution.id == executions.first?.id
+                        ? "latest-execution"
+                        : "execution-\(execution.id.uuidString)"
+                )
         }
         .listStyle(.sidebar)
         .navigationTitle("History")
