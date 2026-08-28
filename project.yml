@@ -1,0 +1,80 @@
+name: Moonlight
+
+options:
+  bundleIdPrefix: com.joaocosta
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "27.0"
+
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: "27.0"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
+
+packages:
+  MoonlightKit:
+    path: Packages/MoonlightKit
+
+targets:
+  Moonlight:
+    type: application
+    platform: macOS
+    deploymentTarget: "27.0"
+    sources:
+      - path: App/Moonlight
+    info:
+      path: App/Moonlight/Info.plist
+      properties:
+        CFBundleDisplayName: Moonlight
+        LSApplicationCategoryType: public.app-category.productivity
+        INIntentsSupported:
+          - ExecuteActionIntent
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight
+        PRODUCT_NAME: Moonlight
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 33FPG9442W
+        CODE_SIGN_ENTITLEMENTS: App/Moonlight/Moonlight.entitlements
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - package: MoonlightKit
+        product: MoonlightAppUI
+      - package: MoonlightKit
+        product: MoonlightIntents
+
+  MoonlightTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "27.0"
+    sources:
+      - path: App/MoonlightTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.MoonlightTests
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 33FPG9442W
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Moonlight
+      - package: MoonlightKit
+        product: MoonlightAppUI
+
+schemes:
+  Moonlight:
+    build:
+      targets:
+        Moonlight: all
+        MoonlightTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: MoonlightTests
