@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B903F3A8DB0E518F15FD7AAB"
+               BuildableName = "MoonlightAppIntentsUITests.xctest"
+               BlueprintName = "MoonlightAppIntentsUITests"
+               ReferencedContainer = "container:Moonlight.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "4079599CED65240152DCACC1"
                BuildableName = "MoonlightTests.xctest"
                BlueprintName = "MoonlightTests"
@@ -62,6 +76,17 @@
                BlueprintIdentifier = "4079599CED65240152DCACC1"
                BuildableName = "MoonlightTests.xctest"
                BlueprintName = "MoonlightTests"
+               ReferencedContainer = "container:Moonlight.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B903F3A8DB0E518F15FD7AAB"
+               BuildableName = "MoonlightAppIntentsUITests.xctest"
+               BlueprintName = "MoonlightAppIntentsUITests"
                ReferencedContainer = "container:Moonlight.xcodeproj">
             </BuildableReference>
          </TestableReference>

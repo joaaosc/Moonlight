@@ -10,6 +10,7 @@ public final class MoonlightModel {
     public private(set) var executions: [Execution] = []
     public private(set) var errorMessage: String?
     public private(set) var isWorking = false
+    public private(set) var isLoading = false
 
     private let clientResult: Result<MoonlightRuntimeClient, MoonlightRuntimeError>
 
@@ -40,6 +41,9 @@ public final class MoonlightModel {
     }
 
     public func load() async {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
             let client = try clientResult.get()
             executions = try await client.recent(50)

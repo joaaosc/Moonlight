@@ -40,6 +40,20 @@ struct AppIntentsAdapterTests {
         #expect(!ExecutionSnippetIntent.isDiscoverable)
         #expect(ExecutionSnippetIntent.supportedExecutionTargets.contains(.main))
     }
+
+    @Test("Capture Note is the discoverable main-process action")
+    func captureNoteContract() {
+        requireAppIntent(CaptureNoteIntent.self)
+        #expect(CaptureNoteIntent.supportedExecutionTargets.contains(.main))
+    }
+
+    @Test("Generic execution remains available without appearing in system discovery")
+    func genericExecutionContract() {
+        requireAppIntent(ExecuteActionIntent.self)
+        #expect(!ExecuteActionIntent.isDiscoverable)
+        #expect(ExecuteActionIntent.supportedExecutionTargets.contains(.main))
+    }
 }
 
 private func requireSnippetIntent<T: SnippetIntent>(_ type: T.Type) {}
+private func requireAppIntent<T: AppIntent>(_ type: T.Type) {}

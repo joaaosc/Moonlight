@@ -27,6 +27,7 @@ struct ExecutionDetailView: View {
             .frame(maxWidth: 720, alignment: .leading)
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .center)
+            .accessibilityElement(children: .contain)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }

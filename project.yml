@@ -32,7 +32,7 @@ targets:
         CFBundleDisplayName: Moonlight
         LSApplicationCategoryType: public.app-category.productivity
         INIntentsSupported:
-          - ExecuteActionIntent
+          - CaptureNoteIntent
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight
@@ -65,12 +65,30 @@ targets:
       - package: MoonlightKit
         product: MoonlightAppUI
 
+  MoonlightAppIntentsUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    deploymentTarget: "27.0"
+    sources:
+      - path: App/MoonlightAppIntentsUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.MoonlightAppIntentsUITests
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 33FPG9442W
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        TEST_TARGET_NAME: Moonlight
+    dependencies:
+      - target: Moonlight
+
 schemes:
   Moonlight:
     build:
       targets:
         Moonlight: all
         MoonlightTests: [test]
+        MoonlightAppIntentsUITests: [test]
     run:
       config: Debug
     test:
@@ -78,3 +96,4 @@ schemes:
       gatherCoverageData: true
       targets:
         - name: MoonlightTests
+        - name: MoonlightAppIntentsUITests

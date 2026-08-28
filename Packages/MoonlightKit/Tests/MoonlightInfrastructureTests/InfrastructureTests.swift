@@ -108,6 +108,24 @@ struct FileExecutionStoreTests {
         ])
     }
 
+    @Test("Uses an isolated temporary store for a valid App Intents test session")
+    func isolatedAppIntentsTestStore() {
+        let sessionID = UUID()
+        let temporaryDirectory = URL(fileURLWithPath: "/tmp/moonlight-tests", isDirectory: true)
+
+        let fileURL = FileExecutionStore.defaultFileURL(
+            environment: [
+                "MOONLIGHT_APP_INTENTS_TEST_SESSION_ID": sessionID.uuidString,
+            ],
+            temporaryDirectory: temporaryDirectory
+        )
+
+        #expect(fileURL == temporaryDirectory
+            .appending(path: "MoonlightAppIntentsTests")
+            .appending(path: sessionID.uuidString)
+            .appending(path: "executions-v1.json"))
+    }
+
     private func makeExecution(
         id: UUID,
         detail: String,

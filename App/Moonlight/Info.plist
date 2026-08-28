@@ -22,7 +22,7 @@
 	<string>1</string>
 	<key>INIntentsSupported</key>
 	<array>
-		<string>ExecuteActionIntent</string>
+		<string>CaptureNoteIntent</string>
 	</array>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>

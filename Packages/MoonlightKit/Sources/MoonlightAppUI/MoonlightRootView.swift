@@ -3,6 +3,7 @@ import MoonlightDomain
 import SwiftUI
 
 public struct MoonlightRootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var model: MoonlightModel
     @State private var selectedExecutionID: Execution.ID?
 
@@ -14,6 +15,7 @@ public struct MoonlightRootView: View {
         NavigationSplitView {
             ExecutionHistoryView(
                 executions: model.executions,
+                isLoading: model.isLoading,
                 selection: $selectedExecutionID
             )
         } detail: {
@@ -24,6 +26,7 @@ public struct MoonlightRootView: View {
 
                 if let selectedExecution {
                     ExecutionDetailView(execution: selectedExecution)
+                        .id(selectedExecution.id)
                 } else {
                     ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
                 }
@@ -35,6 +38,9 @@ public struct MoonlightRootView: View {
         .task {
             await load()
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            refreshWhenActive(newPhase)
+        }
     }
 
     private var selectedExecution: Execution? {
@@ -44,8 +50,15 @@ public struct MoonlightRootView: View {
 
     private func load() async {
         await model.load()
-        if selectedExecutionID == nil {
+        if !model.executions.contains(where: { $0.id == selectedExecutionID }) {
             selectedExecutionID = model.executions.first?.id
+        }
+    }
+
+    private func refreshWhenActive(_ newPhase: ScenePhase) {
+        guard newPhase == .active else { return }
+        Task {
+            await load()
         }
     }
 

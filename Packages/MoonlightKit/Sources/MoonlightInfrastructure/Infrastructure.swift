@@ -131,14 +131,25 @@ public actor FileExecutionStore: ExecutionStore {
             .map { $0 }
     }
 
-    public static func defaultFileURL() -> URL {
-        let applicationSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        )[0]
-        return applicationSupport
-            .appendingPathComponent("Moonlight", isDirectory: true)
-            .appendingPathComponent("executions-v1.json")
+    public static func defaultFileURL(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        temporaryDirectory: URL = .temporaryDirectory
+    ) -> URL {
+#if DEBUG
+        if
+            let rawSessionID = environment["MOONLIGHT_APP_INTENTS_TEST_SESSION_ID"],
+            let sessionID = UUID(uuidString: rawSessionID)
+        {
+            return temporaryDirectory
+                .appending(path: "MoonlightAppIntentsTests")
+                .appending(path: sessionID.uuidString)
+                .appending(path: "executions-v1.json")
+        }
+#endif
+
+        return URL.applicationSupportDirectory
+            .appending(path: "Moonlight")
+            .appending(path: "executions-v1.json")
     }
 }
 

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ExecutionHistoryView: View {
     let executions: [Execution]
+    let isLoading: Bool
     @Binding var selection: Execution.ID?
 
     var body: some View {
@@ -14,7 +15,10 @@ struct ExecutionHistoryView: View {
         .navigationTitle("History")
         .navigationSplitViewColumnWidth(min: 240, ideal: 300, max: 380)
         .overlay {
-            if executions.isEmpty {
+            if isLoading && executions.isEmpty {
+                ProgressView("Loading history")
+                    .controlSize(.small)
+            } else if executions.isEmpty {
                 ContentUnavailableView(
                     "No Executions",
                     systemImage: "clock.arrow.circlepath",
