@@ -8,6 +8,8 @@ options:
 
 settings:
   base:
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
     MACOSX_DEPLOYMENT_TARGET: "27.0"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
@@ -30,6 +32,8 @@ targets:
       path: App/Moonlight/Info.plist
       properties:
         CFBundleDisplayName: Moonlight
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
     settings:
       base:
@@ -55,6 +59,8 @@ targets:
       path: App/MoonlightAppIntentsExtension/Info.plist
       properties:
         CFBundleDisplayName: Moonlight App Intents
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         EXAppExtensionAttributes:
           EXExtensionPointIdentifier: com.apple.appintents-extension
     settings:
