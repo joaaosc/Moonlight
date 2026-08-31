@@ -22,6 +22,52 @@ struct FileExecutionStoreTests {
         #expect(try await reopened.recent(limit: 10) == [replacement])
     }
 
+    @Test("Round-trips versioned action parameters")
+    func roundTripsActionParameters() async throws {
+        let fixture = try TemporaryStoreFixture()
+        defer { fixture.remove() }
+        let execution = makeExecution(
+            id: UUID(),
+            detail: "TW9vbmxpZ2h0",
+            seconds: 1,
+            parameters: ActionParameters(
+                values: [TransformBase64Action.operationParameterName: "encode"]
+            )
+        )
+
+        let store = try FileExecutionStore(fileURL: fixture.fileURL)
+        try await store.upsert(execution)
+
+        let reopened = try FileExecutionStore(fileURL: fixture.fileURL)
+        #expect(try await reopened.execution(id: execution.id) == execution)
+        #expect(
+            try await reopened.execution(id: execution.id)?.parameters
+                == execution.parameters
+        )
+    }
+
+    @Test("Decodes legacy executions without action parameters")
+    func decodesLegacyExecutionWithoutParameters() async throws {
+        let fixture = try TemporaryStoreFixture()
+        defer { fixture.remove() }
+        let execution = makeExecution(id: UUID(), detail: "legacy", seconds: 1)
+        try encode(
+            FixtureDocument(version: 1, executions: [execution]),
+            to: fixture.fileURL
+        )
+
+        let encodedDocument = try String(
+            decoding: Data(contentsOf: fixture.fileURL),
+            as: UTF8.self
+        )
+        #expect(!encodedDocument.contains("\"parameters\""))
+
+        let store = try FileExecutionStore(fileURL: fixture.fileURL)
+        let decoded = try await store.execution(id: execution.id)
+        #expect(decoded == execution)
+        #expect(decoded?.parameters == nil)
+    }
+
     @Test("Rejects invalid JSON without replacing the file")
     func rejectsInvalidJSON() throws {
         let fixture = try TemporaryStoreFixture()
@@ -166,13 +212,15 @@ struct FileExecutionStoreTests {
     private func makeExecution(
         id: UUID,
         detail: String,
-        seconds: Int
+        seconds: Int,
+        parameters: ActionParameters? = nil
     ) -> Execution {
         Execution(
             id: id,
             actionID: MoonlightActionID.captureNote,
             actionTitle: "Capture Note",
             input: detail,
+            parameters: parameters,
             summary: "Note captured",
             detail: detail,
             status: .succeeded,

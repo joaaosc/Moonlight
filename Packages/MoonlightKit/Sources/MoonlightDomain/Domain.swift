@@ -3,6 +3,10 @@ import Foundation
 public enum MoonlightActionID {
     public static let captureNote = "capture-note"
     public static let openColorPicker = "open-color-picker"
+    public static let cleanText = "clean-text"
+    public static let formatJSON = "format-json"
+    public static let generateUUID = "generate-uuid"
+    public static let base64Text = "base64-text"
 }
 
 public enum MoonlightCommand: Equatable, Sendable {
@@ -66,21 +70,54 @@ public struct ActionDescriptor: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let title: String
     public let summary: String
+    public let isIdempotent: Bool
 
-    public init(id: String, title: String, summary: String) {
+    public init(
+        id: String,
+        title: String,
+        summary: String,
+        isIdempotent: Bool = false
+    ) {
         self.id = id
         self.title = title
         self.summary = summary
+        self.isIdempotent = isIdempotent
     }
 }
 
-public struct ActionRequest: Equatable, Sendable {
+public struct ActionParameters: Codable, Equatable, Sendable {
+    public static let currentSchemaVersion = 1
+    public static let empty = ActionParameters()
+
+    public let schemaVersion: Int
+    public let values: [String: String]
+
+    public init(
+        schemaVersion: Int = Self.currentSchemaVersion,
+        values: [String: String] = [:]
+    ) {
+        self.schemaVersion = schemaVersion
+        self.values = values
+    }
+
+    public subscript(name: String) -> String? {
+        values[name]
+    }
+}
+
+public struct ActionRequest: Codable, Equatable, Sendable {
     public let actionID: String
     public let input: String
+    public let parameters: ActionParameters
 
-    public init(actionID: String, input: String) {
+    public init(
+        actionID: String,
+        input: String,
+        parameters: ActionParameters = .empty
+    ) {
         self.actionID = actionID
         self.input = input
+        self.parameters = parameters
     }
 }
 
@@ -97,6 +134,9 @@ public struct ActionOutput: Codable, Equatable, Sendable {
 public enum ActionError: Error, Equatable, LocalizedError, Sendable {
     case emptyInput
     case inputTooLong(limit: Int)
+    case inputTooLarge(limitInBytes: Int)
+    case outputTooLarge(limitInBytes: Int)
+    case unsupportedParameterSchema(Int)
     case unknownAction(String)
 
     public var errorDescription: String? {
@@ -105,6 +145,12 @@ public enum ActionError: Error, Equatable, LocalizedError, Sendable {
             "Enter text before running the action."
         case let .inputTooLong(limit):
             "Text must contain at most \(limit) characters."
+        case let .inputTooLarge(limitInBytes):
+            "Input must contain at most \(limitInBytes) UTF-8 bytes."
+        case let .outputTooLarge(limitInBytes):
+            "The result must contain at most \(limitInBytes) UTF-8 bytes."
+        case let .unsupportedParameterSchema(schemaVersion):
+            "Unsupported action parameter schema: \(schemaVersion)."
         case let .unknownAction(actionID):
             "Unknown action: \(actionID)."
         }
@@ -121,6 +167,7 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
     public let actionID: String
     public let actionTitle: String
     public let input: String
+    public let parameters: ActionParameters?
     public let summary: String
     public let detail: String
     public let status: ExecutionStatus
@@ -131,6 +178,7 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
         actionID: String,
         actionTitle: String,
         input: String,
+        parameters: ActionParameters? = nil,
         summary: String,
         detail: String,
         status: ExecutionStatus,
@@ -140,6 +188,7 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
         self.actionID = actionID
         self.actionTitle = actionTitle
         self.input = input
+        self.parameters = parameters
         self.summary = summary
         self.detail = detail
         self.status = status
@@ -149,7 +198,7 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
 
 public protocol ActionHandler: Sendable {
     var descriptor: ActionDescriptor { get }
-    func perform(input: String) async throws -> ActionOutput
+    func perform(request: ActionRequest) async throws -> ActionOutput
 }
 
 public struct CaptureNoteAction: ActionHandler {
@@ -163,8 +212,13 @@ public struct CaptureNoteAction: ActionHandler {
 
     public init() {}
 
-    public func perform(input: String) async throws -> ActionOutput {
-        let normalized = input
+    public func perform(request: ActionRequest) async throws -> ActionOutput {
+        try Task.checkCancellation()
+        guard request.parameters.values.isEmpty else {
+            throw ToolActionError.unexpectedParameters
+        }
+
+        let normalized = request.input
             .precomposedStringWithCanonicalMapping
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -188,8 +242,13 @@ public struct OpenColorPickerAction: ActionHandler {
 
     public init() {}
 
-    public func perform(input: String) async throws -> ActionOutput {
-        ActionOutput(
+    public func perform(request: ActionRequest) async throws -> ActionOutput {
+        try Task.checkCancellation()
+        guard request.parameters.values.isEmpty else {
+            throw ToolActionError.unexpectedParameters
+        }
+
+        return ActionOutput(
             summary: "Color picker opened",
             detail: "Moonlight continued in the foreground."
         )
@@ -204,7 +263,14 @@ public struct ActionRegistry: Sendable {
     }
 
     public static let standard = ActionRegistry(
-        handlers: [CaptureNoteAction(), OpenColorPickerAction()]
+        handlers: [
+            CaptureNoteAction(),
+            OpenColorPickerAction(),
+            CleanTextAction(),
+            FormatJSONAction(),
+            GenerateUUIDAction(),
+            TransformBase64Action(),
+        ]
     )
 
     public var descriptors: [ActionDescriptor] {
@@ -271,6 +337,8 @@ public struct ActionRunner: Sendable {
 
     @discardableResult
     public func execute(_ request: ActionRequest) async throws -> Execution {
+        try Task.checkCancellation()
+
         guard let handler = registry.handler(id: request.actionID) else {
             return try await persistFailure(
                 request: request,
@@ -279,9 +347,21 @@ public struct ActionRunner: Sendable {
             )
         }
 
+        guard request.parameters.schemaVersion == ActionParameters.currentSchemaVersion else {
+            return try await persistFailure(
+                request: request,
+                actionTitle: handler.descriptor.title,
+                error: ActionError.unsupportedParameterSchema(
+                    request.parameters.schemaVersion
+                )
+            )
+        }
+
         let output: ActionOutput
         do {
-            output = try await handler.perform(input: request.input)
+            output = try await handler.perform(request: request)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             return try await persistFailure(
                 request: request,
@@ -290,11 +370,14 @@ public struct ActionRunner: Sendable {
             )
         }
 
+        try Task.checkCancellation()
+
         let execution = Execution(
             id: identifierGenerator(),
             actionID: handler.descriptor.id,
             actionTitle: handler.descriptor.title,
             input: request.input,
+            parameters: request.parameters,
             summary: output.summary,
             detail: output.detail,
             status: .succeeded,
@@ -314,6 +397,7 @@ public struct ActionRunner: Sendable {
             actionID: request.actionID,
             actionTitle: actionTitle,
             input: request.input,
+            parameters: request.parameters,
             summary: "Action failed",
             detail: error.localizedDescription,
             status: .failed,
