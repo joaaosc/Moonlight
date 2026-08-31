@@ -1,10 +1,16 @@
 # Moonlight
 
-Moonlight é um conjunto de ações rápidas para o macOS, acessíveis pelo Spotlight e Shortcuts. A primeira versão captura notas e abre o seletor de cor sem precisar navegar pela aplicação.
+Moonlight é um conjunto de ações rápidas para o macOS, acessíveis pelo Spotlight e Shortcuts integrado ao framework App Intents com o SDK beta da Apple para o macOS 27 Golden Gate.
+
+Por enquanto é um teste de levar as capacidades do Spotlight/Siri ao limite e juntar com a suíte de mudanças interessantes para powerusers/devs do framework App Intents. Caso o teste seja bem-sucedido, existe a possibilidade de port para iOS 27.
 
 ![Moonlight](docs/screenshot.png)
 
+
+![MoonlightExample](docsMoonlightExample.JPG)
+
 ## Licença
+
 
 PolyForm Noncommercial License 1.0.0. Consulte [LICENSE.md](LICENSE.md).
 
