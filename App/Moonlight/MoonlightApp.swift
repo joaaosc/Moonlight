@@ -8,7 +8,9 @@ struct MoonlightApp: App {
     init() {
         AppDependencyManager.shared.add(
             dependency: MoonlightForegroundClient {
-                MoonlightColorPanelPresenter.shared.present()
+                MoonlightColorPanelPresenter.shared.present(
+                    isolatingFromMainWindow: true
+                )
             }
         )
     }

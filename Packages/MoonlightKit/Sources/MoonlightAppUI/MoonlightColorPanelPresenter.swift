@@ -7,7 +7,7 @@ public final class MoonlightColorPanelPresenter {
 
     private init() {}
 
-    public func present() {
+    public func present(isolatingFromMainWindow: Bool = false) {
         let panel = NSColorPanel.shared
         panel.identifier = NSUserInterfaceItemIdentifier(Self.panelIdentifier)
         panel.title = "Moonlight Color Picker"
@@ -18,6 +18,21 @@ public final class MoonlightColorPanelPresenter {
         panel.setFrameAutosaveName("MoonlightColorPanel")
 
         NSApplication.shared.activate()
+        if isolatingFromMainWindow {
+            hideMainWindow(excluding: panel)
+        }
         panel.makeKeyAndOrderFront(nil)
+    }
+
+    func hideMainWindow(excluding panel: NSPanel) {
+        mainWindows(in: NSApplication.shared.windows, excluding: panel)
+            .forEach { $0.orderOut(nil) }
+    }
+
+    func mainWindows(in windows: [NSWindow], excluding panel: NSPanel) -> [NSWindow] {
+        windows.filter { window in
+            window !== panel
+                && (window.identifier?.rawValue == "main" || window.title == "Moonlight")
+        }
     }
 }

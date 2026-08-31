@@ -124,6 +124,7 @@ struct FileExecutionStoreTests {
         #expect(try await second.execution(id: firstExecution.id) == firstExecution)
     }
 
+#if DEBUG
     @Test("Uses an isolated temporary store for a valid App Intents test session")
     func isolatedAppIntentsTestStore() throws {
         let sessionID = UUID()
@@ -141,6 +142,7 @@ struct FileExecutionStoreTests {
             .appending(path: sessionID.uuidString)
             .appending(path: "executions-v1.json"))
     }
+#endif
 
     @Test("Uses the shared application-group container outside test sessions")
     func sharedAppGroupStore() throws {

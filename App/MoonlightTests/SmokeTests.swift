@@ -1,5 +1,6 @@
+import AppKit
 import Foundation
-import MoonlightAppUI
+@testable import MoonlightAppUI
 import MoonlightDomain
 import MoonlightInfrastructure
 import Testing
@@ -63,6 +64,43 @@ struct MoonlightModelTests {
 
         #expect(ExecutionTextFormatter.preview(original) == "🔎 emoji again")
         #expect(original.contains("\n"))
+    }
+
+    @Test("Intent-driven color panel targets only the history window")
+    func isolatedColorPanelSelection() {
+        let historyWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 320),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        historyWindow.identifier = NSUserInterfaceItemIdentifier("main")
+        historyWindow.title = "Moonlight"
+
+        let colorPanel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        colorPanel.identifier = NSUserInterfaceItemIdentifier(
+            MoonlightColorPanelPresenter.panelIdentifier
+        )
+        let unrelatedWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 240),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        unrelatedWindow.title = "Preferences"
+
+        let selectedWindows = MoonlightColorPanelPresenter.shared.mainWindows(
+            in: [historyWindow, colorPanel, unrelatedWindow],
+            excluding: colorPanel
+        )
+
+        #expect(selectedWindows.count == 1)
+        #expect(selectedWindows.first === historyWindow)
     }
 }
 

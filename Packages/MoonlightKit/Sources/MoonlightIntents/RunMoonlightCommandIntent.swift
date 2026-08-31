@@ -2,18 +2,16 @@ import AppIntents
 import MoonlightDomain
 
 public struct RunMoonlightCommandIntent: AppIntent {
-    public static let title: LocalizedStringResource = "Moonlight"
+    public static let title: LocalizedStringResource = "Run Legacy Moonlight Command"
     public static let description = IntentDescription(
-        "Runs a Moonlight tool from one text command. Try ‘note Buy milk’ or ‘color’."
+        "Runs a text command saved by an earlier Moonlight build."
     )
+    public static let isDiscoverable = false
     public static let supportedModes: IntentModes = [
         .background,
         .foreground(.dynamic),
     ]
-    public static let allowedExecutionTargets: IntentExecutionTargets = [
-        .main,
-        .appIntentsExtension,
-    ]
+    public static let allowedExecutionTargets: IntentExecutionTargets = [.main]
 
     @Parameter(
         title: "Command",

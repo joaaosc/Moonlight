@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="moonlight-background" x1="10%" y1="6%" x2="90%" y2="94%">
+      <stop offset="0%" stop-color="#18255C"/>
+      <stop offset="52%" stop-color="#0D1538"/>
+      <stop offset="100%" stop-color="#070A1C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#moonlight-background)"/>
+</svg>

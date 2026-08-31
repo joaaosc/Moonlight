@@ -13,7 +13,7 @@ struct CaptureComposerView: View {
             Label("Capture Note", systemImage: "square.and.pencil")
                 .font(.title2.bold())
 
-            Text("Save a note here or run a ‘note …’ command with Moonlight in Spotlight.")
+            Text("Save a note here or run Capture Note from Spotlight.")
                 .foregroundStyle(.secondary)
 
             TextField("Enter a note", text: $model.text, axis: .vertical)
