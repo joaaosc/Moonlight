@@ -7,7 +7,7 @@ Por enquanto é um teste de levar as capacidades do Spotlight/Siri ao limite e j
 ![Moonlight](docs/screenshot.png)
 
 
-![MoonlightExample](docsMoonlightExample.JPG)
+![MoonlightExample](docs/MoonlightExample.JPG)
 
 ## Licença
 
