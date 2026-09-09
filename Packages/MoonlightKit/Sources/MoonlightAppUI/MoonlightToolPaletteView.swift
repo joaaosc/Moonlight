@@ -104,7 +104,7 @@ public struct MoonlightToolPaletteView: View {
                     List(selection: $model.selectedID) {
                         ForEach(model.filteredDescriptors) { descriptor in
                             HStack(spacing: 12) {
-                                Image(systemName: symbol(for: descriptor))
+                                Image(systemName: model.presentation(for: descriptor).symbolName)
                                     .frame(width: 28)
                                     .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 3) {
@@ -258,15 +258,4 @@ public struct MoonlightToolPaletteView: View {
         }
     }
 
-    private func symbol(for descriptor: ActionDescriptor) -> String {
-        switch descriptor.id {
-        case MoonlightActionID.captureNote: "note.text.badge.plus"
-        case MoonlightActionID.openColorPicker: "paintpalette"
-        case MoonlightActionID.cleanText: "text.badge.checkmark"
-        case MoonlightActionID.formatJSON: "curlybraces"
-        case MoonlightActionID.generateUUID: "number"
-        case MoonlightActionID.base64Text: "textformat.abc"
-        default: "command"
-        }
-    }
 }

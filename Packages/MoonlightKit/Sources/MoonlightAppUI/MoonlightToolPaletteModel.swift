@@ -13,8 +13,8 @@ public final class MoonlightToolPaletteModel {
     public var selectedID: String? {
         didSet {
             guard selectedID != oldValue else { return }
-            if let oldValue { drafts[oldValue] = currentDraft }
-            restore(drafts[selectedID ?? ""] ?? Draft())
+            if let oldValue { draftStore.save(currentDraft, for: oldValue) }
+            restore(draftStore.draft(for: selectedID ?? ""))
         }
     }
     public private(set) var isEditing = false
@@ -30,14 +30,9 @@ public final class MoonlightToolPaletteModel {
     private let client: MoonlightRuntimeClient
     private let preferences: UserDefaults?
     private let openColorPicker: @MainActor () -> Void
-    private var drafts: [String: Draft] = [:]
-
-    private struct Draft {
-        var input = ""
-        var operation: Base64TextOperation = .encode
-        var result: Execution?
-        var errorMessage: String?
-    }
+    private let catalog: MoonlightToolCatalog
+    private let search = MoonlightToolSearch()
+    private let draftStore = MoonlightToolDraftStore()
 
     public init(
         client: MoonlightRuntimeClient,
@@ -49,7 +44,8 @@ public final class MoonlightToolPaletteModel {
         self.preferences = preferences
         self.preferredActionID = preferredActionID
         self.openColorPicker = onOpenColorPicker
-        descriptors = client.descriptors().sorted { $0.title < $1.title }
+        catalog = MoonlightToolCatalog(descriptors: client.descriptors())
+        descriptors = catalog.descriptors
         favoriteIDs = Set(preferences?.stringArray(forKey: "favoriteToolIDs") ?? [])
         selectedID = descriptors.first { $0.id == preferredActionID }?.id ?? descriptors.first?.id
         isEditing = preferredActionID != nil && selectedID == preferredActionID
@@ -79,17 +75,19 @@ public final class MoonlightToolPaletteModel {
     }
 
     public var filteredDescriptors: [ActionDescriptor] {
-        let matches = descriptors.compactMap { descriptor -> (ActionDescriptor, Int)? in
-            let score = searchScore(for: descriptor)
-            return score > 0 ? (descriptor, score) : nil
-        }
-        return matches.sorted {
-            if $0.1 != $1.1 { return $0.1 > $1.1 }
-            let firstIsFavorite = favoriteIDs.contains($0.0.id)
-            let secondIsFavorite = favoriteIDs.contains($1.0.id)
-            if firstIsFavorite != secondIsFavorite { return firstIsFavorite }
-            return $0.0.title < $1.0.title
-        }.map(\.0)
+        filteredPresentations.compactMap { catalog.descriptor(for: $0.id) }
+    }
+
+    public var filteredPresentations: [MoonlightToolPresentation] {
+        search.ranked(
+            presentations: catalog.presentations,
+            query: query,
+            favoriteIDs: favoriteIDs
+        )
+    }
+
+    public func presentation(for descriptor: ActionDescriptor) -> MoonlightToolPresentation {
+        catalog.presentation(for: descriptor.id) ?? MoonlightToolPresentation(descriptor: descriptor)
     }
 
     public func toggleFavorite(_ descriptor: ActionDescriptor) {
@@ -102,15 +100,7 @@ public final class MoonlightToolPaletteModel {
     }
 
     public func alias(for descriptor: ActionDescriptor) -> String {
-        switch descriptor.id {
-        case MoonlightActionID.captureNote: "note"
-        case MoonlightActionID.openColorPicker: "color"
-        case MoonlightActionID.cleanText: "clean"
-        case MoonlightActionID.formatJSON: "json"
-        case MoonlightActionID.generateUUID: "uuid"
-        case MoonlightActionID.base64Text: "base64"
-        default: descriptor.id
-        }
+        presentation(for: descriptor).alias
     }
 
     /// Completes a local command. Does not intercept Spotlight's Tab behavior.
@@ -121,19 +111,6 @@ public final class MoonlightToolPaletteModel {
         query = completion
         selectedID = descriptor.id
         return true
-    }
-
-    private func searchScore(for descriptor: ActionDescriptor) -> Int {
-        var text = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if text.hasPrefix("\\") { text.removeFirst() }
-        guard !text.isEmpty else { return 1 }
-        let command = alias(for: descriptor)
-        if command == text || descriptor.title.lowercased() == text { return 4 }
-        if command.hasPrefix(text) || descriptor.title.lowercased().hasPrefix(text) { return 3 }
-        let searchableText = "\(descriptor.title) \(descriptor.summary) \(command)".lowercased()
-        return text.split(whereSeparator: \.isWhitespace).allSatisfy {
-            searchableText.contains($0)
-        } ? 2 : 0
     }
 
     public var selectedDescriptor: ActionDescriptor? {
@@ -183,15 +160,15 @@ public final class MoonlightToolPaletteModel {
     }
 
     private func reconcileSelection() {
-        guard !filteredDescriptors.contains(where: { $0.id == selectedID }) else { return }
-        selectedID = filteredDescriptors.first?.id
+        guard !filteredPresentations.contains(where: { $0.id == selectedID }) else { return }
+        selectedID = filteredPresentations.first?.id
     }
 
-    private var currentDraft: Draft {
-        Draft(input: input, operation: base64Operation, result: result, errorMessage: errorMessage)
+    private var currentDraft: MoonlightToolDraft {
+        MoonlightToolDraft(input: input, operation: base64Operation, result: result, errorMessage: errorMessage)
     }
 
-    private func restore(_ draft: Draft) {
+    private func restore(_ draft: MoonlightToolDraft) {
         input = draft.input
         base64Operation = draft.operation
         result = draft.result
@@ -238,17 +215,12 @@ public final class MoonlightToolPaletteModel {
             result = completedDraft.result
             errorMessage = completedDraft.errorMessage
         } else if let selectionAtStart {
-            drafts[selectionAtStart] = completedDraft
+            draftStore.save(completedDraft, for: selectionAtStart)
         }
     }
 
     public func acceptsInput(_ descriptor: ActionDescriptor) -> Bool {
-        switch descriptor.id {
-        case MoonlightActionID.generateUUID, MoonlightActionID.openColorPicker:
-            false
-        default:
-            true
-        }
+        presentation(for: descriptor).acceptsInput
     }
 
     private func input(for descriptor: ActionDescriptor) -> String {

@@ -27,5 +27,5 @@ Não configurar `DerivedDataLocation` global nem executar limpeza ampla do índi
 ## Versão atual
 
 - Marketing version: `0.1.0-pre-alpha.3`;
-- build: `21`;
+- build: `23`;
 - deployment target: macOS `27.0`.
