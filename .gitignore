@@ -7,4 +7,3 @@ xcuserdata/
 .swiftpm/xcode/
 
 # Keep the project roadmap tracked even when broader ignore rules match it.
-!docs/ROADMAP.md
