@@ -7,6 +7,7 @@ public final class MoonlightToolPalettePresenter {
     public static let panelIdentifier = "moonlight-tool-palette"
 
     private var panel: NSPanel?
+    private var model: MoonlightToolPaletteModel?
 
     private init() {}
 
@@ -15,10 +16,11 @@ public final class MoonlightToolPalettePresenter {
         isolatingFromMainWindow: Bool = true,
         onOpenColorPicker: @escaping @MainActor () -> Void = {}
     ) {
-        let model = MoonlightToolPaletteModel(
+        let model = self.model ?? MoonlightToolPaletteModel(
             preferredActionID: preferredActionID,
             onOpenColorPicker: onOpenColorPicker
         )
+        model.preparePresentation(preferredActionID: preferredActionID)
         present(model: model, isolatingFromMainWindow: isolatingFromMainWindow)
     }
 
@@ -26,19 +28,23 @@ public final class MoonlightToolPalettePresenter {
         model: MoonlightToolPaletteModel,
         isolatingFromMainWindow: Bool = true
     ) {
+        let replacingModel = self.model !== model
+        self.model = model
         if let panel {
-            panel.contentView = NSHostingView(rootView: MoonlightToolPaletteView(model: model))
+            if replacingModel {
+                panel.contentView = NSHostingView(rootView: MoonlightToolPaletteView(model: model))
+            }
             if isolatingFromMainWindow {
                 hideMainWindow(excluding: panel)
             }
             panel.makeKeyAndOrderFront(nil)
-            NSApplication.shared.activate(ignoringOtherApps: true)
+            NSApplication.shared.activate()
             return
         }
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 560),
-            styleMask: [.titled, .closable, .utilityWindow],
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 520),
+            styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -48,10 +54,12 @@ public final class MoonlightToolPalettePresenter {
         panel.hidesOnDeactivate = false
         panel.level = .floating
         panel.isReleasedWhenClosed = false
+        panel.contentMinSize = NSSize(width: 480, height: 420)
         panel.contentView = NSHostingView(rootView: MoonlightToolPaletteView(model: model))
         panel.center()
+        panel.setFrameAutosaveName("MoonlightToolPalette")
         self.panel = panel
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        NSApplication.shared.activate()
         if isolatingFromMainWindow {
             hideMainWindow(excluding: panel)
         }

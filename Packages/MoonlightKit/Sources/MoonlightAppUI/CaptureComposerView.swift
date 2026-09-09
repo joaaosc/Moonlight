@@ -13,7 +13,7 @@ struct CaptureComposerView: View {
             Label("Capture Note", systemImage: "square.and.pencil")
                 .font(.title2.bold())
 
-            Text("Save a note here or run Capture Note from Spotlight.")
+            Text("Save a note to your Moonlight history.")
                 .foregroundStyle(.secondary)
 
             TextField("Enter a note", text: $model.text, axis: .vertical)
@@ -37,7 +37,7 @@ struct CaptureComposerView: View {
                 }
 
                 Button("Capture", systemImage: "arrow.down.doc", action: onCapture)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.glassProminent)
                     .keyboardShortcut(.return, modifiers: .command)
                     .disabled(!model.canCapture)
                     .help("Capture note (Command-Return)")

@@ -2,7 +2,7 @@ import AppIntents
 import MoonlightDomain
 
 public struct OpenMoonlightToolIntent: OpenIntent {
-    public static let title: LocalizedStringResource = "Open Moonlight Tool"
+    public static let title: LocalizedStringResource = "Open Tool"
     public static let allowedExecutionTargets: IntentExecutionTargets = [.main]
 
     @Parameter(title: "Tool")

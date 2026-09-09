@@ -9,7 +9,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: 0.1.0-pre-alpha.3
-    CURRENT_PROJECT_VERSION: 21
+    CURRENT_PROJECT_VERSION: 23
     MACOSX_DEPLOYMENT_TARGET: "27.0"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
@@ -35,6 +35,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
+        LSUIElement: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight

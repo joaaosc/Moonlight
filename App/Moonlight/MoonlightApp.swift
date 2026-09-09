@@ -1,4 +1,5 @@
 import AppIntents
+import AppKit
 import MoonlightAppUI
 import MoonlightIntents
 import OSLog
@@ -44,7 +45,7 @@ struct MoonlightApp: App {
         }
         ProcessInfo.processInfo.automaticTerminationSupportEnabled = true
         ProcessInfo.processInfo.disableAutomaticTermination(
-            "Moonlight keeps its tool palette available"
+            "Moonlight keeps Spotlight commands and its menu bar available"
         )
         Task {
             do {
@@ -89,5 +90,14 @@ struct MoonlightApp: App {
                 .keyboardShortcut("c", modifiers: [.command, .shift])
             }
         }
+
+        Settings {
+            MoonlightSettingsView()
+        }
+
+        MenuBarExtra("Moonlight", systemImage: "moon.stars") {
+            MoonlightMenuBarView()
+        }
+        .menuBarExtraStyle(.window)
     }
 }

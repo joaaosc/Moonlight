@@ -8,6 +8,7 @@ public struct MoonlightRootView: View {
     @State private var model: MoonlightModel
     @State private var selectedExecutionID: Execution.ID?
     @State private var historyRevision: String?
+    @State private var isShowingComposer = false
 
     private let historyTimer = Timer.publish(
         every: 0.25,
@@ -27,11 +28,7 @@ public struct MoonlightRootView: View {
                 selection: $selectedExecutionID
             )
         } detail: {
-            VStack(spacing: 0) {
-                CaptureComposerView(model: model, onCapture: capture)
-
-                Divider()
-
+            Group {
                 if let selectedExecution {
                     ExecutionDetailView(execution: selectedExecution)
                         .id(selectedExecution.id)
@@ -40,9 +37,47 @@ public struct MoonlightRootView: View {
                 }
             }
             .navigationTitle("Moonlight")
+            .navigationSubtitle("Control Panel · Execution History")
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 480)
+        .safeAreaInset(edge: .bottom) {
+            if !isShowingComposer, let errorMessage = model.errorMessage {
+                Label(errorMessage, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+                    .textSelection(.enabled)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.background)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("New Note", systemImage: "square.and.pencil") {
+                    isShowingComposer = true
+                }
+                .keyboardShortcut("n", modifiers: .command)
+                .help("New note (⌘N)")
+            }
+            ToolbarItem {
+                Button("Refresh History", systemImage: "arrow.clockwise") {
+                    Task { await load() }
+                }
+                .disabled(model.isLoading)
+            }
+            ToolbarItem {
+                SettingsLink()
+            }
+        }
+        .sheet(isPresented: $isShowingComposer) {
+            VStack(alignment: .trailing, spacing: 0) {
+                CaptureComposerView(model: model, onCapture: capture)
+                Button("Close") { isShowingComposer = false }
+                    .keyboardShortcut(.cancelAction)
+                    .padding([.horizontal, .bottom], 24)
+            }
+            .frame(minWidth: 480, idealWidth: 560)
+        }
         .task {
             await load()
         }
@@ -72,8 +107,7 @@ public struct MoonlightRootView: View {
         guard nextRevision != historyRevision, !model.isLoading else { return }
         historyRevision = nextRevision
         Task {
-            await model.load()
-            selectedExecutionID = model.executions.first?.id
+            await load()
         }
     }
 
@@ -88,6 +122,7 @@ public struct MoonlightRootView: View {
         Task {
             if let execution = await model.capture() {
                 selectedExecutionID = execution.id
+                isShowingComposer = false
             }
         }
     }

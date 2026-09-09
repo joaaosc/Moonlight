@@ -10,6 +10,7 @@
 		06A40124B24202891BA3AED3 /* MoonlightAppIntentsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342C9AE7CD224FFD94861942 /* MoonlightAppIntentsExtension.swift */; };
 		09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 5A8968A0E43DAC7C7082B13B /* MoonlightIntents */; };
 		20424B0B4514B8F162B6776D /* Moonlight.icon in Resources */ = {isa = PBXBuildFile; fileRef = 366965946EFAA5B984A86132 /* Moonlight.icon */; };
+		2D5E5BC3CABC3A012CDA2E06 /* MoonlightMenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F5A05E1ADE396491E0469 /* MoonlightMenuBarView.swift */; };
 		35D6801E0A693FD96FE917A4 /* MoonlightAppIntentsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27548081BDA52A212CC8269F /* MoonlightAppIntentsUITests.swift */; };
 		3DAB85971989121814DF2C9A /* MoonlightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A849AD3732D5A9AF723CA6E3 /* MoonlightApp.swift */; };
 		5E85E6AF58B23D4893CE6AF4 /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 85F85B6F49B3D4149A9F6C8B /* MoonlightIntents */; };
@@ -17,6 +18,7 @@
 		6DB6879FC7ED873FF652B914 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8C05DDA9D1508B7C25A6DEF9 /* InfoPlist.strings */; };
 		BE2F05378BACC0D75022C4BC /* MoonlightAppUI in Frameworks */ = {isa = PBXBuildFile; productRef = 05BF1993C6EA595C294A0073 /* MoonlightAppUI */; };
 		C2F8658FE1E9A4A7733FF677 /* MoonlightAppUI in Frameworks */ = {isa = PBXBuildFile; productRef = 32307D81CCE55E823F22CCDF /* MoonlightAppUI */; };
+		CBD234150ACF7D4780FF2A3E /* MoonlightSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C44DF0033F99113B2541C128 /* MoonlightSettingsView.swift */; };
 		CDCC825C06332EDA50D15EB2 /* MoonlightAppIntentsExtension.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 3EF0F5D2E29F2CCE6AEAC9E7 /* MoonlightAppIntentsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		EB5DFDEE4438C87E3C8D23D3 /* MoonlightApplicationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A85D8584357DDD63136CFB0 /* MoonlightApplicationDelegate.swift */; };
 		F64E0EBF218294EBEB279625 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B8B45C1CB364C7385D476D /* SmokeTests.swift */; };
@@ -62,11 +64,13 @@
 		53B8B45C1CB364C7385D476D /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
 		5D2D9F67B1B0FB6124C31A00 /* MoonlightAppIntentsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MoonlightAppIntentsExtension.entitlements; sourceTree = "<group>"; };
 		7E429E80EC79BC4B6A9B0750 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		818F5A05E1ADE396491E0469 /* MoonlightMenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightMenuBarView.swift; sourceTree = "<group>"; };
 		8442647662BE0038F0ED461A /* MoonlightToolPaletteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightToolPaletteTests.swift; sourceTree = "<group>"; };
 		84ED336EAADD96BF1AF1E5FB /* MoonlightKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MoonlightKit; path = Packages/MoonlightKit; sourceTree = SOURCE_ROOT; };
 		8A85D8584357DDD63136CFB0 /* MoonlightApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightApplicationDelegate.swift; sourceTree = "<group>"; };
 		A849AD3732D5A9AF723CA6E3 /* MoonlightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightApp.swift; sourceTree = "<group>"; };
 		B68903F3434F93151CDA8B83 /* MoonlightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoonlightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C44DF0033F99113B2541C128 /* MoonlightSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightSettingsView.swift; sourceTree = "<group>"; };
 		CB88CBC38D0D959C24A8138B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		DDCFB9F6A5C59D753EF2FA82 /* Moonlight.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Moonlight.entitlements; sourceTree = "<group>"; };
 		E3599415EBAF3D7B81222297 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -150,6 +154,8 @@
 				366965946EFAA5B984A86132 /* Moonlight.icon */,
 				A849AD3732D5A9AF723CA6E3 /* MoonlightApp.swift */,
 				8A85D8584357DDD63136CFB0 /* MoonlightApplicationDelegate.swift */,
+				818F5A05E1ADE396491E0469 /* MoonlightMenuBarView.swift */,
+				C44DF0033F99113B2541C128 /* MoonlightSettingsView.swift */,
 				8C05DDA9D1508B7C25A6DEF9 /* InfoPlist.strings */,
 			);
 			path = Moonlight;
@@ -354,6 +360,8 @@
 			files = (
 				3DAB85971989121814DF2C9A /* MoonlightApp.swift in Sources */,
 				EB5DFDEE4438C87E3C8D23D3 /* MoonlightApplicationDelegate.swift in Sources */,
+				2D5E5BC3CABC3A012CDA2E06 /* MoonlightMenuBarView.swift in Sources */,
+				CBD234150ACF7D4780FF2A3E /* MoonlightSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,12 +413,11 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/Moonlight/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight;
 				PRODUCT_NAME = Moonlight;
 				SDKROOT = macosx;
@@ -429,12 +436,11 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/Moonlight/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight;
 				PRODUCT_NAME = Moonlight;
 				SDKROOT = macosx;
@@ -475,7 +481,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 23;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -567,7 +573,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 23;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

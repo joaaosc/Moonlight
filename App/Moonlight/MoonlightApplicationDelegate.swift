@@ -1,18 +1,20 @@
 import AppKit
 import MoonlightAppUI
+import OSLog
 
 @MainActor
 final class MoonlightApplicationDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        guard !MoonlightLaunchContext.showsHistoryForTesting,
-              notification.userInfo?[NSApplication.launchIsDefaultUserInfoKey] as? Bool == true,
-              !MoonlightPresentationRoute.hasPresentedTool else { return }
-        MoonlightPresentationRoute.presentPalette(isolatingFromMainWindow: true)
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        let showsDockIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
+        if !NSApplication.shared.setActivationPolicy(showsDockIcon ? .regular : .accessory) {
+            Logger(subsystem: "com.joaocosta.Moonlight", category: "Application")
+                .error("Unable to apply the saved Dock visibility preference")
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        guard !MoonlightLaunchContext.showsHistoryForTesting else { return true }
-        MoonlightPresentationRoute.presentPalette(isolatingFromMainWindow: true)
+        // Foreground intents can reopen the process before their destination is
+        // known. Only explicit commands present UI; never guess a palette here.
         return false
     }
 }
@@ -28,25 +30,25 @@ enum MoonlightLaunchContext {
 
 @MainActor
 enum MoonlightPresentationRoute {
-    static private(set) var hasPresentedTool = false
+    static var dismissMenuBar: (@MainActor () -> Void)?
+    static let paletteModel = MoonlightToolPaletteModel(onOpenColorPicker: {
+        presentColorPicker(isolatingFromMainWindow: true)
+    })
 
     static func presentPalette(
         preferredActionID: String? = nil,
         isolatingFromMainWindow: Bool
     ) {
-        hasPresentedTool = true
+        dismissMenuBar?()
+        paletteModel.preparePresentation(preferredActionID: preferredActionID)
         MoonlightToolPalettePresenter.shared.present(
-            preferredActionID: preferredActionID,
-            isolatingFromMainWindow: isolatingFromMainWindow,
-            onOpenColorPicker: {
-                MoonlightToolPalettePresenter.shared.dismiss()
-                presentColorPicker(isolatingFromMainWindow: true)
-            }
+            model: paletteModel,
+            isolatingFromMainWindow: isolatingFromMainWindow
         )
     }
 
     static func presentColorPicker(isolatingFromMainWindow: Bool) {
-        hasPresentedTool = true
+        dismissMenuBar?()
         MoonlightToolPalettePresenter.shared.dismiss()
         MoonlightColorPanelPresenter.shared.present(
             isolatingFromMainWindow: isolatingFromMainWindow
