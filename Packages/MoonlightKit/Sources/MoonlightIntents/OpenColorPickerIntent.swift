@@ -3,6 +3,7 @@ import MoonlightDomain
 
 public struct OpenColorPickerIntent: AppIntent {
     public static let title: LocalizedStringResource = "Open Color Picker"
+    public static let isDiscoverable = true
     public static let description = IntentDescription(
         "Opens the system color panel in Moonlight."
     )

@@ -3,6 +3,7 @@ import MoonlightDomain
 
 public struct CaptureNoteIntent: AppIntent {
     public static let title: LocalizedStringResource = "Capture Note"
+    public static let isDiscoverable = false
     public static let description = IntentDescription(
         "Saves short text in Moonlight."
     )

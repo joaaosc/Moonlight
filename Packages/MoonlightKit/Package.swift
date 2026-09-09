@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "MoonlightKit",
     platforms: [
-        .macOS(.v27),
+        .macOS("27.0"),
     ],
     products: [
         .library(name: "MoonlightDomain", targets: ["MoonlightDomain"]),

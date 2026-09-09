@@ -9,7 +9,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: 0.1.0-pre-alpha.3
-    CURRENT_PROJECT_VERSION: 9
+    CURRENT_PROJECT_VERSION: 21
     MACOSX_DEPLOYMENT_TARGET: "27.0"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
@@ -95,7 +95,6 @@ targets:
         DEVELOPMENT_TEAM: 33FPG9442W
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
-      - target: Moonlight
       - package: MoonlightKit
         product: MoonlightAppUI
 
