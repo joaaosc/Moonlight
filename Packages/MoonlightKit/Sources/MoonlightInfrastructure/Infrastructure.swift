@@ -30,16 +30,36 @@ public enum MoonlightStorage {
     public static let historyDidChangeDarwinName =
         "com.joaocosta.Moonlight.execution-history-did-change"
 
+    public static let bindingsDidChangeNotification = Notification.Name(
+        "com.joaocosta.Moonlight.shortcut-bindings-did-change"
+    )
+    public static let bindingsDidChangeDarwinName =
+        "com.joaocosta.Moonlight.shortcut-bindings-did-change"
+
+    static func postBindingsDidChange() {
+        post(
+            name: bindingsDidChangeNotification,
+            darwinName: bindingsDidChangeDarwinName
+        )
+    }
+
     static func postHistoryDidChange() {
+        post(
+            name: historyDidChangeNotification,
+            darwinName: historyDidChangeDarwinName
+        )
+    }
+
+    private static func post(name: Notification.Name, darwinName: String) {
         DistributedNotificationCenter.default().postNotificationName(
-            historyDidChangeNotification,
+            name,
             object: nil,
             userInfo: nil,
             deliverImmediately: true
         )
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
-            CFNotificationName(rawValue: historyDidChangeDarwinName as CFString),
+            CFNotificationName(rawValue: darwinName as CFString),
             nil,
             nil,
             true

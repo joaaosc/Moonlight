@@ -1,7 +1,23 @@
 import AppKit
+import MoonlightAppUI
 import SwiftUI
 
 struct MoonlightSettingsView: View {
+    var body: some View {
+        TabView {
+            Tab("General", systemImage: "gearshape") {
+                MoonlightGeneralSettingsView()
+            }
+            Tab("Shortcuts", systemImage: "link") {
+                ShortcutBindingsView()
+                    .frame(width: 560, height: 420)
+            }
+        }
+        .scenePadding()
+    }
+}
+
+private struct MoonlightGeneralSettingsView: View {
     @AppStorage("showDockIcon") private var showsDockIcon = false
     @State private var activationError: String?
 

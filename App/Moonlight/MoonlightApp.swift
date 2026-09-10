@@ -3,6 +3,7 @@ import AppKit
 import MoonlightAppUI
 import MoonlightInfrastructure
 import MoonlightIntents
+import MoonlightShortcuts
 import OSLog
 import SwiftUI
 
@@ -29,10 +30,11 @@ struct MoonlightApp: App {
 
     init() {
         // The host process composes its dependencies once and hands them to
-        // the surfaces below. The App Intents extension composes its own.
-        let coordinator = MoonlightPresentationCoordinator(
-            environment: MoonlightProcess.environment
-        )
+        // the surfaces below. The App Intents extension composes its own, and
+        // only this process gets the Apple Events client: extensions may not
+        // send them.
+        let environment = MoonlightProcess.install(Self.composeEnvironment())
+        let coordinator = MoonlightPresentationCoordinator(environment: environment)
         self.coordinator = coordinator
 
         AppDependencyManager.shared.add(
@@ -67,6 +69,18 @@ struct MoonlightApp: App {
                     "Failed to refresh the Moonlight tool index: \(error.localizedDescription, privacy: .public)"
                 )
             }
+        }
+    }
+
+    private static func composeEnvironment() -> Result<MoonlightEnvironment, MoonlightRuntimeError> {
+        do {
+            return .success(
+                try MoonlightEnvironment.live(
+                    shortcuts: ShortcutsEventsClient().catalogClient()
+                )
+            )
+        } catch {
+            return .failure(.initializationFailed(error.localizedDescription))
         }
     }
 
