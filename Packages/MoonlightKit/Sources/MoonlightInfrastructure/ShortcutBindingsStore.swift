@@ -6,6 +6,7 @@ public enum ShortcutBindingsStoreError: Error, Equatable, LocalizedError, Sendab
     case unsupportedVersion(Int)
     case duplicateBindingID(UUID)
     case duplicateAlias(String)
+    case reservedAlias(String)
     case emptyAlias
     case bindingNotFound(UUID)
     case sharedContainerUnavailable(String)
@@ -20,6 +21,8 @@ public enum ShortcutBindingsStoreError: Error, Equatable, LocalizedError, Sendab
             "A shortcut command with identifier \(identifier.uuidString) already exists."
         case let .duplicateAlias(alias):
             "The alias ‘\(alias)’ already belongs to another command."
+        case let .reservedAlias(alias):
+            "The alias ‘\(alias)’ belongs to a built-in Moonlight tool."
         case .emptyAlias:
             "Enter an alias for this shortcut."
         case let .bindingNotFound(identifier):
@@ -43,9 +46,14 @@ public actor ShortcutBindingsStore {
     private static let currentVersion = 1
 
     public let fileURL: URL
+    private let reservedAliases: Set<String>
 
-    public init(fileURL: URL? = nil) throws {
+    public init(
+        fileURL: URL? = nil,
+        reservedAliases: Set<String> = ShortcutCommandBinding.reservedAliases()
+    ) throws {
         self.fileURL = try fileURL ?? Self.defaultFileURL()
+        self.reservedAliases = reservedAliases
         try Self.ensureDocumentExists(at: self.fileURL)
         _ = try Self.readBindings(at: self.fileURL)
     }
@@ -69,6 +77,9 @@ public actor ShortcutBindingsStore {
             guard !bindings.contains(where: { $0.id == binding.id }) else {
                 throw ShortcutBindingsStoreError.duplicateBindingID(binding.id)
             }
+            guard !reservedAliases.contains(binding.alias) else {
+                throw ShortcutBindingsStoreError.reservedAlias(binding.alias)
+            }
             guard !bindings.contains(where: { $0.alias == binding.alias }) else {
                 throw ShortcutBindingsStoreError.duplicateAlias(binding.alias)
             }
@@ -86,6 +97,9 @@ public actor ShortcutBindingsStore {
             }
             guard !binding.alias.isEmpty else {
                 throw ShortcutBindingsStoreError.emptyAlias
+            }
+            guard !reservedAliases.contains(binding.alias) else {
+                throw ShortcutBindingsStoreError.reservedAlias(binding.alias)
             }
             guard !bindings.contains(where: {
                 $0.alias == binding.alias && $0.id != binding.id

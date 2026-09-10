@@ -60,13 +60,14 @@ struct ShortcutBindingsStoreTests {
         var stored = binding(alias: "daily-note")
         try await store.add(stored)
 
-        stored.alias = "note"
+        // "note" belongs to the built-in Capture Note tool and is refused.
+        stored.alias = "morning-note"
         try await store.update(stored)
         let bindings = try await store.bindings()
 
         #expect(bindings.count == 1)
         #expect(bindings.first?.id == stored.id)
-        #expect(bindings.first?.alias == "note")
+        #expect(bindings.first?.alias == "morning-note")
     }
 
     @Test("Removing a command deletes only the link")
@@ -101,5 +102,43 @@ struct ShortcutBindingsStoreTests {
             _ = try ShortcutBindingsStore(fileURL: fileURL)
         }
         #expect(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+}
+
+@Suite("Alias conflicts with built-in tools")
+struct ShortcutAliasConflictTests {
+    @Test("An alias owned by a built-in tool is refused")
+    func refusesReservedAlias() async throws {
+        let directory = URL.temporaryDirectory
+            .appending(path: "MoonlightShortcutBindingsTests")
+            .appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try ShortcutBindingsStore(
+            fileURL: directory.appending(path: "shortcut-bindings-v1.json")
+        )
+        let reserved = try #require(ShortcutCommandBinding.reservedAliases().first)
+
+        await #expect(throws: ShortcutBindingsStoreError.reservedAlias(reserved)) {
+            try await store.add(
+                ShortcutCommandBinding(
+                    externalID: "external-1",
+                    cachedName: "Daily Note",
+                    alias: reserved
+                )
+            )
+        }
+        #expect(try await store.bindings().isEmpty)
+    }
+
+    @Test("A suggested alias avoids built-in tools")
+    func suggestsFreeAlias() {
+        let reserved = ShortcutCommandBinding.reservedAliases()
+        let suggestion = ShortcutCommandBinding.suggestedAlias(
+            for: "json",
+            avoiding: reserved
+        )
+
+        #expect(!reserved.contains(suggestion))
+        #expect(suggestion.hasPrefix("json"))
     }
 }

@@ -127,6 +127,14 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
             .joined(separator: "-")
     }
 
+    /// Aliases a personal command may not take, because a built-in tool
+    /// already answers to them in the palette.
+    public static func reservedAliases(
+        registry: ActionRegistry = .standard
+    ) -> Set<String> {
+        Set(registry.definitions.map(\.presentation.alias))
+    }
+
     /// A starting alias derived from the shortcut name, made unique against
     /// aliases already in use.
     public static func suggestedAlias(

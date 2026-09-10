@@ -123,6 +123,7 @@ public final class MoonlightShortcutsModel {
             alias: ShortcutCommandBinding.suggestedAlias(
                 for: summary.name,
                 avoiding: Set(bindings.map(\.alias))
+                    .union(ShortcutCommandBinding.reservedAliases())
             )
         )
 

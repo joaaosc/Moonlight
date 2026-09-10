@@ -58,6 +58,14 @@ public struct MoonlightToolPaletteView: View {
             }
             Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
                 .font(.headline)
+            if let sourceContext = model.sourceContext {
+                // Where the invocation came from, kept visible while Moonlight
+                // is in front of that app.
+                Text("from \(sourceContext.name)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Invoked from \(sourceContext.name)")
+            }
             Spacer()
             if model.isWorking {
                 ProgressView()

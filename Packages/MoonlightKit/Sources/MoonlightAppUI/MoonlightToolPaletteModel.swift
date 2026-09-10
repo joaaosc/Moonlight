@@ -27,6 +27,9 @@ public final class MoonlightToolPaletteModel {
     public private(set) var activeInvocation: MoonlightToolInvocation?
     public var isWorking: Bool { activeInvocation != nil }
     public let preferredActionID: String?
+    /// The app the user came from, shown so a command's origin stays visible
+    /// while the palette is in front.
+    public private(set) var sourceContext: MoonlightSourceContext?
     public private(set) var favoriteIDs: Set<String> = []
 
     private let client: MoonlightRuntimeClient
@@ -194,7 +197,11 @@ public final class MoonlightToolPaletteModel {
         descriptors.first { $0.id == selectedID }
     }
 
-    public func preparePresentation(preferredActionID: String? = nil) {
+    public func preparePresentation(
+        preferredActionID: String? = nil,
+        sourceContext: MoonlightSourceContext? = nil
+    ) {
+        self.sourceContext = sourceContext
         refreshCatalog()
         if let preferredActionID,
            descriptors.contains(where: { $0.id == preferredActionID }) {

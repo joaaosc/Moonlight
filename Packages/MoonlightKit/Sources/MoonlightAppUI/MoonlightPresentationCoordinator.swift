@@ -67,8 +67,13 @@ public final class MoonlightPresentationCoordinator {
         preferredActionID: String? = nil,
         isolatingFromMainWindow: Bool
     ) {
+        // Read the origin before anything activates Moonlight.
+        let sourceContext = MoonlightSourceContext.current()
         dismissMenuBar?()
-        paletteModel.preparePresentation(preferredActionID: preferredActionID)
+        paletteModel.preparePresentation(
+            preferredActionID: preferredActionID,
+            sourceContext: sourceContext
+        )
         palettePresenter.present(
             model: paletteModel,
             isolatingFromMainWindow: isolatingFromMainWindow
@@ -85,8 +90,9 @@ public final class MoonlightPresentationCoordinator {
 
     /// Prepares the palette embedded in the menu bar window.
     public func prepareMenuBarPalette() {
+        let sourceContext = MoonlightSourceContext.current()
         palettePresenter.dismiss()
-        paletteModel.preparePresentation()
+        paletteModel.preparePresentation(sourceContext: sourceContext)
     }
 
     public func dismissPalette() {
