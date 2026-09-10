@@ -3,10 +3,12 @@ import MoonlightAppUI
 import SwiftUI
 
 struct MoonlightSettingsView: View {
+    let hotKeyCenter: GlobalHotKeyCenter
+
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") {
-                MoonlightGeneralSettingsView()
+                MoonlightGeneralSettingsView(hotKeyCenter: hotKeyCenter)
             }
             Tab("Shortcuts", systemImage: "link") {
                 ShortcutBindingsView()
@@ -18,11 +20,16 @@ struct MoonlightSettingsView: View {
 }
 
 private struct MoonlightGeneralSettingsView: View {
+    let hotKeyCenter: GlobalHotKeyCenter
+
     @AppStorage("showDockIcon") private var showsDockIcon = false
     @State private var activationError: String?
 
     var body: some View {
         Form {
+            Section("Global Shortcut") {
+                HotKeyRecorderView(center: hotKeyCenter)
+            }
             Section {
                 Toggle("Show Moonlight in the Dock", isOn: $showsDockIcon)
                     .onChange(of: showsDockIcon) { previousValue, newValue in

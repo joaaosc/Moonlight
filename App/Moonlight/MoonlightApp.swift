@@ -22,6 +22,9 @@ struct MoonlightApp: App {
     /// The host owns presentation. Surfaces receive this instance explicitly
     /// instead of reaching for a global route.
     private let coordinator: MoonlightPresentationCoordinator
+    /// Moonlight's own system-wide shortcut. Registered with macOS; unrelated
+    /// to Spotlight and never announced as a Spotlight feature.
+    private let hotKeyCenter = GlobalHotKeyCenter()
 
     private static let logger = Logger(
         subsystem: "com.joaocosta.Moonlight",
@@ -36,6 +39,9 @@ struct MoonlightApp: App {
         let environment = MoonlightProcess.install(Self.composeEnvironment())
         let coordinator = MoonlightPresentationCoordinator(environment: environment)
         self.coordinator = coordinator
+        hotKeyCenter.start {
+            coordinator.presentPalette(isolatingFromMainWindow: true)
+        }
 
         AppDependencyManager.shared.add(
             dependency: MoonlightForegroundClient(
@@ -120,7 +126,7 @@ struct MoonlightApp: App {
         }
 
         Settings {
-            MoonlightSettingsView()
+            MoonlightSettingsView(hotKeyCenter: hotKeyCenter)
         }
 
         MenuBarExtra("Moonlight", systemImage: "moon.stars") {
