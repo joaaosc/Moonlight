@@ -55,6 +55,10 @@ struct MoonlightApp: App {
                         preferredActionID: actionID,
                         isolatingFromMainWindow: true
                     )
+                },
+                copyToPasteboard: { text in
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
                 }
             )
         )

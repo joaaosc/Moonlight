@@ -18,16 +18,11 @@ public struct ExecutionSnippetIntent: SnippetIntent {
     }
 
     public func perform() async throws -> some IntentResult & ShowsSnippetView {
-        guard let identifier = UUID(uuidString: executionID) else {
-            throw ExecutionIntentError.invalidExecutionIdentifier(executionID)
-        }
         // The renderer only reads a stored result by ID. It never re-runs a
         // command: re-executing here would duplicate history and side effects.
-        guard let storedExecution = try await MoonlightIntentExecutor.execution(
-            id: identifier
-        ) else {
-            throw ExecutionIntentError.executionNotFound(identifier)
-        }
+        let storedExecution = try await MoonlightIntentExecutor.storedExecution(
+            rawIdentifier: executionID
+        )
         let view = await MainActor.run {
             ExecutionSnippetView(execution: storedExecution)
         }

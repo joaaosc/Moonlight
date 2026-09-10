@@ -1,14 +1,12 @@
 import AppIntents
 import MoonlightDomain
-import MoonlightSnippetUI
-import SwiftUI
 
 public struct FormatJSONIntent: AppIntent {
     public static let title: LocalizedStringResource = "Format JSON"
     public static let description = IntentDescription(
         "Validates and formats a JSON object or array."
     )
-    public static let isDiscoverable = false
+    public static let isDiscoverable = true
     public static let supportedModes: IntentModes = [.background]
     public static let allowedExecutionTargets: IntentExecutionTargets = [
         .main,
@@ -31,22 +29,22 @@ public struct FormatJSONIntent: AppIntent {
         self.json = json
     }
 
-    public func perform() async throws -> some IntentResult & ProvidesDialog & ShowsSnippetView {
-        let execution = try await MoonlightIntentExecutor.execute(
+    public func perform() async throws -> some IntentResult & ReturnsValue<String>
+        & ProvidesDialog & ShowsSnippetIntent {
+        let execution = try await MoonlightIntentExecutor.succeeded(
             actionID: MoonlightActionID.formatJSON,
             input: json
         )
 
-        let view = await MainActor.run {
-            ExecutionSnippetView(execution: execution)
-        }
-
+        // The snippet is fetched by identifier, so redrawing it does not format
+        // the JSON again or add a second execution to the history.
         return .result(
+            value: execution.resolvedOutput.value.text ?? execution.detail,
             dialog: IntentDialog(
-                full: "\(execution.detail)",
+                full: "JSON formatted.",
                 systemImageName: "curlybraces"
             ),
-            view: view
+            snippetIntent: ExecutionSnippetIntent(executionID: execution.id)
         )
     }
 }

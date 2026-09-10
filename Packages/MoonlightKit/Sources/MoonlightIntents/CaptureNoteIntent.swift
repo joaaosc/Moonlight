@@ -3,7 +3,7 @@ import MoonlightDomain
 
 public struct CaptureNoteIntent: AppIntent {
     public static let title: LocalizedStringResource = "Capture Note"
-    public static let isDiscoverable = false
+    public static let isDiscoverable = true
     public static let description = IntentDescription(
         "Saves short text in Moonlight."
     )
@@ -29,13 +29,19 @@ public struct CaptureNoteIntent: AppIntent {
         self.text = text
     }
 
-    public func perform() async throws -> some IntentResult & ShowsSnippetIntent {
-        let execution = try await MoonlightIntentExecutor.execute(
+    public func perform() async throws -> some IntentResult & ReturnsValue<String>
+        & ProvidesDialog & ShowsSnippetIntent {
+        let execution = try await MoonlightIntentExecutor.succeeded(
             actionID: MoonlightActionID.captureNote,
             input: text
         )
 
         return .result(
+            value: execution.resolvedOutput.value.text ?? execution.detail,
+            dialog: IntentDialog(
+                full: "Note captured.",
+                systemImageName: "square.and.pencil"
+            ),
             snippetIntent: ExecutionSnippetIntent(executionID: execution.id)
         )
     }
