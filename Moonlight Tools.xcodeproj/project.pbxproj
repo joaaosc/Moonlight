@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -58,25 +58,21 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		35C0870EA9900242A39D3716 /* Embed ExtensionKit Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
-			dstSubfolderSpec = 16;
+			dstSubfolder = Product;
 			files = (
 				CDCC825C06332EDA50D15EB2 /* MoonlightAppIntentsExtension.appex in Embed ExtensionKit Extensions */,
 			);
 			name = "Embed ExtensionKit Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A0C414232EED36306576E328 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 13;
+			dstSubfolder = PlugIns;
 			files = (
 				A764261C82FA687960ED9EAB /* MoonlightWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -114,37 +110,29 @@
 /* Begin PBXFrameworksBuildPhase section */
 		0AE3AD78183B092E3AAAD868 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				94D196B54FD28937D146BC2A /* MoonlightIntents in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2AA8C160D05318FCC6C1A22C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				BE2F05378BACC0D75022C4BC /* MoonlightAppUI in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9E9E14E5A367701E652056DD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				5E85E6AF58B23D4893CE6AF4 /* MoonlightIntents in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		ED97DE2F501981EB59F415DF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */,
 				C2F8658FE1E9A4A7733FF677 /* MoonlightAppUI in Frameworks */,
 				05A7AB371DD848F84275AE97 /* MoonlightShortcuts in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -266,8 +254,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = MoonlightAppIntentsExtension;
 			packageProductDependencies = (
 				85F85B6F49B3D4149A9F6C8B /* MoonlightIntents */,
@@ -276,9 +262,9 @@
 			productReference = 3EF0F5D2E29F2CCE6AEAC9E7 /* MoonlightAppIntentsExtension.appex */;
 			productType = "com.apple.product-type.extensionkit-extension";
 		};
-		32E0C782E89DEB4606415314 /* Moonlight */ = {
+		32E0C782E89DEB4606415314 /* Moonlight Tools */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE57F7FAED9333979E1BC1C7 /* Build configuration list for PBXNativeTarget "Moonlight" */;
+			buildConfigurationList = CE57F7FAED9333979E1BC1C7 /* Build configuration list for PBXNativeTarget "Moonlight Tools" */;
 			buildPhases = (
 				C9591E77DCBD8DF21510A041 /* Sources */,
 				F579A6091F1CD0FA6AC9A1AD /* Resources */,
@@ -292,7 +278,7 @@
 				7AF61397241673AC551CDEC3 /* PBXTargetDependency */,
 				239F69CD2FADB3C8ABC69DE0 /* PBXTargetDependency */,
 			);
-			name = Moonlight;
+			name = "Moonlight Tools";
 			packageProductDependencies = (
 				5A8968A0E43DAC7C7082B13B /* MoonlightIntents */,
 				32307D81CCE55E823F22CCDF /* MoonlightAppUI */,
@@ -310,8 +296,6 @@
 				2AA8C160D05318FCC6C1A22C /* Frameworks */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = MoonlightTests;
 			packageProductDependencies = (
@@ -333,8 +317,6 @@
 				E5EA4B84C0C44037A9D92CFF /* PBXTargetDependency */,
 			);
 			name = MoonlightAppIntentsUITests;
-			packageProductDependencies = (
-			);
 			productName = MoonlightAppIntentsUITests;
 			productReference = 2FF171626C0C6BD217FB1BB8 /* MoonlightAppIntentsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -347,8 +329,6 @@
 				0AE3AD78183B092E3AAAD868 /* Frameworks */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = MoonlightWidgets;
 			packageProductDependencies = (
@@ -365,7 +345,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					2580001ED504CDA199D160AD = {
 						DevelopmentTeam = 33FPG9442W;
@@ -390,7 +370,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 32414954D1DFD94977C19662 /* Build configuration list for PBXProject "Moonlight" */;
+			buildConfigurationList = 32414954D1DFD94977C19662 /* Build configuration list for PBXProject "Moonlight Tools" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -403,12 +383,12 @@
 			packageReferences = (
 				137666A6FAC207869710173A /* XCLocalSwiftPackageReference "Packages/MoonlightKit" */,
 			);
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 100;
 			productRefGroup = 7ED7D4A73297A981E1C10746 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				32E0C782E89DEB4606415314 /* Moonlight */,
+				32E0C782E89DEB4606415314 /* Moonlight Tools */,
 				2580001ED504CDA199D160AD /* MoonlightAppIntentsExtension */,
 				BB23D7E82EF336A4456910E5 /* MoonlightWidgets */,
 				4079599CED65240152DCACC1 /* MoonlightTests */,
@@ -420,46 +400,37 @@
 /* Begin PBXResourcesBuildPhase section */
 		F579A6091F1CD0FA6AC9A1AD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				6DB6879FC7ED873FF652B914 /* InfoPlist.strings in Resources */,
 				20424B0B4514B8F162B6776D /* Moonlight.icon in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0713F1ABC05C32424EA85B96 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				35D6801E0A693FD96FE917A4 /* MoonlightAppIntentsUITests.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		24A0231D5225DA9E24688857 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				064349088867091C65EF8EAB /* MoonlightFavoritesWidget.swift in Sources */,
 				BFCF2937FA47E0010C31F010 /* MoonlightWidgetBundle.swift in Sources */,
 				621B763B47135D4CFD3DD371 /* OpenMoonlightControl.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		95AECFDFF830CCE7E4E516A3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				5EFFEDA3F7F75D0053A7E408 /* MoonlightToolPaletteTests.swift in Sources */,
 				F64E0EBF218294EBEB279625 /* SmokeTests.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C9591E77DCBD8DF21510A041 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				3DAB85971989121814DF2C9A /* MoonlightApp.swift in Sources */,
 				EB5DFDEE4438C87E3C8D23D3 /* MoonlightApplicationDelegate.swift in Sources */,
@@ -467,15 +438,12 @@
 				926BBA2981F492F85338C72D /* MoonlightServicesProvider.swift in Sources */,
 				CBD234150ACF7D4780FF2A3E /* MoonlightSettingsView.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		EE6CDA89AA08C37AF8A51272 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				06A40124B24202891BA3AED3 /* MoonlightAppIntentsExtension.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -492,7 +460,7 @@
 		};
 		E5EA4B84C0C44037A9D92CFF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 32E0C782E89DEB4606415314 /* Moonlight */;
+			target = 32E0C782E89DEB4606415314 /* Moonlight Tools */;
 			targetProxy = 8C2F5DD9DE2C4B1AC028F86E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -510,7 +478,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		14CEECD87CF3B6852561AF49 /* Debug */ = {
+		14CEECD87CF3B6852561AF49 /* Debug configuration for PBXNativeTarget "Moonlight Tools" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Moonlight;
@@ -518,10 +486,13 @@
 				CODE_SIGN_ENTITLEMENTS = App/Moonlight/Moonlight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				CURRENT_PROJECT_VERSION = 10000;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/Moonlight/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MoonlightDebug;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -529,11 +500,12 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight;
 				PRODUCT_NAME = Moonlight;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
-		18BCAC905E92A56889797D7B /* Release */ = {
+		18BCAC905E92A56889797D7B /* Release configuration for PBXNativeTarget "Moonlight Tools" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Moonlight;
@@ -541,10 +513,13 @@
 				CODE_SIGN_ENTITLEMENTS = App/Moonlight/Moonlight.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				CURRENT_PROJECT_VERSION = 10000;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/Moonlight/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Moonlight;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -552,18 +527,19 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight;
 				PRODUCT_NAME = Moonlight;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 			};
 			name = Release;
 		};
-		69023B6A1FADAF622D56AB67 /* Release */ = {
+		69023B6A1FADAF622D56AB67 /* Release configuration for PBXNativeTarget "MoonlightWidgets" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MoonlightWidgets/MoonlightWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/MoonlightWidgets/Info.plist;
@@ -575,16 +551,19 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight.Widgets;
 				PRODUCT_NAME = MoonlightWidgets;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
-		6C25C59050785C6E4EA7020E /* Debug */ = {
+		6C25C59050785C6E4EA7020E /* Debug configuration for PBXProject "Moonlight Tools" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 95C1BB08826631F097A86272 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -615,9 +594,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 33FPG9442W;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -638,6 +620,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -648,14 +631,14 @@
 			};
 			name = Debug;
 		};
-		716A5CEF49E7707DC9F13010 /* Release */ = {
+		716A5CEF49E7707DC9F13010 /* Release configuration for PBXNativeTarget "MoonlightAppIntentsExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MoonlightAppIntentsExtension/MoonlightAppIntentsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/MoonlightAppIntentsExtension/Info.plist;
@@ -666,16 +649,19 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight.AppIntentsExtension;
 				PRODUCT_NAME = MoonlightAppIntentsExtension;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
-		A33F5CB6A6BDD6AB4CA7CFB8 /* Release */ = {
+		A33F5CB6A6BDD6AB4CA7CFB8 /* Release configuration for PBXProject "Moonlight Tools" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 95C1BB08826631F097A86272 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -706,9 +692,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 33FPG9442W;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -723,6 +712,7 @@
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -733,14 +723,14 @@
 			};
 			name = Release;
 		};
-		A9B0D39CAB23D7DD52753EE4 /* Debug */ = {
+		A9B0D39CAB23D7DD52753EE4 /* Debug configuration for PBXNativeTarget "MoonlightWidgets" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MoonlightWidgets/MoonlightWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/MoonlightWidgets/Info.plist;
@@ -752,18 +742,19 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight.Widgets;
 				PRODUCT_NAME = MoonlightWidgets;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
-		B28A8E0B2D213895599A84A5 /* Release */ = {
+		B28A8E0B2D213895599A84A5 /* Release configuration for PBXNativeTarget "MoonlightTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -776,14 +767,14 @@
 			};
 			name = Release;
 		};
-		B77C8010D947457A425E3618 /* Debug */ = {
+		B77C8010D947457A425E3618 /* Debug configuration for PBXNativeTarget "MoonlightAppIntentsExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = App/MoonlightAppIntentsExtension/MoonlightAppIntentsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/MoonlightAppIntentsExtension/Info.plist;
@@ -794,18 +785,19 @@
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.joaocosta.Moonlight.AppIntentsExtension;
 				PRODUCT_NAME = MoonlightAppIntentsExtension;
+				REGISTER_APP_GROUPS = YES;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
-		D8611203FC9F185A64B75536 /* Release */ = {
+		D8611203FC9F185A64B75536 /* Release configuration for PBXNativeTarget "MoonlightAppIntentsUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -820,13 +812,13 @@
 			};
 			name = Release;
 		};
-		DC8992FC810D7D1D0B113360 /* Debug */ = {
+		DC8992FC810D7D1D0B113360 /* Debug configuration for PBXNativeTarget "MoonlightAppIntentsUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -841,13 +833,13 @@
 			};
 			name = Debug;
 		};
-		F906131BF0F11821306F6747 /* Debug */ = {
+		F906131BF0F11821306F6747 /* Debug configuration for PBXNativeTarget "MoonlightTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 33FPG9442W;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -863,58 +855,52 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		32414954D1DFD94977C19662 /* Build configuration list for PBXProject "Moonlight" */ = {
+		32414954D1DFD94977C19662 /* Build configuration list for PBXProject "Moonlight Tools" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6C25C59050785C6E4EA7020E /* Debug */,
-				A33F5CB6A6BDD6AB4CA7CFB8 /* Release */,
+				6C25C59050785C6E4EA7020E /* Debug configuration for PBXProject "Moonlight Tools" */,
+				A33F5CB6A6BDD6AB4CA7CFB8 /* Release configuration for PBXProject "Moonlight Tools" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		4B4F37A369555691A37C5DFA /* Build configuration list for PBXNativeTarget "MoonlightTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F906131BF0F11821306F6747 /* Debug */,
-				B28A8E0B2D213895599A84A5 /* Release */,
+				F906131BF0F11821306F6747 /* Debug configuration for PBXNativeTarget "MoonlightTests" */,
+				B28A8E0B2D213895599A84A5 /* Release configuration for PBXNativeTarget "MoonlightTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		88EC03E5336D4D4317D8ABA7 /* Build configuration list for PBXNativeTarget "MoonlightAppIntentsUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DC8992FC810D7D1D0B113360 /* Debug */,
-				D8611203FC9F185A64B75536 /* Release */,
+				DC8992FC810D7D1D0B113360 /* Debug configuration for PBXNativeTarget "MoonlightAppIntentsUITests" */,
+				D8611203FC9F185A64B75536 /* Release configuration for PBXNativeTarget "MoonlightAppIntentsUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		BBD2EE20D996E5C88826E074 /* Build configuration list for PBXNativeTarget "MoonlightAppIntentsExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B77C8010D947457A425E3618 /* Debug */,
-				716A5CEF49E7707DC9F13010 /* Release */,
+				B77C8010D947457A425E3618 /* Debug configuration for PBXNativeTarget "MoonlightAppIntentsExtension" */,
+				716A5CEF49E7707DC9F13010 /* Release configuration for PBXNativeTarget "MoonlightAppIntentsExtension" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		CAD30EA7CD02928A003FBFC1 /* Build configuration list for PBXNativeTarget "MoonlightWidgets" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A9B0D39CAB23D7DD52753EE4 /* Debug */,
-				69023B6A1FADAF622D56AB67 /* Release */,
+				A9B0D39CAB23D7DD52753EE4 /* Debug configuration for PBXNativeTarget "MoonlightWidgets" */,
+				69023B6A1FADAF622D56AB67 /* Release configuration for PBXNativeTarget "MoonlightWidgets" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		CE57F7FAED9333979E1BC1C7 /* Build configuration list for PBXNativeTarget "Moonlight" */ = {
+		CE57F7FAED9333979E1BC1C7 /* Build configuration list for PBXNativeTarget "Moonlight Tools" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				14CEECD87CF3B6852561AF49 /* Debug */,
-				18BCAC905E92A56889797D7B /* Release */,
+				14CEECD87CF3B6852561AF49 /* Debug configuration for PBXNativeTarget "Moonlight Tools" */,
+				18BCAC905E92A56889797D7B /* Release configuration for PBXNativeTarget "Moonlight Tools" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
