@@ -118,6 +118,25 @@ struct AppIntentsAdapterTests {
             == identifier.uuidString)
     }
 
+    @Test("A single static intent runs any registered command by entity")
+    func runUserShortcutContract() {
+        let entity = MoonlightToolEntity(
+            id: "shortcut:8b1f0f1c",
+            name: "Daily Note",
+            summary: "Shortcut · \\daily-note",
+            symbolName: "link"
+        )
+        let intent = RunUserShortcutIntent(command: entity, input: "Moonlight")
+
+        requireAppIntent(RunUserShortcutIntent.self)
+        #expect(RunUserShortcutIntent.isDiscoverable)
+        // Apple Events are only available in the app process.
+        #expect(RunUserShortcutIntent.allowedExecutionTargets == [.main])
+        #expect(intent.command.id == entity.id)
+        #expect(intent.input == "Moonlight")
+        #expect(entity.symbolName == "link")
+    }
+
     @Test("The published phrase list stays short and curated")
     func curatedAppShortcuts() {
         let shortcuts = MoonlightAppShortcuts.appShortcuts
