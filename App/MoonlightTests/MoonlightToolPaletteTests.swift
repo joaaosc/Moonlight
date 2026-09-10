@@ -311,3 +311,59 @@ struct MoonlightUndoTests {
         #expect(ExecutionResultTransfer(execution: text)?.suggestedFileName.hasSuffix(".json") == true)
     }
 }
+
+@Suite("Loading the shortcuts library")
+@MainActor
+struct MoonlightShortcutsLoadingTests {
+    @Test("The library is requested even when permission is undecided")
+    func listsWithoutPreflightGate() async {
+        let summaries = [
+            ShortcutSummary(externalID: "A", name: "Daily Note"),
+            ShortcutSummary(externalID: "B", name: "Resize Window"),
+        ]
+        // `notDetermined` is what a machine reports while the helper is not
+        // running; the request must go out anyway.
+        let model = MoonlightShortcutsModel(
+            shortcuts: .stub(summaries, status: .notDetermined),
+            store: nil,
+            cache: ShortcutBindingsCache()
+        )
+
+        await model.loadLibrary()
+
+        #expect(model.library.map(\.externalID) == ["A", "B"])
+        #expect(model.hasLoadedLibrary)
+        #expect(model.errorMessage == nil)
+        #expect(model.authorization == .authorized)
+    }
+
+    @Test("A refusal is reported as a permission problem")
+    func reportsDenial() async {
+        let model = MoonlightShortcutsModel(
+            shortcuts: .failing(.notAuthorized, status: .denied),
+            store: nil,
+            cache: ShortcutBindingsCache()
+        )
+
+        await model.loadLibrary()
+
+        #expect(model.library.isEmpty)
+        #expect(!model.hasLoadedLibrary)
+        #expect(model.authorization == .denied)
+        #expect(model.errorMessage?.contains("Automation") == true)
+    }
+
+    @Test("Any other failure keeps the error the request returned")
+    func keepsUnderlyingError() async {
+        let model = MoonlightShortcutsModel(
+            shortcuts: .failing(.timedOut, status: .notDetermined),
+            store: nil,
+            cache: ShortcutBindingsCache()
+        )
+
+        await model.loadLibrary()
+
+        #expect(model.errorMessage == ShortcutsClientError.timedOut.localizedDescription)
+        #expect(model.errorMessage?.contains("did not answer in time") == true)
+    }
+}

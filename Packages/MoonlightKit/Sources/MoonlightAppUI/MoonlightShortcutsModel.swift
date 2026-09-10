@@ -91,19 +91,17 @@ public final class MoonlightShortcutsModel {
 
     /// Reads the library after an explicit user action. This is the only place
     /// allowed to raise the system consent prompt.
+    ///
+    /// The request is sent first and the permission is inspected only if it
+    /// fails. Asking beforehand cannot work: Shortcuts Events is not running
+    /// until an event reaches it, so a preflight answers "not running" and
+    /// would block the very request that starts it — and that request is also
+    /// what makes macOS ask the user for consent.
     public func loadLibrary() async {
         guard !isLoadingLibrary else { return }
         isLoadingLibrary = true
         errorMessage = nil
         defer { isLoadingLibrary = false }
-
-        authorization = await shortcuts.authorizationStatus(true)
-        guard authorization.allowsListing else {
-            // A library that cannot be read is not an empty library.
-            cache.clearAvailability()
-            errorMessage = Self.message(for: authorization)
-            return
-        }
 
         do {
             let summaries = try await shortcuts.list()
@@ -111,11 +109,14 @@ public final class MoonlightShortcutsModel {
                 $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
             hasLoadedLibrary = true
+            authorization = .authorized
             cache.recordAvailability(externalIDs: Set(summaries.map(\.externalID)))
             await refreshCachedNames()
         } catch {
+            // A library that cannot be read is not an empty library.
             cache.clearAvailability()
-            errorMessage = error.localizedDescription
+            authorization = await shortcuts.authorizationStatus(false)
+            errorMessage = Self.message(for: authorization) ?? error.localizedDescription
         }
     }
 
@@ -261,12 +262,13 @@ public final class MoonlightShortcutsModel {
         }
     }
 
+    /// A message only when the permission itself explains the failure.
+    /// Otherwise the caller keeps the error the request actually returned,
+    /// which says more than a guess about permissions.
     private static func message(for status: ShortcutsAuthorizationStatus) -> String? {
         switch status {
-        case .authorized:
+        case .authorized, .notDetermined:
             nil
-        case .notDetermined:
-            "Moonlight is waiting for permission to read your shortcuts."
         case .denied:
             ShortcutsClientError.notAuthorized.localizedDescription
         case .unavailable:

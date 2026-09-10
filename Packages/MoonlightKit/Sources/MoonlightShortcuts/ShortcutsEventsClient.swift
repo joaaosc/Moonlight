@@ -38,6 +38,10 @@ public actor ShortcutsEventsClient {
 
     /// Queries Apple Events permission. With `askingUser` false the system
     /// answers without showing a consent prompt.
+    ///
+    /// This is a preflight, not a gate. It cannot decide anything while the
+    /// target is not running, so callers send the event and use this only to
+    /// explain a failure.
     public func authorizationStatus(askingUser: Bool) -> ShortcutsAuthorizationStatus {
         let target = NSAppleEventDescriptor(bundleIdentifier: Self.bundleIdentifier)
         guard let descriptor = target.aeDesc else { return .unavailable }
@@ -55,7 +59,13 @@ public actor ShortcutsEventsClient {
             return .notDetermined
         case OSStatus(errAEEventNotPermitted):
             return .denied
-        case OSStatus(procNotFound), OSStatus(connectionInvalid):
+        case OSStatus(procNotFound):
+            // Shortcuts Events is a faceless helper: it is not running until an
+            // event is sent to it, and the preflight answers `procNotFound`
+            // while that is the case. Not running says nothing about
+            // permission, so the caller must stay free to try.
+            return .notDetermined
+        case OSStatus(connectionInvalid):
             return .unavailable
         default:
             return .denied

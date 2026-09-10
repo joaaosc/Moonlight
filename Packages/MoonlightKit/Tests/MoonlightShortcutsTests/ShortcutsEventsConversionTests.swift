@@ -36,3 +36,20 @@ struct ShortcutsEventsConversionTests {
         #expect(result != .text("[\"a\": 1]"))
     }
 }
+
+@Suite("Preflight semantics")
+struct ShortcutsPreflightTests {
+    /// Shortcuts Events is a faceless helper and is normally not running, which
+    /// is the state a cold start meets. The preflight answers `procNotFound`
+    /// there; reading that as "unavailable" is what stopped the request that
+    /// would have launched it — and with it the consent prompt.
+    @Test("A target that is not running is never reported as unavailable")
+    func notRunningIsNotUnavailable() async {
+        let client = ShortcutsEventsClient()
+
+        let status = await client.authorizationStatus(askingUser: false)
+
+        #expect(status != .unavailable)
+        #expect([.authorized, .notDetermined, .denied].contains(status))
+    }
+}
