@@ -37,9 +37,17 @@ public struct MoonlightGlassSurface<Content: View>: View {
 
     public var body: some View {
         content
-            .background { wash }
+            // The glass is a background layer, not a wrapper. Applying
+            // `.glassEffect` to the content itself hands the content the
+            // material's own appearance, which resolves `.primary` to dark ink
+            // and leaves the palette unreadable in dark mode.
+            .background {
+                MoonlightGlassMetrics.shape
+                    .fill(.clear)
+                    .glassEffect(.regular, in: MoonlightGlassMetrics.shape)
+                    .overlay { wash.clipShape(MoonlightGlassMetrics.shape) }
+            }
             .clipShape(MoonlightGlassMetrics.shape)
-            .glassEffect(.regular, in: MoonlightGlassMetrics.shape)
             .overlay {
                 MoonlightGlassMetrics.shape
                     .strokeBorder(edge, lineWidth: 1)
