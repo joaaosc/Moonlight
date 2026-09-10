@@ -16,4 +16,6 @@ PolyForm Noncommercial License 1.0.0. Consulte [LICENSE.md](LICENSE.md).
 
 ## Release
 
-Pré-alpha `0.1.0-pre-alpha.3` — build `23`.
+Pré-alpha `0.1.0-pre-alpha.3`.
+
+O número de build não é versionado: builds locais numeram-se pela contagem de commits e o Xcode Cloud atribui os seus. Consulte [docs/BUILD.md](docs/BUILD.md).

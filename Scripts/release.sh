@@ -16,6 +16,11 @@ ARCHIVE="$BUILD_DIR/Moonlight.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 TEAM_ID="${TEAM_ID:-33FPG9442W}"
 
+echo "==> Writing the build number"
+# Derived, not committed: the release stamps whatever the commit count says at
+# this moment. Raising a build number is no longer an edit to a tracked file.
+bash "$(dirname "$0")/version.sh"
+
 echo "==> Regenerating the project from project.yml"
 xcodegen generate --quiet
 
