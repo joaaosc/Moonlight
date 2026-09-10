@@ -49,7 +49,7 @@ Os dois espaços não colidem: o Xcode Cloud está configurado para começar em 
 
 ## Versão atual
 
-- Marketing version: `0.1.0-pre-alpha.3`;
+- Marketing version: `2.0-alpha`;
 - build local: derivado da contagem de commits;
 - build do Xcode Cloud: atribuído pelo serviço a partir de `1000`;
 - deployment target: macOS `27.0`.
