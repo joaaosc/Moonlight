@@ -20,7 +20,7 @@ struct MoonlightToolPaletteTests {
     }
 
     @Test("Executes Base64 using the selected operation parameters")
-    func executesBase64WithOperation() async {
+    func executesBase64WithOperation() async throws {
         let store = InMemoryExecutionStore()
         let model = MoonlightToolPaletteModel(client: .inMemory(store: store))
         let descriptor = ActionDescriptor(
@@ -28,8 +28,13 @@ struct MoonlightToolPaletteTests {
             title: "Base64",
             summary: "Transform text"
         )
+        model.selectedID = MoonlightActionID.base64Text
         model.input = "Moonlight"
-        model.base64Operation = .encode
+        // The operation is a declared option, not a field the palette knows.
+        let option = try #require(
+            model.presentation(for: descriptor).options.first
+        )
+        model.setOptionValue(Base64TextOperation.encode.rawValue, for: option)
 
         await model.execute(descriptor)
 

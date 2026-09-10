@@ -1,19 +1,20 @@
 import MoonlightDomain
 
-public struct MoonlightToolDraft: Sendable {
+public struct MoonlightToolDraft: Sendable, Equatable {
     public var input = ""
-    public var operation: Base64TextOperation = .encode
+    /// Chosen values per option parameter, empty while the defaults apply.
+    public var optionSelections: [String: String] = [:]
     public var result: Execution?
     public var errorMessage: String?
 
     public init(
         input: String = "",
-        operation: Base64TextOperation = .encode,
+        optionSelections: [String: String] = [:],
         result: Execution? = nil,
         errorMessage: String? = nil
     ) {
         self.input = input
-        self.operation = operation
+        self.optionSelections = optionSelections
         self.result = result
         self.errorMessage = errorMessage
     }

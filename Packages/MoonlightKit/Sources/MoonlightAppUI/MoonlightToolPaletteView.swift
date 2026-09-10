@@ -184,10 +184,15 @@ public struct MoonlightToolPaletteView: View {
             Text(descriptor.summary)
                 .foregroundStyle(.secondary)
 
-            if model.presentation(for: descriptor).inputKind == .base64 {
-                Picker("Operation", selection: $model.base64Operation) {
-                    ForEach(Base64TextOperation.allCases, id: \.self) { operation in
-                        Text(operation.rawValue.capitalized).tag(operation)
+            // Options are declared by each feature; the palette renders them
+            // without knowing which tool is selected.
+            ForEach(model.presentation(for: descriptor).options) { option in
+                Picker(option.title, selection: Binding(
+                    get: { model.optionValue(option) },
+                    set: { model.setOptionValue($0, for: option) }
+                )) {
+                    ForEach(option.choices) { choice in
+                        Text(choice.title).tag(choice.value)
                     }
                 }
                 .pickerStyle(.segmented)

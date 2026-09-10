@@ -13,23 +13,23 @@ public struct MoonlightToolInvocation: Equatable, Identifiable, Sendable {
     public let presentationID: UUID
     public let toolID: String
     public let input: String
-    public let operation: Base64TextOperation
+    public let optionSelections: [String: String]
 
     init(
         presentationID: UUID,
         toolID: String,
         input: String,
-        operation: Base64TextOperation
+        optionSelections: [String: String]
     ) {
         self.id = UUID()
         self.presentationID = presentationID
         self.toolID = toolID
         self.input = input
-        self.operation = operation
+        self.optionSelections = optionSelections
     }
 
     /// True when `draft` still holds the values this invocation was built from.
     func matches(_ draft: MoonlightToolDraft) -> Bool {
-        draft.input == input && draft.operation == operation
+        draft.input == input && draft.optionSelections == optionSelections
     }
 }

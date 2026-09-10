@@ -19,6 +19,9 @@ struct ToolActionsTests {
             MoonlightActionID.formatJSON,
             MoonlightActionID.generateUUID,
             MoonlightActionID.base64Text,
+            MoonlightActionID.hashText,
+            MoonlightActionID.urlText,
+            MoonlightActionID.convertTimestamp,
         ])
 
         #expect(Set(descriptors.map(\.id)) == expectedIDs)
@@ -31,6 +34,8 @@ struct ToolActionsTests {
         #expect(idempotence[MoonlightActionID.formatJSON] == true)
         #expect(idempotence[MoonlightActionID.generateUUID] == false)
         #expect(idempotence[MoonlightActionID.base64Text] == true)
+        #expect(idempotence[MoonlightActionID.hashText] == true)
+        #expect(idempotence[MoonlightActionID.convertTimestamp] == true)
     }
 
     @Test("Clean Text normalizes NFC and preserves internal whitespace")
@@ -444,5 +449,101 @@ struct OversizedInputCase: Sendable, CustomTestStringConvertible {
 
     var testDescription: String {
         actionID
+    }
+}
+
+@Suite("Text workflow tools")
+struct TextWorkflowToolTests {
+    private func run(
+        actionID: String,
+        input: String,
+        parameters: ActionParameters = .empty
+    ) async throws -> Execution {
+        let runner = ActionRunner(
+            registry: .standard,
+            store: InMemoryExecutionStore()
+        )
+        return try await runner.execute(
+            ActionRequest(actionID: actionID, input: input, parameters: parameters)
+        )
+    }
+
+    @Test("Hashing defaults to SHA-256 and returns lowercase hexadecimal")
+    func hashesWithDefaultAlgorithm() async throws {
+        let execution = try await run(
+            actionID: MoonlightActionID.hashText,
+            input: "Moonlight"
+        )
+
+        #expect(execution.status == .succeeded)
+        #expect(execution.detail.count == 64)
+        #expect(execution.detail == execution.detail.lowercased())
+        #expect(execution.resolvedOutput.value == .identifier(execution.detail))
+    }
+
+    @Test("SHA-512 is selected through the declared option")
+    func hashesWithSelectedAlgorithm() async throws {
+        let execution = try await run(
+            actionID: MoonlightActionID.hashText,
+            input: "Moonlight",
+            parameters: ActionParameters(
+                values: [HashTextAction.algorithmParameterName: HashAlgorithm.sha512.rawValue]
+            )
+        )
+
+        #expect(execution.detail.count == 128)
+        #expect(execution.summary == "SHA-512 digest")
+    }
+
+    @Test("URL encoding escapes reserved characters and round-trips")
+    func encodesAndDecodesURLText() async throws {
+        let encoded = try await run(
+            actionID: MoonlightActionID.urlText,
+            input: "a b&c=d/e",
+            parameters: ActionParameters(
+                values: [TransformURLAction.operationParameterName: URLTextOperation.encode.rawValue]
+            )
+        )
+        let decoded = try await run(
+            actionID: MoonlightActionID.urlText,
+            input: encoded.detail,
+            parameters: ActionParameters(
+                values: [TransformURLAction.operationParameterName: URLTextOperation.decode.rawValue]
+            )
+        )
+
+        #expect(encoded.detail == "a%20b%26c%3Dd%2Fe")
+        #expect(decoded.detail == "a b&c=d/e")
+    }
+
+    @Test("Timestamps convert in both directions from the input alone")
+    func convertsTimestamps() async throws {
+        let toDate = try await run(
+            actionID: MoonlightActionID.convertTimestamp,
+            input: "1800000000"
+        )
+        let toSeconds = try await run(
+            actionID: MoonlightActionID.convertTimestamp,
+            input: toDate.detail
+        )
+        let invalid = try await run(
+            actionID: MoonlightActionID.convertTimestamp,
+            input: "not a date"
+        )
+
+        #expect(toDate.detail.hasPrefix("2027-01-15T"))
+        #expect(toSeconds.detail == "1800000000")
+        #expect(invalid.status == .failed)
+        #expect(invalid.resolvedFailure?.code == "invalid-timestamp")
+    }
+
+    @Test("Every option a tool declares has a valid default")
+    func optionsDeclareUsableDefaults() {
+        for definition in ActionRegistry.standard.definitions {
+            for option in definition.presentation.options {
+                #expect(option.choices.contains { $0.value == option.defaultValue })
+                #expect(option.resolvedValue(from: ["other": "value"]) == option.defaultValue)
+            }
+        }
     }
 }

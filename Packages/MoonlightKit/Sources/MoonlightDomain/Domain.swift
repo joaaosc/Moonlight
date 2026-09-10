@@ -7,6 +7,9 @@ public enum MoonlightActionID {
     public static let formatJSON = "format-json"
     public static let generateUUID = "generate-uuid"
     public static let base64Text = "base64-text"
+    public static let hashText = "hash-text"
+    public static let urlText = "url-text"
+    public static let convertTimestamp = "convert-timestamp"
 }
 
 public enum MoonlightCommand: Equatable, Sendable {
@@ -336,6 +339,9 @@ public struct ActionRegistry: Sendable {
         FormatJSONAction(),
         GenerateUUIDAction(),
         TransformBase64Action(),
+        HashTextAction(),
+        TransformURLAction(),
+        ConvertTimestampAction(),
     ]
 
     public static let standard = ActionRegistry(handlers: standardHandlers)

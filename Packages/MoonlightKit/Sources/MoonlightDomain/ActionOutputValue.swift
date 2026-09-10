@@ -120,6 +120,8 @@ extension ToolActionError: CodedActionError {
         case .jsonTooDeep: "json-too-deep"
         case .invalidBase64: "invalid-base64"
         case .decodedTextIsNotUTF8: "decoded-text-not-utf8"
+        case .invalidPercentEncoding: "invalid-percent-encoding"
+        case .invalidTimestamp: "invalid-timestamp"
         }
     }
 }

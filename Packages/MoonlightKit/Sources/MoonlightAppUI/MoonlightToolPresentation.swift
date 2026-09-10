@@ -11,6 +11,7 @@ public struct MoonlightToolPresentation: Equatable, Identifiable, Sendable {
     public let acceptsInput: Bool
     public let inputKind: CommandPresentation.InputKind
     public let destination: CommandPresentation.Destination
+    public let options: [CommandOption]
 
     public init(definition: CommandDefinition) {
         self.id = definition.descriptor.id
@@ -20,6 +21,7 @@ public struct MoonlightToolPresentation: Equatable, Identifiable, Sendable {
         self.symbolName = definition.presentation.symbolName
         self.inputKind = definition.presentation.inputKind
         self.destination = definition.presentation.destination
+        self.options = definition.presentation.options
         self.acceptsInput = definition.presentation.inputKind != .none
     }
 

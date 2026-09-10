@@ -20,7 +20,8 @@ public final class MoonlightToolPaletteModel {
     public private(set) var isEditing = false
     public private(set) var presentationID = UUID()
     public var input = ""
-    public var base64Operation: Base64TextOperation = .encode
+    /// Values chosen for the selected tool's declared options.
+    public var optionSelections: [String: String] = [:]
     public private(set) var result: Execution?
     public private(set) var errorMessage: String?
     public private(set) var catalogErrorMessage: String?
@@ -250,14 +251,28 @@ public final class MoonlightToolPaletteModel {
     }
 
     private var currentDraft: MoonlightToolDraft {
-        MoonlightToolDraft(input: input, operation: base64Operation, result: result, errorMessage: errorMessage)
+        MoonlightToolDraft(
+            input: input,
+            optionSelections: optionSelections,
+            result: result,
+            errorMessage: errorMessage
+        )
     }
 
     private func restore(_ draft: MoonlightToolDraft) {
         input = draft.input
-        base64Operation = draft.operation
+        optionSelections = draft.optionSelections
         result = draft.result
         errorMessage = draft.errorMessage
+    }
+
+    /// The value shown for one option, falling back to the tool's default.
+    public func optionValue(_ option: CommandOption) -> String {
+        option.resolvedValue(from: optionSelections)
+    }
+
+    public func setOptionValue(_ value: String, for option: CommandOption) {
+        optionSelections[option.parameterName] = value
     }
 
     public func execute(_ descriptor: ActionDescriptor) async {
@@ -267,11 +282,14 @@ public final class MoonlightToolPaletteModel {
             presentationID: presentationID,
             toolID: descriptor.id,
             input: input,
-            operation: base64Operation
+            optionSelections: optionSelections
         )
         let presentation = presentation(for: descriptor)
         let request = makeRequest(for: descriptor, presentation: presentation)
-        var completedDraft = MoonlightToolDraft(input: input, operation: base64Operation)
+        var completedDraft = MoonlightToolDraft(
+            input: input,
+            optionSelections: optionSelections
+        )
 
         activeInvocation = invocation
         result = nil
@@ -318,24 +336,17 @@ public final class MoonlightToolPaletteModel {
         }
     }
 
+    /// Builds the request from the tool's declared options. No branch here
+    /// knows which tool it is building for.
     private func makeRequest(
         for descriptor: ActionDescriptor,
         presentation: MoonlightToolPresentation
     ) -> ActionRequest {
-        switch presentation.inputKind {
-        case .base64:
-            ActionRequest(
-                actionID: descriptor.id,
-                input: input,
-                parameters: ActionParameters(
-                    values: [TransformBase64Action.operationParameterName: base64Operation.rawValue]
-                )
-            )
-        case .text:
-            ActionRequest(actionID: descriptor.id, input: input)
-        case .none:
-            ActionRequest(actionID: descriptor.id, input: "")
-        }
+        ActionRequest(
+            actionID: descriptor.id,
+            input: presentation.acceptsInput ? input : "",
+            parameters: presentation.options.parameters(from: optionSelections)
+        )
     }
 
     /// The actions the current result supports. Empty until a command produced

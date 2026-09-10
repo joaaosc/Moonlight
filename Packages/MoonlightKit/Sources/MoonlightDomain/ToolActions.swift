@@ -36,6 +36,8 @@ public enum ToolActionError: Error, Equatable, LocalizedError, Sendable {
     case jsonTooDeep(limit: Int)
     case invalidBase64
     case decodedTextIsNotUTF8
+    case invalidPercentEncoding
+    case invalidTimestamp
 
     public var errorDescription: String? {
         switch self {
@@ -57,6 +59,10 @@ public enum ToolActionError: Error, Equatable, LocalizedError, Sendable {
             "Enter valid Base64 without spaces or line breaks."
         case .decodedTextIsNotUTF8:
             "The Base64 value contains binary data, not UTF-8 text."
+        case .invalidPercentEncoding:
+            "Enter text with valid percent-encoding, such as %20."
+        case .invalidTimestamp:
+            "Enter a Unix timestamp in seconds or an ISO-8601 date."
         }
     }
 }

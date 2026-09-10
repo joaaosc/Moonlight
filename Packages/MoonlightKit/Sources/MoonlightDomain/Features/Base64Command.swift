@@ -5,8 +5,25 @@ extension TransformBase64Action {
         CommandPresentation(
             alias: "base64",
             symbolName: "textformat.abc",
-            inputKind: .base64,
-            destination: .result
+            inputKind: .text,
+            destination: .result,
+            options: [
+                CommandOption(
+                    parameterName: Self.operationParameterName,
+                    title: "Operation",
+                    choices: [
+                        CommandOption.Choice(
+                            value: Base64TextOperation.encode.rawValue,
+                            title: "Encode"
+                        ),
+                        CommandOption.Choice(
+                            value: Base64TextOperation.decode.rawValue,
+                            title: "Decode"
+                        ),
+                    ],
+                    defaultValue: Base64TextOperation.encode.rawValue
+                ),
+            ]
         )
     }
 }
