@@ -60,7 +60,7 @@ public final class MoonlightNotesModel {
 
             undoManager?.registerUndo(withTarget: self) { model in
                 MainActor.assumeIsolated {
-                    Task { await model.restore(note, undoManager: undoManager) }
+                    _ = Task { await model.restore(note, undoManager: undoManager) }
                 }
             }
             undoManager?.setActionName("Delete Note")
@@ -78,7 +78,7 @@ public final class MoonlightNotesModel {
 
             undoManager?.registerUndo(withTarget: self) { model in
                 MainActor.assumeIsolated {
-                    Task { await model.delete(note, undoManager: undoManager) }
+                    _ = Task { await model.delete(note, undoManager: undoManager) }
                 }
             }
         } catch {
