@@ -51,6 +51,16 @@ let package = Package(
             name: "MoonlightShortcuts",
             dependencies: ["MoonlightDomain"]
         ),
+        // Renders the app's screens to PNG for inspection without launching it.
+        .executableTarget(
+            name: "MoonlightSnapshots",
+            dependencies: [
+                "MoonlightAppUI",
+                "MoonlightDomain",
+                "MoonlightInfrastructure",
+                "MoonlightSnippetUI",
+            ]
+        ),
         .testTarget(
             name: "MoonlightDomainTests",
             dependencies: ["MoonlightDomain"]
