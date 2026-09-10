@@ -22,8 +22,10 @@ echo "==> Writing the build number"
 
 echo "==> Regenerating the project from project.yml"
 if ! command -v xcodegen > /dev/null 2>&1; then
-    # Homebrew is part of the temporary build environment; sudo is not
-    # available and is not needed here.
+    # Homebrew is part of the temporary build environment and sudo is neither
+    # available nor needed. The install is allowed to fail on purpose: Apple
+    # has documented Homebrew breaking on prerelease macOS images, and a
+    # missing generator must not take the build down with it.
     brew install --quiet xcodegen || true
 fi
 
