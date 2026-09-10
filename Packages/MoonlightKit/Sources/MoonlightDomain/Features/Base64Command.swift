@@ -4,7 +4,7 @@ extension TransformBase64Action {
     public var presentation: CommandPresentation {
         CommandPresentation(
             alias: "base64",
-            symbolName: "textformat.abc",
+            symbolName: "arrow.left.arrow.right",
             inputKind: .text,
             destination: .result,
             options: [

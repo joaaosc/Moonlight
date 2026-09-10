@@ -147,22 +147,13 @@ public struct MoonlightToolPaletteView: View {
             }
             .padding(.horizontal, isGlassPanel ? 14 : 10)
             .padding(.vertical, isGlassPanel ? 11 : 8)
+            // The search field is the one control shaped as a capsule; every
+            // other field in the panel is a rounded rectangle.
             .background {
                 if isGlassPanel {
-                    // The field is the panel's primary control, so it gets its
-                    // own glass rather than a filled rectangle competing with
-                    // the surface behind it.
-                    Capsule(style: .continuous)
-                        .fill(.white.opacity(0.08))
+                    GlassFieldBackground(shape: Capsule(style: .continuous))
                 } else {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.quinary)
-                }
-            }
-            .overlay {
-                if isGlassPanel {
-                    Capsule(style: .continuous)
-                        .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quinary)
                 }
             }
 
@@ -180,38 +171,7 @@ public struct MoonlightToolPaletteView: View {
                 ScrollViewReader { scroll in
                     List(selection: $model.selectedID) {
                         ForEach(model.filteredDescriptors) { descriptor in
-                            let isFavorite = model.favoriteIDs.contains(descriptor.id)
-                            HStack(spacing: 10) {
-                                Image(systemName: model.presentation(for: descriptor).symbolName)
-                                    .font(.body)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 22)
-                                    .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(descriptor.title)
-                                    Text(descriptor.summary)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                }
-                                Spacer(minLength: 8)
-                                Text("\\" + model.alias(for: descriptor))
-                                    .font(.caption.monospaced())
-                                    .foregroundStyle(.tertiary)
-                                Button(
-                                    isFavorite ? "Remove Favorite" : "Add Favorite",
-                                    systemImage: isFavorite ? "star.fill" : "star"
-                                ) {
-                                    model.toggleFavorite(descriptor, undoManager: undoManager)
-                                }
-                                .labelStyle(.iconOnly)
-                                .buttonStyle(.plain)
-                                // Filled and tinted only when it means something;
-                                // an outline in black on every row reads as a
-                                // control rather than as state.
-                                .foregroundStyle(isFavorite ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
-                                .help("Favorite \(descriptor.title)")
-                            }
+                            row(for: descriptor)
                             .padding(.vertical, 4)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
@@ -242,13 +202,12 @@ public struct MoonlightToolPaletteView: View {
                 errorLabel(error)
             }
             Divider()
-            HStack(spacing: 8) {
-                Text("↑↓ Select · Tab Complete")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                KeyHint(symbol: "arrow.up.arrow.down", action: "Select with the arrow keys")
+                KeyHint(symbol: "arrow.right.to.line", action: "Complete with Tab")
                 if let sourceContext = model.sourceContext {
                     // Where the invocation came from: context, not a title.
-                    Text("· from \(sourceContext.name)")
+                    Text(sourceContext.name)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
@@ -260,26 +219,75 @@ public struct MoonlightToolPaletteView: View {
                 Button {
                     activateSelectedTool()
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("Open")
-                        Image(systemName: "return")
-                    }
-                    .font(.caption)
+                    KeyHint(symbol: "return", action: "Open the selected tool")
                 }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
                 .disabled(model.selectedDescriptor == nil || model.isWorking)
+                .help("Open the selected tool (Return)")
             }
+        }
+    }
+
+    /// One tool in the catalogue.
+    ///
+    /// Only the selected row carries its summary. Showing every description at
+    /// once turns the list into a wall of prose, and the one being chosen is
+    /// the only one whose detail is being read.
+    @ViewBuilder
+    private func row(for descriptor: ActionDescriptor) -> some View {
+        let isFavorite = model.favoriteIDs.contains(descriptor.id)
+        let isSelected = model.selectedID == descriptor.id
+
+        HStack(spacing: 12) {
+            Image(systemName: model.presentation(for: descriptor).symbolName)
+                .font(.system(size: 15))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 26, height: 26)
+                .foregroundStyle(isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(descriptor.title)
+                if isSelected {
+                    Text(descriptor.summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if isSelected {
+                Text("\\" + model.alias(for: descriptor))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
+            }
+
+            // Filled and tinted only when it means something; an outline on
+            // every row reads as a control rather than as state.
+            Button(
+                isFavorite ? "Remove Favorite" : "Add Favorite",
+                systemImage: isFavorite ? "star.fill" : "star"
+            ) {
+                model.toggleFavorite(descriptor, undoManager: undoManager)
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.plain)
+            .foregroundStyle(isFavorite ? AnyShapeStyle(.tint) : AnyShapeStyle(.quaternary))
+            .opacity(isFavorite || isSelected ? 1 : 0)
+            .help("Favorite \(descriptor.title)")
         }
     }
 
     private func editor(for descriptor: ActionDescriptor) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(descriptor.summary)
-                .foregroundStyle(.secondary)
+            // The tool's name and summary are already in the header; repeating
+            // the summary here is a second title for the same screen.
 
             // Options are declared by each feature; the palette renders them
-            // without knowing which tool is selected.
+            // without knowing which tool is selected. The label is dropped
+            // because a two-choice segmented control states its own question.
             ForEach(model.presentation(for: descriptor).options) { option in
                 Picker(option.title, selection: Binding(
                     get: { model.optionValue(option) },
@@ -290,6 +298,8 @@ public struct MoonlightToolPaletteView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
                 .disabled(model.isWorking)
             }
 
@@ -298,15 +308,11 @@ public struct MoonlightToolPaletteView: View {
                     .font(.body.monospaced())
                     .focused($focusedField, equals: .input)
                     .scrollContentBackground(.hidden)
-                    .padding(6)
+                    .padding(10)
                     .frame(minHeight: 120, maxHeight: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color(nsColor: .textBackgroundColor))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.quaternary)
+                    .moonlightFieldBackground(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous),
+                        isGlass: isGlassPanel
                     )
                     .accessibilityLabel("Input for \(descriptor.title)")
                     .disabled(model.isWorking)
@@ -354,33 +360,31 @@ public struct MoonlightToolPaletteView: View {
                     }
                 }
                 .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(.quaternary)
+                .moonlightFieldBackground(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous),
+                    isGlass: isGlassPanel
                 )
             }
 
             if let error = model.errorMessage { errorLabel(error) }
             if !model.acceptsInput(descriptor) { Spacer(minLength: 0) }
             Divider()
-            HStack {
-                Text("Esc Back · ⌘Return Run")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                KeyHint(symbol: "escape", action: "Back to tools")
                 Spacer()
                 // Inside the editor there is a form to submit, so the default
                 // button is the right control — unlike the catalogue, where
-                // Return already acts on the selected row.
-                Button("Run \(descriptor.title)") {
+                // Return already acts on the selected row. The tool's name is
+                // in the header, so the button only has to name the verb.
+                Button {
                     Task { await model.execute(descriptor) }
+                } label: {
+                    Label("Run", systemImage: "play.fill")
                 }
                 .keyboardShortcut(.return, modifiers: .command)
                 .buttonStyle(.borderedProminent)
                 .disabled(model.isWorking)
+                .help("Run \(descriptor.title) (⌘Return)")
             }
         }
     }

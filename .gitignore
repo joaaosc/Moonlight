@@ -11,3 +11,6 @@ xcuserdata/
 
 # The build number is derived, never committed. See Config/Version.xcconfig.
 Config/Version.generated.xcconfig
+
+# Xcode writes package schemes here; none of it describes the project.
+.swiftpm/
