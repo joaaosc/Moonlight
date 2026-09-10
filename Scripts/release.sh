@@ -53,6 +53,7 @@ xcodebuild -exportArchive \
 APP="$EXPORT_DIR/Moonlight.app"
 
 echo "==> Unregistering build copies so they do not shadow the installed app"
+bash "$(dirname "$0")/clean-app-registrations.sh" >/dev/null 2>&1 || true
 # The archive leaves a second bundle behind; both it and the export carry the
 # same identifier as the installed app.
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
