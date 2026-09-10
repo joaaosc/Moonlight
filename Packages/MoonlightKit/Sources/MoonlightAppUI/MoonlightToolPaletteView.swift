@@ -5,6 +5,7 @@ import MoonlightDomain
 public struct MoonlightToolPaletteView: View {
     @Bindable private var model: MoonlightToolPaletteModel
     @FocusState private var focusedField: Field?
+    @Environment(\.undoManager) private var undoManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let onDismiss: () -> Void
 
@@ -133,7 +134,7 @@ public struct MoonlightToolPaletteView: View {
                                     model.favoriteIDs.contains(descriptor.id) ? "Remove Favorite" : "Add Favorite",
                                     systemImage: model.favoriteIDs.contains(descriptor.id) ? "star.fill" : "star"
                                 ) {
-                                    model.toggleFavorite(descriptor)
+                                    model.toggleFavorite(descriptor, undoManager: undoManager)
                                 }
                                 .labelStyle(.iconOnly)
                                 .buttonStyle(.plain)
@@ -217,6 +218,13 @@ public struct MoonlightToolPaletteView: View {
                         Spacer()
                         // Availability comes from the result itself: a command
                         // that returned nothing offers no actions at all.
+                        if let transfer = ExecutionResultTransfer(execution: result) {
+                            // Dragging or sharing hands over the typed value,
+                            // not the rendered summary around it.
+                            ShareLink(item: transfer.text)
+                                .labelStyle(.iconOnly)
+                                .help("Share result")
+                        }
                         if !model.resultActions.isEmpty {
                             Menu("Actions", systemImage: "ellipsis.circle") {
                                 ForEach(model.resultActions) { action in
@@ -240,6 +248,7 @@ public struct MoonlightToolPaletteView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxHeight: 160)
+                        .draggable(value)
                     }
                 }
                 .padding(12)

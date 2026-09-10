@@ -244,3 +244,70 @@ private actor ExecutionGate {
         releaseContinuation = nil
     }
 }
+
+@Suite("Undoable palette actions")
+@MainActor
+struct MoonlightUndoTests {
+    @Test("Undo restores the favorites that existed before the change")
+    func undoRestoresPreviousFavorites() {
+        let preferences = UserDefaults(suiteName: "MoonlightUndoTests-\(UUID().uuidString)")!
+        let model = MoonlightToolPaletteModel(
+            client: .inMemory(store: InMemoryExecutionStore()),
+            preferences: preferences
+        )
+        let undoManager = UndoManager()
+        undoManager.groupsByEvent = false
+        let json = ActionDescriptor(id: MoonlightActionID.formatJSON, title: "Format JSON", summary: "")
+        let uuid = ActionDescriptor(id: MoonlightActionID.generateUUID, title: "Generate UUID", summary: "")
+
+        // With grouping by event disabled, each change is its own group.
+        for descriptor in [json, uuid] {
+            undoManager.beginUndoGrouping()
+            model.toggleFavorite(descriptor, undoManager: undoManager)
+            undoManager.endUndoGrouping()
+        }
+        #expect(model.favoriteIDs == [json.id, uuid.id])
+
+        undoManager.undo()
+        #expect(model.favoriteIDs == [json.id])
+
+        undoManager.undo()
+        #expect(model.favoriteIDs.isEmpty)
+
+        undoManager.redo()
+        #expect(model.favoriteIDs == [json.id])
+    }
+
+    @Test("A result with no value cannot be transferred")
+    func transferRequiresValue() {
+        let empty = Execution(
+            id: UUID(),
+            actionID: MoonlightActionID.openColorPicker,
+            actionTitle: "Open Color Picker",
+            input: "",
+            summary: "Color picker opened",
+            detail: "Moonlight continued in the foreground.",
+            status: .succeeded,
+            createdAt: Date(),
+            output: ActionOutput(
+                summary: "Color picker opened",
+                detail: "Moonlight continued in the foreground.",
+                value: ActionOutputValue.none
+            )
+        )
+        let text = Execution(
+            id: UUID(),
+            actionID: MoonlightActionID.formatJSON,
+            actionTitle: "Format JSON",
+            input: "{}",
+            summary: "JSON formatted",
+            detail: "{}",
+            status: .succeeded,
+            createdAt: Date(),
+            output: ActionOutput(summary: "JSON formatted", detail: "{}", value: .json("{}"))
+        )
+
+        #expect(ExecutionResultTransfer(execution: empty) == nil)
+        #expect(ExecutionResultTransfer(execution: text)?.suggestedFileName.hasSuffix(".json") == true)
+    }
+}

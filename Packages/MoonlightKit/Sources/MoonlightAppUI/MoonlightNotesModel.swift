@@ -48,12 +48,39 @@ public final class MoonlightNotesModel {
         }
     }
 
-    public func delete(_ note: MoonlightNote) async {
+    /// - Parameter undoManager: undo restores the note that was deleted, with
+    ///   its identifier and dates, instead of writing a new one that only looks
+    ///   the same.
+    public func delete(_ note: MoonlightNote, undoManager: UndoManager? = nil) async {
         guard let store else { return }
         do {
             try await store.delete(id: note.id)
             notes.removeAll { $0.id == note.id }
             errorMessage = nil
+
+            undoManager?.registerUndo(withTarget: self) { model in
+                MainActor.assumeIsolated {
+                    Task { await model.restore(note, undoManager: undoManager) }
+                }
+            }
+            undoManager?.setActionName("Delete Note")
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func restore(_ note: MoonlightNote, undoManager: UndoManager?) async {
+        guard let store else { return }
+        do {
+            try await store.save(note)
+            await load()
+            errorMessage = nil
+
+            undoManager?.registerUndo(withTarget: self) { model in
+                MainActor.assumeIsolated {
+                    Task { await model.delete(note, undoManager: undoManager) }
+                }
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -28,6 +28,7 @@ public struct MoonlightRootView: View {
     }
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.undoManager) private var undoManager
     @State private var model: MoonlightModel
     @State private var notesModel: MoonlightNotesModel
     @State private var section: Section = .history
@@ -166,7 +167,7 @@ public struct MoonlightRootView: View {
     }
 
     private func deleteSelectedNote(_ note: MoonlightNote) async {
-        await notesModel.delete(note)
+        await notesModel.delete(note, undoManager: undoManager)
         selectedNoteID = notesModel.notes.first?.id
     }
 

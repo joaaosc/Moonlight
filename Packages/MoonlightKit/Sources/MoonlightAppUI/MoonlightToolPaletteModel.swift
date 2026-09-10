@@ -171,13 +171,47 @@ public final class MoonlightToolPaletteModel {
         catalog.presentation(for: descriptor.id) ?? MoonlightToolPresentation(descriptor: descriptor)
     }
 
-    public func toggleFavorite(_ descriptor: ActionDescriptor) {
-        if favoriteIDs.contains(descriptor.id) {
-            favoriteIDs.remove(descriptor.id)
+    /// - Parameter undoManager: registers the previous set, not the inverse of
+    ///   the action. Undoing after several changes must restore what was there,
+    ///   which flipping a flag back cannot guarantee.
+    public func toggleFavorite(
+        _ descriptor: ActionDescriptor,
+        undoManager: UndoManager? = nil
+    ) {
+        let previousFavorites = favoriteIDs
+        var updated = favoriteIDs
+        if updated.contains(descriptor.id) {
+            updated.remove(descriptor.id)
         } else {
-            favoriteIDs.insert(descriptor.id)
+            updated.insert(descriptor.id)
         }
-        preferences?.set(favoriteIDs.sorted(), forKey: "favoriteToolIDs")
+        applyFavorites(updated)
+
+        undoManager?.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated {
+                model.restoreFavorites(previousFavorites, undoManager: undoManager)
+            }
+        }
+        undoManager?.setActionName(
+            favoriteIDs.contains(descriptor.id)
+                ? "Favorite \(descriptor.title)"
+                : "Remove \(descriptor.title) from Favorites"
+        )
+    }
+
+    private func restoreFavorites(_ favorites: Set<String>, undoManager: UndoManager?) {
+        let previousFavorites = favoriteIDs
+        applyFavorites(favorites)
+        undoManager?.registerUndo(withTarget: self) { model in
+            MainActor.assumeIsolated {
+                model.restoreFavorites(previousFavorites, undoManager: undoManager)
+            }
+        }
+    }
+
+    private func applyFavorites(_ favorites: Set<String>) {
+        favoriteIDs = favorites
+        preferences?.set(favorites.sorted(), forKey: "favoriteToolIDs")
     }
 
     public func alias(for descriptor: ActionDescriptor) -> String {
