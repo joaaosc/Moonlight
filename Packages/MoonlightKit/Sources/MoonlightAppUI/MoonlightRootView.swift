@@ -32,6 +32,7 @@ public struct MoonlightRootView: View {
     @State private var model: MoonlightModel
     @State private var notesModel: MoonlightNotesModel
     @State private var section: Section = .history
+    @State private var noteSearchText = ""
     @State private var selectedNoteID: MoonlightNote.ID?
     @State private var selectedExecutionID: Execution.ID?
     @State private var historyRevision: String?
@@ -43,12 +44,23 @@ public struct MoonlightRootView: View {
         in: .common
     ).autoconnect()
 
+    private let notesFocus: MoonlightNotesFocus?
+
     public init(
         model: MoonlightModel = MoonlightModel(),
-        notesModel: MoonlightNotesModel = MoonlightNotesModel()
+        notesModel: MoonlightNotesModel = MoonlightNotesModel(),
+        notesFocus: MoonlightNotesFocus? = nil
     ) {
         _model = State(initialValue: model)
         _notesModel = State(initialValue: notesModel)
+        self.notesFocus = notesFocus
+    }
+
+    /// Notes matching the current search. An empty search shows everything.
+    private var visibleNotes: [MoonlightNote] {
+        let query = noteSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return notesModel.notes }
+        return notesModel.notes.filter { $0.text.localizedCaseInsensitiveContains(query) }
     }
 
     public var body: some View {
@@ -73,10 +85,11 @@ public struct MoonlightRootView: View {
                     )
                 case .notes:
                     NotesListView(
-                        notes: notesModel.notes,
+                        notes: visibleNotes,
                         isLoading: notesModel.isLoading,
                         selection: $selectedNoteID
                     )
+                    .searchable(text: $noteSearchText, prompt: "Search notes")
                 }
             }
         } detail: {
@@ -159,11 +172,29 @@ public struct MoonlightRootView: View {
         .onChange(of: scenePhase) { _, newPhase in
             refreshWhenActive(newPhase)
         }
+        .onChange(of: notesFocus?.revision) { _, _ in
+            applyNotesFocus()
+        }
+        .task(id: notesFocus?.revision) {
+            applyNotesFocus()
+        }
     }
 
     private var selectedNote: MoonlightNote? {
         guard let selectedNoteID else { return nil }
         return notesModel.notes.first { $0.id == selectedNoteID }
+    }
+
+    /// Applies a request that came from outside the window.
+    private func applyNotesFocus() {
+        guard let notesFocus else { return }
+        guard !notesFocus.searchText.isEmpty || notesFocus.noteID != nil else { return }
+
+        section = .notes
+        noteSearchText = notesFocus.searchText
+        if let noteID = notesFocus.noteID {
+            selectedNoteID = noteID
+        }
     }
 
     private func deleteSelectedNote(_ note: MoonlightNote) async {

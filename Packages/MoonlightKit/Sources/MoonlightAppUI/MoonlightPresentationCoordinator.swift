@@ -27,11 +27,15 @@ public final class MoonlightPresentationCoordinator {
         }
     )
 
+    /// Requests aimed at the notes section of the main window.
+    public let notesFocus = MoonlightNotesFocus()
+
     private let environment: Result<MoonlightEnvironment, MoonlightRuntimeError>
     private let palettePresenter: MoonlightToolPalettePresenter
     private let colorPanelPresenter: MoonlightColorPanelPresenter
     private var menuBarToken: MenuBarToken?
     private var dismissMenuBar: (@MainActor () -> Void)?
+    private var openMainWindow: (@MainActor () -> Void)?
 
     public init(
         environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment,
@@ -88,6 +92,31 @@ public final class MoonlightPresentationCoordinator {
         colorPanelPresenter.present(
             isolatingFromMainWindow: isolatingFromMainWindow
         )
+    }
+
+    /// Registers how the host opens its main window. SwiftUI owns that action,
+    /// so the coordinator asks for it instead of guessing at a window.
+    public func registerMainWindowOpener(_ open: @escaping @MainActor () -> Void) {
+        openMainWindow = open
+    }
+
+    /// Opens the notes section, optionally on a search or a specific note.
+    public func presentNotes(searchText: String = "", noteID: UUID? = nil) {
+        dismissMenuBar?()
+        palettePresenter.dismiss()
+        notesFocus.request(searchText: searchText, noteID: noteID)
+
+        if let openMainWindow {
+            openMainWindow()
+        } else {
+            // No opener registered yet: bring an existing window forward rather
+            // than failing silently. A window that does not exist cannot be
+            // created from here, and inventing one would be worse.
+            NSApplication.shared.activate()
+            NSApplication.shared.windows
+                .first { $0.identifier?.rawValue == "main" }?
+                .makeKeyAndOrderFront(nil)
+        }
     }
 
     /// Prepares the palette embedded in the menu bar window.

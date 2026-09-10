@@ -63,6 +63,9 @@ struct MoonlightApp: App {
                 copyToPasteboard: { text in
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
+                },
+                presentNotes: { searchText, noteID in
+                    coordinator.presentNotes(searchText: searchText, noteID: noteID)
                 }
             )
         )
@@ -102,7 +105,11 @@ struct MoonlightApp: App {
 
     var body: some Scene {
         WindowGroup("Moonlight", id: "main") {
-            MoonlightRootView()
+            MoonlightRootView(notesFocus: coordinator.notesFocus)
+                .onAppear {
+                    // SwiftUI owns window creation; the coordinator borrows it.
+                    coordinator.registerMainWindowOpener { openWindow(id: "main") }
+                }
         }
         .defaultLaunchBehavior(MoonlightLaunchContext.showsHistoryForTesting ? .presented : .suppressed)
         .restorationBehavior(.disabled)
