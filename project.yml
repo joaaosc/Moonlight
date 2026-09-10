@@ -36,6 +36,7 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
         LSUIElement: true
+        NSAppleEventsUsageDescription: Moonlight lists your shortcuts so you can add them as commands.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight
@@ -53,6 +54,8 @@ targets:
         product: MoonlightIntents
       - package: MoonlightKit
         product: MoonlightAppUI
+      - package: MoonlightKit
+        product: MoonlightShortcuts
 
   MoonlightAppIntentsExtension:
     type: extensionkit-extension

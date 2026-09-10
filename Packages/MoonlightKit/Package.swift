@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "MoonlightSnippetUI", targets: ["MoonlightSnippetUI"]),
         .library(name: "MoonlightIntents", targets: ["MoonlightIntents"]),
         .library(name: "MoonlightAppUI", targets: ["MoonlightAppUI"]),
+        .library(name: "MoonlightShortcuts", targets: ["MoonlightShortcuts"]),
     ],
     targets: [
         .target(name: "MoonlightDomain"),
@@ -39,6 +40,12 @@ let package = Package(
                 "MoonlightDomain",
                 "MoonlightInfrastructure",
             ]
+        ),
+        // Apple Events live in their own target: the App Intents extension
+        // links MoonlightKit and must not gain a scripting dependency.
+        .target(
+            name: "MoonlightShortcuts",
+            dependencies: ["MoonlightDomain"]
         ),
         .testTarget(
             name: "MoonlightDomainTests",

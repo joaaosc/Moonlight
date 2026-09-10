@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		05A7AB371DD848F84275AE97 /* MoonlightShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 019FDDADDA06AAD7687EF688 /* MoonlightShortcuts */; };
 		06A40124B24202891BA3AED3 /* MoonlightAppIntentsExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342C9AE7CD224FFD94861942 /* MoonlightAppIntentsExtension.swift */; };
 		09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 5A8968A0E43DAC7C7082B13B /* MoonlightIntents */; };
 		20424B0B4514B8F162B6776D /* Moonlight.icon in Resources */ = {isa = PBXBuildFile; fileRef = 366965946EFAA5B984A86132 /* Moonlight.icon */; };
@@ -101,6 +102,7 @@
 			files = (
 				09BA3EB580AFC292AF025A6F /* MoonlightIntents in Frameworks */,
 				C2F8658FE1E9A4A7733FF677 /* MoonlightAppUI in Frameworks */,
+				05A7AB371DD848F84275AE97 /* MoonlightShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -228,6 +230,7 @@
 			packageProductDependencies = (
 				5A8968A0E43DAC7C7082B13B /* MoonlightIntents */,
 				32307D81CCE55E823F22CCDF /* MoonlightAppUI */,
+				019FDDADDA06AAD7687EF688 /* MoonlightShortcuts */,
 			);
 			productName = Moonlight;
 			productReference = EFA55BE42FBF2AF83406468B /* Moonlight.app */;
@@ -762,6 +765,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		019FDDADDA06AAD7687EF688 /* MoonlightShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MoonlightShortcuts;
+		};
 		05BF1993C6EA595C294A0073 /* MoonlightAppUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MoonlightAppUI;

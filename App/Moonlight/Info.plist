@@ -24,5 +24,7 @@
 	<string>public.app-category.productivity</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Moonlight lists your shortcuts so you can add them as commands.</string>
 </dict>
 </plist>
