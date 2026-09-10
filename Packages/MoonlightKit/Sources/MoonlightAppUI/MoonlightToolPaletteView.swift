@@ -202,13 +202,21 @@ public struct MoonlightToolPaletteView: View {
                     HStack {
                         Text(output.summary).font(.subheadline.weight(.semibold))
                         Spacer()
-                        // A command with no value to show, such as the color
-                        // picker, offers nothing to copy.
-                        if let value = output.value.text {
-                            Button("Copy Result", systemImage: "doc.on.doc") {
-                                NSPasteboard.general.clearContents()
-                                NSPasteboard.general.setString(value, forType: .string)
+                        // Availability comes from the result itself: a command
+                        // that returned nothing offers no actions at all.
+                        if !model.resultActions.isEmpty {
+                            Menu("Actions", systemImage: "ellipsis.circle") {
+                                ForEach(model.resultActions) { action in
+                                    Button(action.title, systemImage: action.symbolName) {
+                                        model.perform(action)
+                                    }
+                                    .keyboardShortcut(Self.shortcut(for: action))
+                                }
                             }
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
+                            .keyboardShortcut("k", modifiers: .command)
+                            .help("Result actions (⌘K)")
                         }
                     }
                     if let value = output.value.text {
@@ -240,6 +248,15 @@ public struct MoonlightToolPaletteView: View {
                 .buttonStyle(.glassProminent)
                 .disabled(model.isWorking)
             }
+        }
+    }
+
+    /// Each action keeps a direct key, so the whole cycle works without a mouse.
+    private static func shortcut(for action: ExecutionResultAction) -> KeyEquivalent {
+        switch action {
+        case .copy: "c"
+        case .save: "s"
+        case .open: "o"
         }
     }
 

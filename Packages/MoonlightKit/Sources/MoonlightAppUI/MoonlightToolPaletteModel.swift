@@ -35,6 +35,7 @@ public final class MoonlightToolPaletteModel {
     private let openColorPicker: @MainActor () -> Void
     private var catalog: MoonlightToolCatalog
     private let search = MoonlightToolSearch()
+    private let performer = ExecutionResultActionPerformer()
     private let draftStore = MoonlightToolDraftStore()
 
     public init(
@@ -328,6 +329,17 @@ public final class MoonlightToolPaletteModel {
         case .none:
             ActionRequest(actionID: descriptor.id, input: "")
         }
+    }
+
+    /// The actions the current result supports. Empty until a command produced
+    /// a value, so the menu never offers something that cannot be done.
+    public var resultActions: [ExecutionResultAction] {
+        result?.resultActions ?? []
+    }
+
+    /// Runs a result action and surfaces its failure in the palette.
+    public func perform(_ action: ExecutionResultAction) {
+        errorMessage = performer.perform(action)
     }
 
     public func acceptsInput(_ descriptor: ActionDescriptor) -> Bool {
