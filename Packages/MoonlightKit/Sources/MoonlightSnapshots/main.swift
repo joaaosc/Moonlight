@@ -58,6 +58,12 @@ enum MoonlightSnapshots {
             preferences: nil
         )
 
+        let commandModel = MoonlightToolPaletteModel(
+            client: .inMemory(store: InMemoryExecutionStore()),
+            preferences: nil
+        )
+        commandModel.preparePresentation(initialQuery: "/note Buy milk and bread")
+
         let shortcutsModel = MoonlightShortcutsModel(
             shortcuts: .stub([
                 ShortcutSummary(
@@ -106,6 +112,14 @@ enum MoonlightSnapshots {
             ("launcher-editor", CGSize(width: 640, height: 520), AnyView(
                 MoonlightToolPaletteView(
                     model: launcherEditingModel,
+                    appearance: .glassPanel,
+                    onDismiss: {}
+                )
+                .moonlightGlassSurface()
+            )),
+            ("launcher-command", CGSize(width: 640, height: 520), AnyView(
+                MoonlightToolPaletteView(
+                    model: commandModel,
                     appearance: .glassPanel,
                     onDismiss: {}
                 )

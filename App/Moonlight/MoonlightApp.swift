@@ -66,6 +66,12 @@ struct MoonlightApp: App {
                 },
                 presentNotes: { searchText, noteID in
                     coordinator.presentNotes(searchText: searchText, noteID: noteID)
+                },
+                presentCommandLine: { text in
+                    coordinator.presentCommandLine(
+                        text: text,
+                        isolatingFromMainWindow: true
+                    )
                 }
             )
         )
