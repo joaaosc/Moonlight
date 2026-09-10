@@ -31,6 +31,10 @@ fi
 
 if command -v xcodegen > /dev/null 2>&1; then
     xcodegen generate --quiet
+    # Regenerating can move target identifiers. A stale identifier in a test
+    # plan resolves to nothing and the run passes having executed no tests,
+    # which is the one CI failure mode that looks like success.
+    ./Scripts/sync-test-plans.sh
 else
     # Not fatal: the project is committed, so the build still has a
     # project to use. It is only no longer guaranteed to match project.yml,

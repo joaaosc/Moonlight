@@ -7,7 +7,7 @@
 set -euo pipefail
 
 SCHEME="Moonlight"
-PROJECT="Moonlight Tools.xcodeproj"
+PROJECT="MoonlightTools.xcodeproj"
 # A ".noindex" suffix keeps Spotlight and Launch Services out of the build
 # directory: an app bundle sitting there would otherwise be registered and show
 # up next to the installed copy.
@@ -23,6 +23,10 @@ bash "$(dirname "$0")/version.sh"
 
 echo "==> Regenerating the project from project.yml"
 xcodegen generate --quiet
+# Target identifiers are derived from the project, so regenerating can move
+# them. A test plan left pointing at an old identifier runs no tests and still
+# reports success, so the two are re-synced here rather than by hand.
+"$(dirname "$0")/sync-test-plans.sh"
 
 echo "==> Archiving $SCHEME (Release)"
 rm -rf "$ARCHIVE" "$EXPORT_DIR"

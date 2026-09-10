@@ -14,8 +14,8 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:Moonlight Tools.xcodeproj",
-        "identifier" : "BAD158DAFC8211A0351A4906",
+        "containerPath" : "container:MoonlightTools.xcodeproj",
+        "identifier" : "0792E2D50BFCC6E38458E3C8",
         "name" : "MoonlightAppIntentsUITests"
       }
     }

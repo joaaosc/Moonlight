@@ -14,7 +14,7 @@ O Xcode aberto pela interface não passa a usar esse caminho automaticamente. Pa
 
 ```text
 xcodebuild \
-  -project 'Moonlight Tools.xcodeproj' \
+  -project MoonlightTools.xcodeproj \
   -scheme Moonlight \
   -configuration Debug \
   -destination 'platform=macOS' \
@@ -56,7 +56,7 @@ Os dois espaços não colidem: o Xcode Cloud está configurado para começar em 
 
 ## Xcode Cloud
 
-O produto já existe em `Moonlight Tools.xcodeproj/xcshareddata/xcodecloud/manifest.json`.
+O produto já existe em `MoonlightTools.xcodeproj/xcshareddata/xcodecloud/manifest.json`.
 
 `ci_scripts/ci_post_clone.sh` roda depois do clone e faz duas coisas: escreve o build number a partir de `CI_BUILD_NUMBER` e regenera o projeto a partir de `project.yml` com XcodeGen instalado por Homebrew. Se o XcodeGen não instalar, o build segue com o projeto versionado e registra o aviso no log.
 

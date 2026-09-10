@@ -1,24 +1,22 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "A1B2C3D4-0001-4000-8000-000000000001",
-      "name" : "Default",
-      "options" : {
-
-      }
+      "id": "A1B2C3D4-0001-4000-8000-000000000001",
+      "name": "Default",
+      "options": {}
     }
   ],
-  "defaultOptions" : {
-    "codeCoverage" : true
+  "defaultOptions": {
+    "codeCoverage": true
   },
-  "testTargets" : [
+  "testTargets": [
     {
-      "target" : {
-        "containerPath" : "container:Moonlight Tools.xcodeproj",
-        "identifier" : "C324C8DC3F6595982434DB32",
-        "name" : "MoonlightTests"
+      "target": {
+        "containerPath": "container:MoonlightTools.xcodeproj",
+        "identifier": "4C8C942DDD7C8B0C81B341B2",
+        "name": "MoonlightTests"
       }
     }
   ],
-  "version" : 1
+  "version": 1
 }
