@@ -197,22 +197,29 @@ public struct MoonlightToolPaletteView: View {
             }
 
             if let result = model.result {
+                let output = result.resolvedOutput
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(result.summary).font(.subheadline.weight(.semibold))
+                        Text(output.summary).font(.subheadline.weight(.semibold))
                         Spacer()
-                        Button("Copy Result", systemImage: "doc.on.doc") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(result.detail, forType: .string)
+                        // A command with no value to show, such as the color
+                        // picker, offers nothing to copy.
+                        if let value = output.value.text {
+                            Button("Copy Result", systemImage: "doc.on.doc") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(value, forType: .string)
+                            }
                         }
                     }
-                    ScrollView {
-                        Text(result.detail)
-                            .font(.body.monospaced())
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    if let value = output.value.text {
+                        ScrollView {
+                            Text(value)
+                                .font(.body.monospaced())
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxHeight: 160)
                     }
-                    .frame(maxHeight: 160)
                 }
                 .padding(12)
                 .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))

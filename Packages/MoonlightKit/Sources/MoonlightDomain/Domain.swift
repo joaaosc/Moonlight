@@ -124,10 +124,34 @@ public struct ActionRequest: Codable, Equatable, Sendable {
 public struct ActionOutput: Codable, Equatable, Sendable {
     public let summary: String
     public let detail: String
+    public let value: ActionOutputValue
 
-    public init(summary: String, detail: String) {
+    public init(
+        summary: String,
+        detail: String,
+        value: ActionOutputValue
+    ) {
         self.summary = summary
         self.detail = detail
+        self.value = value
+    }
+
+    /// A handler that only produces a string keeps its previous meaning.
+    /// Declaring the value is not optional: `ActionOutputValue.none` and a
+    /// missing argument must not be spelled the same way.
+    public init(summary: String, detail: String) {
+        self.init(summary: summary, detail: detail, value: .text(detail))
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        summary = try container.decode(String.self, forKey: .summary)
+        detail = try container.decode(String.self, forKey: .detail)
+        // Records written before typed output carry only the rendered string.
+        value = try container.decodeIfPresent(
+            ActionOutputValue.self,
+            forKey: .value
+        ) ?? .text(detail)
     }
 }
 
@@ -172,6 +196,10 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
     public let detail: String
     public let status: ExecutionStatus
     public let createdAt: Date
+    /// Absent in records written before typed output existed.
+    public let output: ActionOutput?
+    /// Absent in successful records and in failures written before codes existed.
+    public let failure: ExecutionFailure?
 
     public init(
         id: UUID,
@@ -182,7 +210,9 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
         summary: String,
         detail: String,
         status: ExecutionStatus,
-        createdAt: Date
+        createdAt: Date,
+        output: ActionOutput? = nil,
+        failure: ExecutionFailure? = nil
     ) {
         self.id = id
         self.actionID = actionID
@@ -193,6 +223,22 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
         self.detail = detail
         self.status = status
         self.createdAt = createdAt
+        self.output = output
+        self.failure = failure
+    }
+
+    /// The typed result, reconstructed as plain text for historical records.
+    public var resolvedOutput: ActionOutput {
+        output ?? ActionOutput(summary: summary, detail: detail, value: .text(detail))
+    }
+
+    /// The coded failure, reconstructed for historical records.
+    public var resolvedFailure: ExecutionFailure? {
+        if let failure {
+            return failure
+        }
+        guard status == .failed else { return nil }
+        return ExecutionFailure(code: ExecutionFailure.unknownCode, message: detail)
     }
 }
 
@@ -241,7 +287,7 @@ public struct CaptureNoteAction: ActionHandler {
             throw ActionError.inputTooLong(limit: Self.maximumCharacterCount)
         }
 
-        return ActionOutput(summary: "Note captured", detail: normalized)
+        return ActionOutput(summary: "Note captured", detail: normalized, value: .text(normalized))
     }
 }
 
@@ -260,9 +306,11 @@ public struct OpenColorPickerAction: ActionHandler {
             throw ToolActionError.unexpectedParameters
         }
 
+        // Presenting the picker is the result; there is no value to render.
         return ActionOutput(
             summary: "Color picker opened",
-            detail: "Moonlight continued in the foreground."
+            detail: "Moonlight continued in the foreground.",
+            value: ActionOutputValue.none
         )
     }
 }
@@ -391,6 +439,9 @@ public struct ActionRunner: Sendable {
         do {
             output = try await handler.perform(request: request)
         } catch is CancellationError {
+            // A cancelled command never becomes history: there is no result to
+            // record and no failure to report. Callers distinguish it by the
+            // error type, never by inspecting a stored execution.
             throw CancellationError()
         } catch {
             return try await persistFailure(
@@ -411,7 +462,8 @@ public struct ActionRunner: Sendable {
             summary: output.summary,
             detail: output.detail,
             status: .succeeded,
-            createdAt: clock()
+            createdAt: clock(),
+            output: output
         )
         try await store.upsert(execution)
         return execution
@@ -431,7 +483,8 @@ public struct ActionRunner: Sendable {
             summary: "Action failed",
             detail: error.localizedDescription,
             status: .failed,
-            createdAt: clock()
+            createdAt: clock(),
+            failure: ExecutionFailure(error: error)
         )
         try await store.upsert(execution)
         return execution

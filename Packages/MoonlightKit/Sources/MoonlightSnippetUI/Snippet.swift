@@ -18,10 +18,23 @@ public struct ExecutionSnippetView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(execution.detail)
-                .font(.body)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // The renderer reads the typed value of a stored result. It never
+            // runs a command and never branches on the tool identifier.
+            switch output.value {
+            case .none:
+                EmptyView()
+            case let .text(value):
+                valueText(value, isMonospaced: false)
+            case let .json(value), let .identifier(value):
+                valueText(value, isMonospaced: true)
+            }
+
+            if let failure = execution.resolvedFailure {
+                Text(failure.message)
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             Divider()
 
@@ -38,6 +51,17 @@ public struct ExecutionSnippetView: View {
         .accessibilityLabel(
             "\(execution.summary). \(execution.actionTitle). \(execution.detail). \(execution.createdAt.formatted())."
         )
+    }
+
+    private var output: ActionOutput {
+        execution.resolvedOutput
+    }
+
+    private func valueText(_ value: String, isMonospaced: Bool) -> some View {
+        Text(value)
+            .font(isMonospaced ? .body.monospaced() : .body)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var statusSymbol: String {

@@ -87,7 +87,7 @@ public struct CleanTextAction: ActionHandler {
         try ToolActionValidation.checkOutputSize(output)
         try Task.checkCancellation()
 
-        return ActionOutput(summary: "Text cleaned", detail: output)
+        return ActionOutput(summary: "Text cleaned", detail: output, value: .text(output))
     }
 }
 
@@ -149,9 +149,11 @@ public struct FormatJSONAction: ActionHandler {
         try ToolActionValidation.checkOutputSize(outputData.count)
         try Task.checkCancellation()
 
+        let formatted = String(decoding: outputData, as: UTF8.self)
         return ActionOutput(
             summary: "JSON formatted",
-            detail: String(decoding: outputData, as: UTF8.self)
+            detail: formatted,
+            value: .json(formatted)
         )
     }
 }
@@ -187,7 +189,7 @@ public struct GenerateUUIDAction: ActionHandler {
         try ToolActionValidation.checkOutputSize(output)
         try Task.checkCancellation()
 
-        return ActionOutput(summary: "UUID generated", detail: output)
+        return ActionOutput(summary: "UUID generated", detail: output, value: .identifier(output))
     }
 }
 
@@ -222,7 +224,7 @@ public struct TransformBase64Action: ActionHandler {
             let output = Data(request.input.utf8).base64EncodedString()
             try ToolActionValidation.checkOutputSize(output)
             try Task.checkCancellation()
-            return ActionOutput(summary: "Text encoded as Base64", detail: output)
+            return ActionOutput(summary: "Text encoded as Base64", detail: output, value: .text(output))
 
         case .decode:
             guard let decodedData = Data(
@@ -236,7 +238,7 @@ public struct TransformBase64Action: ActionHandler {
                 throw ToolActionError.decodedTextIsNotUTF8
             }
             try Task.checkCancellation()
-            return ActionOutput(summary: "Base64 decoded", detail: output)
+            return ActionOutput(summary: "Base64 decoded", detail: output, value: .text(output))
         }
     }
 }
