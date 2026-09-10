@@ -63,6 +63,20 @@
                ReferencedContainer = "container:Moonlight.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BB23D7E82EF336A4456910E5"
+               BuildableName = "MoonlightWidgets.appex"
+               BlueprintName = "MoonlightWidgets"
+               ReferencedContainer = "container:Moonlight.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

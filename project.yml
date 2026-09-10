@@ -57,6 +57,7 @@ targets:
         ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: YES
     dependencies:
       - target: MoonlightAppIntentsExtension
+      - target: MoonlightWidgets
       - package: MoonlightKit
         product: MoonlightIntents
       - package: MoonlightKit
@@ -85,6 +86,35 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 33FPG9442W
         CODE_SIGN_ENTITLEMENTS: App/MoonlightAppIntentsExtension/MoonlightAppIntentsExtension.entitlements
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: MoonlightKit
+        product: MoonlightIntents
+
+  MoonlightWidgets:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "27.0"
+    sources:
+      - path: App/MoonlightWidgets
+    info:
+      path: App/MoonlightWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Moonlight Widgets
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight.Widgets
+        PRODUCT_NAME: MoonlightWidgets
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 33FPG9442W
+        CODE_SIGN_ENTITLEMENTS: App/MoonlightWidgets/MoonlightWidgets.entitlements
         ENABLE_APP_SANDBOX: YES
         ENABLE_HARDENED_RUNTIME: YES
         APPLICATION_EXTENSION_API_ONLY: YES
@@ -132,6 +162,7 @@ schemes:
       targets:
         Moonlight: all
         MoonlightAppIntentsExtension: all
+        MoonlightWidgets: all
         MoonlightTests: [test]
         MoonlightAppIntentsUITests: [test]
     run:
