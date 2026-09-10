@@ -7,7 +7,7 @@
 set -euo pipefail
 
 SCHEME="Moonlight"
-PROJECT="Moonlight.xcodeproj"
+PROJECT="Moonlight Tools.xcodeproj"
 # A ".noindex" suffix keeps Spotlight and Launch Services out of the build
 # directory: an app bundle sitting there would otherwise be registered and show
 # up next to the installed copy.

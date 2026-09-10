@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2700"
+   LastUpgradeVersion = "1430"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES">
+      buildImplicitDependencies = "YES"
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -14,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "32E0C782E89DEB4606415314"
+               BlueprintIdentifier = "2D834F48A2C839872B1F9BEA"
                BuildableName = "Moonlight.app"
-               BlueprintName = "Moonlight Tools"
+               BlueprintName = "Moonlight"
                ReferencedContainer = "container:Moonlight Tools.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,7 +29,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2580001ED504CDA199D160AD"
+               BlueprintIdentifier = "9ADBEC6D7DAF327CD12BC992"
                BuildableName = "MoonlightAppIntentsExtension.appex"
                BlueprintName = "MoonlightAppIntentsExtension"
                ReferencedContainer = "container:Moonlight Tools.xcodeproj">
@@ -42,7 +43,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B903F3A8DB0E518F15FD7AAB"
+               BlueprintIdentifier = "BAD158DAFC8211A0351A4906"
                BuildableName = "MoonlightAppIntentsUITests.xctest"
                BlueprintName = "MoonlightAppIntentsUITests"
                ReferencedContainer = "container:Moonlight Tools.xcodeproj">
@@ -56,7 +57,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4079599CED65240152DCACC1"
+               BlueprintIdentifier = "C324C8DC3F6595982434DB32"
                BuildableName = "MoonlightTests.xctest"
                BlueprintName = "MoonlightTests"
                ReferencedContainer = "container:Moonlight Tools.xcodeproj">
@@ -70,7 +71,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB23D7E82EF336A4456910E5"
+               BlueprintIdentifier = "448BDA037508C6CEC53D2F86"
                BuildableName = "MoonlightWidgets.appex"
                BlueprintName = "MoonlightWidgets"
                ReferencedContainer = "container:Moonlight Tools.xcodeproj">
@@ -83,25 +84,30 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      codeCoverageEnabled = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "32E0C782E89DEB4606415314"
-            BuildableName = "Moonlight.app"
-            BlueprintName = "Moonlight Tools"
-            ReferencedContainer = "container:Moonlight Tools.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
+      codeCoverageEnabled = "YES"
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
       <TestPlans>
          <TestPlanReference
-            reference = "container:TestPlans/Moonlight.xctestplan"
-            default = "YES">
+            default = "YES"
+            reference = "container:TestPlans/Moonlight.xctestplan">
          </TestPlanReference>
          <TestPlanReference
             reference = "container:TestPlans/MoonlightSystem.xctestplan">
          </TestPlanReference>
       </TestPlans>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "2D834F48A2C839872B1F9BEA"
+            BuildableName = "Moonlight.app"
+            BlueprintName = "Moonlight"
+            ReferencedContainer = "container:Moonlight Tools.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <Testables>
+      </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -117,12 +123,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "32E0C782E89DEB4606415314"
+            BlueprintIdentifier = "2D834F48A2C839872B1F9BEA"
             BuildableName = "Moonlight.app"
-            BlueprintName = "Moonlight Tools"
+            BlueprintName = "Moonlight"
             ReferencedContainer = "container:Moonlight Tools.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -134,9 +142,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "32E0C782E89DEB4606415314"
+            BlueprintIdentifier = "2D834F48A2C839872B1F9BEA"
             BuildableName = "Moonlight.app"
-            BlueprintName = "Moonlight Tools"
+            BlueprintName = "Moonlight"
             ReferencedContainer = "container:Moonlight Tools.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

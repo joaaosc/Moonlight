@@ -32,7 +32,7 @@ fi
 if command -v xcodegen > /dev/null 2>&1; then
     xcodegen generate --quiet
 else
-    # Not fatal: Moonlight.xcodeproj is committed, so the build still has a
+    # Not fatal: the project is committed, so the build still has a
     # project to use. It is only no longer guaranteed to match project.yml,
     # which is worth saying out loud in the build log.
     echo "    xcodegen unavailable; building the committed project as-is."
