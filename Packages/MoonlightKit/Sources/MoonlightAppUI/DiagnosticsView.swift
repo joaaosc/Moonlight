@@ -1,9 +1,11 @@
+import MoonlightDomain
 import MoonlightInfrastructure
 import SwiftUI
 
 /// Shows where Moonlight's data lives and how much of it there is.
 public struct DiagnosticsView: View {
     @State private var diagnostics: MoonlightDiagnostics?
+    @State private var capabilities: [MoonlightCapability] = []
     @State private var isLoading = false
 
     private let environment: Result<MoonlightEnvironment, MoonlightRuntimeError>
@@ -28,13 +30,25 @@ public struct DiagnosticsView: View {
                 }
             }
 
+            Section("Optional capabilities") {
+                ForEach(capabilities) { capability in
+                    VStack(alignment: .leading, spacing: 2) {
+                        LabeledContent(capability.name, value: capability.status.summary)
+                        Text(capability.detail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+
             Section {
                 Button("Refresh Report", systemImage: "arrow.clockwise") {
                     Task { await load() }
                 }
                 .disabled(isLoading)
             } footer: {
-                Text("Reading this report never creates, repairs or deletes a document.")
+                Text("Reading this report never creates, repairs or deletes a document, and never asks for a permission.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -81,8 +95,15 @@ public struct DiagnosticsView: View {
     private func load() async {
         isLoading = true
         defer { isLoading = false }
-        diagnostics = await MoonlightDiagnostics.current(
-            environment: try? environment.get()
-        )
+
+        let resolvedEnvironment = try? environment.get()
+        diagnostics = await MoonlightDiagnostics.current(environment: resolvedEnvironment)
+
+        // `false` keeps the query silent: no consent prompt from a report.
+        let automation = await resolvedEnvironment?.shortcuts.authorizationStatus(false)
+        capabilities = [
+            .appleEvents(status: automation ?? .unavailable),
+            .accessibility(),
+        ]
     }
 }
