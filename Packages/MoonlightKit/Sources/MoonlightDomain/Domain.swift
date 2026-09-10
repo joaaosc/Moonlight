@@ -268,10 +268,16 @@ public struct CaptureNoteAction: ActionHandler {
     public let descriptor = ActionDescriptor(
         id: MoonlightActionID.captureNote,
         title: "Capture Note",
-        summary: "Save text as a Moonlight execution"
+        summary: "Keep text as a durable Moonlight note"
     )
 
-    public init() {}
+    private let recorder: NoteRecorder
+
+    /// - Parameter recorder: writes the durable note. Without one the command
+    ///   still runs and is recorded in history, but nothing is kept.
+    public init(recorder: NoteRecorder = .none) {
+        self.recorder = recorder
+    }
 
     public func perform(request: ActionRequest) async throws -> ActionOutput {
         try Task.checkCancellation()
@@ -289,6 +295,10 @@ public struct CaptureNoteAction: ActionHandler {
         guard normalized.count <= Self.maximumCharacterCount else {
             throw ActionError.inputTooLong(limit: Self.maximumCharacterCount)
         }
+
+        // The note is durable and lives in its own store: clearing execution
+        // history later must not take the note with it.
+        try await recorder.record(normalized, nil)
 
         return ActionOutput(summary: "Note captured", detail: normalized, value: .text(normalized))
     }

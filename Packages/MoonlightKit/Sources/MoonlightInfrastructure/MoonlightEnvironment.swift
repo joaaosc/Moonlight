@@ -19,19 +19,23 @@ public struct MoonlightEnvironment: Sendable {
     public let bindingsStore: ShortcutBindingsStore?
     /// The snapshot the synchronous catalog provider may read.
     public let bindingsCache: ShortcutBindingsCache
+    /// Durable notes, kept apart from the execution history.
+    public let noteStore: (any NoteStore)?
 
     public init(
         client: MoonlightRuntimeClient,
         catalogProvider: any CommandCatalogProvider,
         shortcuts: ShortcutsCatalogClient = .failing(.unavailable, status: .unavailable),
         bindingsStore: ShortcutBindingsStore? = nil,
-        bindingsCache: ShortcutBindingsCache = ShortcutBindingsCache()
+        bindingsCache: ShortcutBindingsCache = ShortcutBindingsCache(),
+        noteStore: (any NoteStore)? = nil
     ) {
         self.client = client
         self.catalogProvider = catalogProvider
         self.shortcuts = shortcuts
         self.bindingsStore = bindingsStore
         self.bindingsCache = bindingsCache
+        self.noteStore = noteStore
     }
 
     /// Composes the environment backed by the shared history document.
@@ -49,6 +53,7 @@ public struct MoonlightEnvironment: Sendable {
     ) throws -> MoonlightEnvironment {
         let store = try store ?? FileExecutionStore()
         let bindingsStore = try ShortcutBindingsStore()
+        let noteStore = try FileNoteStore()
         let cache = ShortcutBindingsCache()
 
         // The catalog must be correct on the first request, so stored bindings
@@ -58,8 +63,16 @@ public struct MoonlightEnvironment: Sendable {
             cache.replaceBindings(stored)
         }
 
+        // Capturing a note writes to the durable store; the handler list is
+        // composed here so the domain keeps no ambient dependency.
+        let composedHandlers = handlers.map { handler -> any ActionHandler in
+            handler.descriptor.id == MoonlightActionID.captureNote
+                ? CaptureNoteAction(recorder: noteStore.recorder())
+                : handler
+        }
+
         let registry = ActionRegistry(
-            handlers: handlers,
+            handlers: composedHandlers,
             resolvers: [
                 ShortcutCommandHandlerResolver(cache: cache, client: shortcutRunner),
             ]
@@ -68,12 +81,13 @@ public struct MoonlightEnvironment: Sendable {
         return MoonlightEnvironment(
             client: .fileBacked(registry: registry, store: store),
             catalogProvider: CompositeCommandCatalogProvider(
-                BuiltInCommandProvider(registry: ActionRegistry(handlers: handlers)),
+                BuiltInCommandProvider(registry: ActionRegistry(handlers: composedHandlers)),
                 UserShortcutCommandProvider(cache: cache)
             ),
             shortcuts: shortcuts,
             bindingsStore: bindingsStore,
-            bindingsCache: cache
+            bindingsCache: cache,
+            noteStore: noteStore
         )
     }
 

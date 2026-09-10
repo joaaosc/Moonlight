@@ -36,6 +36,16 @@ public enum MoonlightStorage {
     public static let bindingsDidChangeDarwinName =
         "com.joaocosta.Moonlight.shortcut-bindings-did-change"
 
+    public static let notesDidChangeNotification = Notification.Name(
+        "com.joaocosta.Moonlight.notes-did-change"
+    )
+    public static let notesDidChangeDarwinName =
+        "com.joaocosta.Moonlight.notes-did-change"
+
+    static func postNotesDidChange() {
+        post(name: notesDidChangeNotification, darwinName: notesDidChangeDarwinName)
+    }
+
     static func postBindingsDidChange() {
         post(
             name: bindingsDidChangeNotification,
