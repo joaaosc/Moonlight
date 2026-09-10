@@ -4,8 +4,34 @@ import MoonlightDomain
 import SwiftUI
 
 public struct MoonlightRootView: View {
+    /// The two things the control panel shows. Executions are a log that can be
+    /// cleared; notes are content the user keeps.
+    private enum Section: String, CaseIterable, Identifiable {
+        case history
+        case notes
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .history: "History"
+            case .notes: "Notes"
+            }
+        }
+
+        var symbolName: String {
+            switch self {
+            case .history: "clock"
+            case .notes: "note.text"
+            }
+        }
+    }
+
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: MoonlightModel
+    @State private var notesModel: MoonlightNotesModel
+    @State private var section: Section = .history
+    @State private var selectedNoteID: MoonlightNote.ID?
     @State private var selectedExecutionID: Execution.ID?
     @State private var historyRevision: String?
     @State private var isShowingComposer = false
@@ -16,28 +42,73 @@ public struct MoonlightRootView: View {
         in: .common
     ).autoconnect()
 
-    public init(model: MoonlightModel = MoonlightModel()) {
+    public init(
+        model: MoonlightModel = MoonlightModel(),
+        notesModel: MoonlightNotesModel = MoonlightNotesModel()
+    ) {
         _model = State(initialValue: model)
+        _notesModel = State(initialValue: notesModel)
     }
 
     public var body: some View {
         NavigationSplitView {
-            ExecutionHistoryView(
-                executions: model.executions,
-                isLoading: model.isLoading,
-                selection: $selectedExecutionID
-            )
+            VStack(spacing: 0) {
+                Picker("Section", selection: $section) {
+                    ForEach(Section.allCases) { section in
+                        Label(section.title, systemImage: section.symbolName)
+                            .tag(section)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding([.horizontal, .top], 8)
+
+                switch section {
+                case .history:
+                    ExecutionHistoryView(
+                        executions: model.executions,
+                        isLoading: model.isLoading,
+                        selection: $selectedExecutionID
+                    )
+                case .notes:
+                    NotesListView(
+                        notes: notesModel.notes,
+                        isLoading: notesModel.isLoading,
+                        selection: $selectedNoteID
+                    )
+                }
+            }
         } detail: {
             Group {
-                if let selectedExecution {
-                    ExecutionDetailView(execution: selectedExecution)
-                        .id(selectedExecution.id)
-                } else {
-                    ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
+                switch section {
+                case .history:
+                    if let selectedExecution {
+                        ExecutionDetailView(execution: selectedExecution)
+                            .id(selectedExecution.id)
+                    } else {
+                        ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
+                    }
+                case .notes:
+                    if let selectedNote {
+                        NoteDetailView(note: selectedNote) {
+                            Task { await deleteSelectedNote(selectedNote) }
+                        }
+                        .id(selectedNote.id)
+                    } else {
+                        ContentUnavailableView(
+                            "Select a note",
+                            systemImage: "note.text",
+                            description: Text("Notes are kept separately from execution history.")
+                        )
+                    }
                 }
             }
             .navigationTitle("Moonlight")
-            .navigationSubtitle("Control Panel · Execution History")
+            .navigationSubtitle(
+                section == .history
+                    ? "Control Panel · Execution History"
+                    : "Control Panel · Notes"
+            )
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 480)
@@ -89,12 +160,26 @@ public struct MoonlightRootView: View {
         }
     }
 
+    private var selectedNote: MoonlightNote? {
+        guard let selectedNoteID else { return nil }
+        return notesModel.notes.first { $0.id == selectedNoteID }
+    }
+
+    private func deleteSelectedNote(_ note: MoonlightNote) async {
+        await notesModel.delete(note)
+        selectedNoteID = notesModel.notes.first?.id
+    }
+
     private var selectedExecution: Execution? {
         guard let selectedExecutionID else { return nil }
         return model.executions.first { $0.id == selectedExecutionID }
     }
 
     private func load() async {
+        await notesModel.load()
+        if !notesModel.notes.contains(where: { $0.id == selectedNoteID }) {
+            selectedNoteID = notesModel.notes.first?.id
+        }
         await model.load()
         historyRevision = model.historyRevision
         if !model.executions.contains(where: { $0.id == selectedExecutionID }) {
@@ -123,6 +208,9 @@ public struct MoonlightRootView: View {
             if let execution = await model.capture() {
                 selectedExecutionID = execution.id
                 isShowingComposer = false
+                // The capture also wrote a durable note; show it right away.
+                await notesModel.load()
+                selectedNoteID = notesModel.notes.first?.id
             }
         }
     }
