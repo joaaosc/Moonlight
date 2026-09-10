@@ -12,7 +12,9 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
     public static let commandIDPrefix = "shortcut:"
 
     public let id: UUID
-    public let externalID: String
+    /// The handle Shortcuts owns. It changes only through an explicit relink,
+    /// when a shortcut was reimported or synced under a new identifier.
+    public private(set) var externalID: String
     public var cachedName: String
     public var cachedSubtitle: String
     public var alias: String
@@ -96,6 +98,18 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
                 destination: .result
             )
         )
+    }
+
+    /// Points this command at another shortcut, keeping its Moonlight identity,
+    /// alias and input policy. Used when the original identifier disappeared
+    /// after a reimport or a sync.
+    public func relinked(to summary: ShortcutSummary, at date: Date = Date()) -> Self {
+        var updated = self
+        updated.externalID = summary.externalID
+        updated.cachedName = summary.name
+        updated.cachedSubtitle = summary.subtitle
+        updated.lastSeenAt = date
+        return updated
     }
 
     /// Normalizes an alias typed by the user. Aliases address a command from

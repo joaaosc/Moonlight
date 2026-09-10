@@ -166,6 +166,19 @@ public final class MoonlightShortcutsModel {
         }
     }
 
+    /// Points an existing command at another shortcut. The command keeps its
+    /// identity, alias and history; only the link moves.
+    public func relink(_ binding: ShortcutCommandBinding, to summary: ShortcutSummary) async {
+        guard let store else { return }
+        do {
+            let stored = try await store.update(binding.relinked(to: summary))
+            apply(stored)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     /// Removes Moonlight's link. The shortcut stays in the user's library.
     public func remove(_ binding: ShortcutCommandBinding) async {
         guard let store else { return }

@@ -80,6 +80,18 @@ public struct ShortcutBindingsView: View {
                         .labelStyle(.titleAndIcon)
                         .font(.caption)
                         .foregroundStyle(.orange)
+                    // The shortcut behind this command is gone. Relinking keeps
+                    // the command, its alias and its history.
+                    Menu("Relink") {
+                        ForEach(model.unregisteredLibrary) { summary in
+                            Button(summary.name) {
+                                Task { await model.relink(binding, to: summary) }
+                            }
+                        }
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                    .disabled(model.unregisteredLibrary.isEmpty)
                 }
                 Spacer()
                 Button("Remove", systemImage: "minus.circle") {

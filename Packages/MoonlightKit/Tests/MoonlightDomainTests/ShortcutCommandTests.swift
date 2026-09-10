@@ -124,3 +124,32 @@ struct UserShortcutCommandProviderTests {
         #expect(definitions.count == ActionRegistry.standard.descriptors.count + 1)
     }
 }
+
+@Suite("Relinking a shortcut command")
+struct ShortcutRelinkTests {
+    @Test("Relinking moves the handle and keeps the command")
+    func keepsCommandIdentity() {
+        let original = ShortcutCommandBinding(
+            externalID: "external-1",
+            cachedName: "Daily Note",
+            alias: "daily-note",
+            inputKind: .text
+        )
+
+        let relinked = original.relinked(
+            to: ShortcutSummary(
+                externalID: "external-2",
+                name: "Daily Note (restored)",
+                subtitle: "Notes"
+            )
+        )
+
+        #expect(relinked.id == original.id)
+        #expect(relinked.commandID == original.commandID)
+        #expect(relinked.alias == original.alias)
+        #expect(relinked.inputKind == original.inputKind)
+        #expect(relinked.externalID == "external-2")
+        #expect(relinked.cachedName == "Daily Note (restored)")
+        #expect(relinked.lastSeenAt != nil)
+    }
+}
