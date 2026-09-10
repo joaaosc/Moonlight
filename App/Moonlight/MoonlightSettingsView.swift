@@ -1,5 +1,6 @@
 import AppKit
 import MoonlightAppUI
+import MoonlightInfrastructure
 import MoonlightIntents
 import SwiftUI
 
@@ -36,6 +37,10 @@ private struct MoonlightGeneralSettingsView: View {
     let hotKeyCenter: GlobalHotKeyCenter
 
     @AppStorage("showDockIcon") private var showsDockIcon = false
+    @AppStorage(MoonlightRetention.executionLimitKey)
+    private var executionLimit = MoonlightRetention.defaultExecutionLimit
+    @AppStorage(MoonlightRetention.noteLimitKey)
+    private var noteLimit = MoonlightRetention.defaultNoteLimit
     @State private var activationError: String?
 
     var body: some View {
@@ -43,6 +48,26 @@ private struct MoonlightGeneralSettingsView: View {
             Section("Global Shortcut") {
                 HotKeyRecorderView(center: hotKeyCenter)
             }
+            Section {
+                Stepper(
+                    "Keep \(executionLimit.formatted()) executions",
+                    value: $executionLimit,
+                    in: MoonlightRetention.minimumLimit...MoonlightRetention.maximumLimit,
+                    step: 50
+                )
+                Stepper(
+                    "Keep \(noteLimit.formatted()) notes",
+                    value: $noteLimit,
+                    in: MoonlightRetention.minimumLimit...MoonlightRetention.maximumLimit,
+                    step: 50
+                )
+                Text("New limits apply the next time Moonlight starts. Records beyond the limit are dropped when the next one is written.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Retention")
+            }
+
             Section {
                 Toggle("Show Moonlight in the Dock", isOn: $showsDockIcon)
                     .onChange(of: showsDockIcon) { previousValue, newValue in

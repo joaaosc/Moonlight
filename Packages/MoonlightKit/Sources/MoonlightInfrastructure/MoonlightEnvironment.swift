@@ -55,11 +55,14 @@ public struct MoonlightEnvironment: Sendable {
         handlers: [any ActionHandler] = ActionRegistry.standardHandlers,
         store: FileExecutionStore? = nil,
         shortcuts: ShortcutsCatalogClient = .failing(.unavailable, status: .unavailable),
-        shortcutRunner: ShortcutsRunClient = .unavailable()
+        shortcutRunner: ShortcutsRunClient = .unavailable(),
+        retention: MoonlightRetention = MoonlightRetention()
     ) throws -> MoonlightEnvironment {
-        let store = try store ?? FileExecutionStore()
+        let store = try store ?? FileExecutionStore(
+            retentionLimit: retention.executionLimit
+        )
         let bindingsStore = try ShortcutBindingsStore()
-        let noteStore = try FileNoteStore()
+        let noteStore = try FileNoteStore(retentionLimit: retention.noteLimit)
         let quicklinkStore = try QuicklinkStore()
         let cache = ShortcutBindingsCache()
         let quicklinkCache = QuicklinkCache()

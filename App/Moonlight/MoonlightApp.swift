@@ -95,7 +95,8 @@ struct MoonlightApp: App {
             return .success(
                 try MoonlightEnvironment.live(
                     shortcuts: shortcuts.catalogClient(),
-                    shortcutRunner: shortcuts.runClient()
+                    shortcutRunner: shortcuts.runClient(),
+                    retention: MoonlightRetention(preferences: .standard)
                 )
             )
         } catch {
