@@ -97,6 +97,7 @@
 		84ED336EAADD96BF1AF1E5FB /* MoonlightKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MoonlightKit; path = Packages/MoonlightKit; sourceTree = SOURCE_ROOT; };
 		8A85D8584357DDD63136CFB0 /* MoonlightApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightApplicationDelegate.swift; sourceTree = "<group>"; };
 		8F62F9B64BA321F71C639F2D /* MoonlightFavoritesWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightFavoritesWidget.swift; sourceTree = "<group>"; };
+		95C1BB08826631F097A86272 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		9650625EF6A1A540B4B3258D /* MoonlightWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MoonlightWidgets.entitlements; sourceTree = "<group>"; };
 		A6339BC8BCECDBCFCD1D2FAA /* MoonlightServicesProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightServicesProvider.swift; sourceTree = "<group>"; };
 		A849AD3732D5A9AF723CA6E3 /* MoonlightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightApp.swift; sourceTree = "<group>"; };
@@ -217,6 +218,14 @@
 			path = Moonlight;
 			sourceTree = "<group>";
 		};
+		D15CF262AF0D6F9F2DE88283 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				95C1BB08826631F097A86272 /* Version.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		E342897766CD0568AEBFE34C /* Packages */ = {
 			isa = PBXGroup;
 			children = (
@@ -229,6 +238,7 @@
 			isa = PBXGroup;
 			children = (
 				6342121A65E43B02907FE4D7 /* App */,
+				D15CF262AF0D6F9F2DE88283 /* Config */,
 				E342897766CD0568AEBFE34C /* Packages */,
 				7ED7D4A73297A981E1C10746 /* Products */,
 			);
@@ -572,6 +582,7 @@
 		};
 		6C25C59050785C6E4EA7020E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 95C1BB08826631F097A86272 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -604,7 +615,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 27;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -623,7 +633,6 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = "0.1.0-pre-alpha.3";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -664,6 +673,7 @@
 		};
 		A33F5CB6A6BDD6AB4CA7CFB8 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 95C1BB08826631F097A86272 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -696,7 +706,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 27;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -709,7 +718,6 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = "0.1.0-pre-alpha.3";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";

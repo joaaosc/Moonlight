@@ -8,3 +8,6 @@ xcuserdata/
 .swiftpm/xcode/
 
 # Keep the project roadmap tracked even when broader ignore rules match it.
+
+# The build number is derived, never committed. See Config/Version.xcconfig.
+Config/Version.generated.xcconfig

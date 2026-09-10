@@ -10,10 +10,15 @@ configs:
   Debug: debug
   Release: release
 
+# Version settings come from an xcconfig, not from here. A build number in this
+# file is a build number in Git: every build becomes a commit, and two branches
+# cannot raise it independently. See Config/Version.xcconfig.
+configFiles:
+  Debug: Config/Version.xcconfig
+  Release: Config/Version.xcconfig
+
 settings:
   base:
-    MARKETING_VERSION: 0.1.0-pre-alpha.3
-    CURRENT_PROJECT_VERSION: 27
     MACOSX_DEPLOYMENT_TARGET: "27.0"
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
