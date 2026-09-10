@@ -24,7 +24,8 @@ public final class MoonlightToolPaletteModel {
     public private(set) var result: Execution?
     public private(set) var errorMessage: String?
     public private(set) var catalogErrorMessage: String?
-    public private(set) var isWorking = false
+    public private(set) var activeInvocation: MoonlightToolInvocation?
+    public var isWorking: Bool { activeInvocation != nil }
     public let preferredActionID: String?
     public private(set) var favoriteIDs: Set<String> = []
 
@@ -249,20 +250,70 @@ public final class MoonlightToolPaletteModel {
     }
 
     public func execute(_ descriptor: ActionDescriptor) async {
-        guard !isWorking else { return }
+        guard activeInvocation == nil else { return }
 
-        isWorking = true
+        let invocation = MoonlightToolInvocation(
+            presentationID: presentationID,
+            toolID: descriptor.id,
+            input: input,
+            operation: base64Operation
+        )
+        let presentation = presentation(for: descriptor)
+        let request = makeRequest(for: descriptor, presentation: presentation)
+        var completedDraft = MoonlightToolDraft(input: input, operation: base64Operation)
+
+        activeInvocation = invocation
         result = nil
         errorMessage = nil
-        let selectionAtStart = selectedID
-        var completedDraft = currentDraft
-        defer { isWorking = false }
+        defer {
+            if activeInvocation == invocation {
+                activeInvocation = nil
+            }
+        }
 
-        let presentation = presentation(for: descriptor)
-        let request: ActionRequest
+        do {
+            let execution = try await client.execute(request)
+            if execution.status == .succeeded {
+                completedDraft.result = execution
+            } else {
+                completedDraft.errorMessage = execution.detail
+            }
+        } catch is CancellationError {
+            // Cancellation is not a failed tool result.
+            return
+        } catch {
+            completedDraft.errorMessage = error.localizedDescription
+        }
+
+        // A result belongs to the presentation that requested it. Once that
+        // presentation is gone the response has no surface left to own.
+        guard invocation.presentationID == presentationID else { return }
+
+        guard selectedID == invocation.toolID else {
+            // The tool left the screen: keep the result with its own draft,
+            // unless that draft already moved on without this invocation.
+            guard invocation.matches(draftStore.draft(for: invocation.toolID)) else { return }
+            draftStore.save(completedDraft, for: invocation.toolID)
+            return
+        }
+
+        // The tool is still selected but its input may have been retyped.
+        guard invocation.matches(currentDraft) else { return }
+
+        result = completedDraft.result
+        errorMessage = completedDraft.errorMessage
+        if presentation.destination == .colorPicker, completedDraft.result != nil {
+            openColorPicker()
+        }
+    }
+
+    private func makeRequest(
+        for descriptor: ActionDescriptor,
+        presentation: MoonlightToolPresentation
+    ) -> ActionRequest {
         switch presentation.inputKind {
         case .base64:
-            request = ActionRequest(
+            ActionRequest(
                 actionID: descriptor.id,
                 input: input,
                 parameters: ActionParameters(
@@ -270,38 +321,9 @@ public final class MoonlightToolPaletteModel {
                 )
             )
         case .text:
-            request = ActionRequest(
-                actionID: descriptor.id,
-                input: input
-            )
+            ActionRequest(actionID: descriptor.id, input: input)
         case .none:
-            request = ActionRequest(
-                actionID: descriptor.id,
-                input: ""
-            )
-        }
-
-        do {
-            let execution = try await client.execute(request)
-            if execution.status == .succeeded {
-                completedDraft.result = execution
-                if presentation.destination == .colorPicker,
-                   selectedID == selectionAtStart {
-                    openColorPicker()
-                }
-            } else {
-                completedDraft.errorMessage = execution.detail
-            }
-        } catch is CancellationError {
-            // Cancellation is not a failed tool result.
-        } catch {
-            completedDraft.errorMessage = error.localizedDescription
-        }
-        if selectedID == selectionAtStart {
-            result = completedDraft.result
-            errorMessage = completedDraft.errorMessage
-        } else if let selectionAtStart {
-            draftStore.save(completedDraft, for: selectionAtStart)
+            ActionRequest(actionID: descriptor.id, input: "")
         }
     }
 

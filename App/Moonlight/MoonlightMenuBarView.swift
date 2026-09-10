@@ -3,14 +3,17 @@ import MoonlightAppUI
 import SwiftUI
 
 struct MoonlightMenuBarView: View {
+    let coordinator: MoonlightPresentationCoordinator
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
+    @State private var menuBarToken: MoonlightPresentationCoordinator.MenuBarToken?
 
     var body: some View {
         VStack(spacing: 0) {
             MoonlightToolPaletteView(
-                model: MoonlightPresentationRoute.paletteModel,
+                model: coordinator.paletteModel,
                 onDismiss: { dismiss() }
             )
             Divider()
@@ -39,12 +42,15 @@ struct MoonlightMenuBarView: View {
         }
         .frame(width: 600, height: 570)
         .onAppear {
-            MoonlightToolPalettePresenter.shared.dismiss()
-            MoonlightPresentationRoute.paletteModel.preparePresentation()
-            MoonlightPresentationRoute.dismissMenuBar = { dismiss() }
+            coordinator.prepareMenuBarPalette()
+            menuBarToken = coordinator.registerMenuBar(dismiss: { dismiss() })
         }
         .onDisappear {
-            MoonlightPresentationRoute.dismissMenuBar = nil
+            // A previous instance can disappear after a new one registered.
+            // The token keeps it from clearing someone else's dismissal.
+            if let menuBarToken {
+                coordinator.unregisterMenuBar(menuBarToken)
+            }
         }
     }
 }

@@ -66,6 +66,8 @@ struct MoonlightToolPaletteTests {
             onOpenColorPicker: { wasOpened = true }
         )
 
+        // The palette only executes the tool it currently presents.
+        model.selectedID = MoonlightActionID.openColorPicker
         await model.execute(ActionDescriptor(
             id: MoonlightActionID.openColorPicker,
             title: "Open Color Picker",
@@ -75,6 +77,64 @@ struct MoonlightToolPaletteTests {
         #expect(wasOpened)
         #expect(await probe.actionID() == MoonlightActionID.openColorPicker)
         #expect(model.result?.status == .succeeded)
+    }
+
+    @Test("A result from a closed presentation never controls the current one")
+    func discardsResultFromSupersededPresentation() async {
+        let gate = ExecutionGate()
+        let model = MoonlightToolPaletteModel(client: .gated(gate, detail: "stale"))
+        let descriptor = ActionDescriptor(
+            id: MoonlightActionID.cleanText,
+            title: "Clean Text",
+            summary: "Normalize text"
+        )
+        model.selectedID = descriptor.id
+
+        async let execution: Void = model.execute(descriptor)
+        await gate.waitUntilStarted()
+        // Closing and reopening the palette while the command runs.
+        model.preparePresentation()
+        await gate.release()
+        await execution
+
+        #expect(model.result == nil)
+        #expect(model.errorMessage == nil)
+        #expect(!model.isWorking)
+    }
+
+    @Test("A result reaching a different selection stays in its own draft")
+    func keepsResultWithItsOwnTool() async {
+        let gate = ExecutionGate()
+        let model = MoonlightToolPaletteModel(client: .gated(gate, detail: "done"))
+        let descriptor = ActionDescriptor(
+            id: MoonlightActionID.cleanText,
+            title: "Clean Text",
+            summary: "Normalize text"
+        )
+        model.selectedID = descriptor.id
+
+        async let execution: Void = model.execute(descriptor)
+        await gate.waitUntilStarted()
+        model.selectedID = MoonlightActionID.generateUUID
+        await gate.release()
+        await execution
+
+        #expect(model.result == nil)
+        model.selectedID = descriptor.id
+        #expect(model.result?.detail == "done")
+    }
+
+    @Test("A disappearing menu bar instance keeps a newer dismissal registered")
+    func menuBarTokenSurvivesStaleDisappearance() {
+        let coordinator = MoonlightPresentationCoordinator()
+        let staleToken = coordinator.registerMenuBar(dismiss: {})
+        let currentToken = coordinator.registerMenuBar(dismiss: {})
+
+        coordinator.unregisterMenuBar(staleToken)
+        #expect(coordinator.isMenuBarRegistered)
+
+        coordinator.unregisterMenuBar(currentToken)
+        #expect(!coordinator.isMenuBarRegistered)
     }
 
     @Test("Isolated palette targets only the history window")
@@ -125,5 +185,57 @@ private actor PaletteExecutionProbe {
 
     func actionID() -> String? {
         storedActionID
+    }
+}
+
+private extension MoonlightRuntimeClient {
+    /// A client that reports when execution started and waits to be released,
+    /// so a test can change the presentation while a command is in flight.
+    static func gated(_ gate: ExecutionGate, detail: String) -> MoonlightRuntimeClient {
+        MoonlightRuntimeClient(
+            descriptors: { [] },
+            execute: { request in
+                await gate.signalStartAndWait()
+                return Execution(
+                    id: UUID(),
+                    actionID: request.actionID,
+                    actionTitle: request.actionID,
+                    input: request.input,
+                    parameters: request.parameters,
+                    summary: "Completed",
+                    detail: detail,
+                    status: .succeeded,
+                    createdAt: Date()
+                )
+            },
+            execution: { _ in nil },
+            recent: { _ in [] }
+        )
+    }
+}
+
+private actor ExecutionGate {
+    private var hasStarted = false
+    private var isReleased = false
+    private var startedContinuation: CheckedContinuation<Void, Never>?
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+
+    func signalStartAndWait() async {
+        hasStarted = true
+        startedContinuation?.resume()
+        startedContinuation = nil
+        guard !isReleased else { return }
+        await withCheckedContinuation { releaseContinuation = $0 }
+    }
+
+    func waitUntilStarted() async {
+        guard !hasStarted else { return }
+        await withCheckedContinuation { startedContinuation = $0 }
+    }
+
+    func release() {
+        isReleased = true
+        releaseContinuation?.resume()
+        releaseContinuation = nil
     }
 }

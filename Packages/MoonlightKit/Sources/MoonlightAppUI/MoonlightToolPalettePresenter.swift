@@ -12,19 +12,6 @@ public final class MoonlightToolPalettePresenter {
     private init() {}
 
     public func present(
-        preferredActionID: String? = nil,
-        isolatingFromMainWindow: Bool = true,
-        onOpenColorPicker: @escaping @MainActor () -> Void = {}
-    ) {
-        let model = self.model ?? MoonlightToolPaletteModel(
-            preferredActionID: preferredActionID,
-            onOpenColorPicker: onOpenColorPicker
-        )
-        model.preparePresentation(preferredActionID: preferredActionID)
-        present(model: model, isolatingFromMainWindow: isolatingFromMainWindow)
-    }
-
-    public func present(
         model: MoonlightToolPaletteModel,
         isolatingFromMainWindow: Bool = true
     ) {

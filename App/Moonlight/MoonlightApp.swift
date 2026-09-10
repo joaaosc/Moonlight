@@ -17,21 +17,28 @@ struct MoonlightApp: App {
     private var applicationDelegate
     @Environment(\.openWindow) private var openWindow
 
+    /// The host owns presentation. Surfaces receive this instance explicitly
+    /// instead of reaching for a global route.
+    private let coordinator: MoonlightPresentationCoordinator
+
     private static let logger = Logger(
         subsystem: "com.joaocosta.Moonlight",
         category: "Spotlight"
     )
 
     init() {
+        let coordinator = MoonlightPresentationCoordinator()
+        self.coordinator = coordinator
+
         AppDependencyManager.shared.add(
             dependency: MoonlightForegroundClient(
                 presentColorPicker: {
-                    MoonlightPresentationRoute.presentColorPicker(
+                    coordinator.presentColorPicker(
                         isolatingFromMainWindow: true
                     )
                 },
                 presentToolPalette: { actionID in
-                    MoonlightPresentationRoute.presentPalette(
+                    coordinator.presentPalette(
                         preferredActionID: actionID,
                         isolatingFromMainWindow: true
                     )
@@ -70,20 +77,20 @@ struct MoonlightApp: App {
             CommandGroup(replacing: .newItem) {}
             CommandMenu("Tools") {
                 Button("Open Moonlight Tools") {
-                    MoonlightPresentationRoute.presentPalette(
+                    coordinator.presentPalette(
                         isolatingFromMainWindow: false
                     )
                 }
                 .keyboardShortcut("m", modifiers: [.command, .shift])
 
                 Button("Open History") {
-                    MoonlightToolPalettePresenter.shared.dismiss()
+                    coordinator.dismissPalette()
                     openWindow(id: "main")
                 }
                 .keyboardShortcut("h", modifiers: [.command, .shift])
 
                 Button("Open Color Picker") {
-                    MoonlightPresentationRoute.presentColorPicker(
+                    coordinator.presentColorPicker(
                         isolatingFromMainWindow: false
                     )
                 }
@@ -96,7 +103,7 @@ struct MoonlightApp: App {
         }
 
         MenuBarExtra("Moonlight", systemImage: "moon.stars") {
-            MoonlightMenuBarView()
+            MoonlightMenuBarView(coordinator: coordinator)
         }
         .menuBarExtraStyle(.window)
     }

@@ -1,5 +1,4 @@
 import AppKit
-import MoonlightAppUI
 import OSLog
 
 @MainActor
@@ -26,33 +25,4 @@ enum MoonlightLaunchContext {
         return processInfo.arguments.contains("--moonlight-testing-show-history")
             || processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
-}
-
-@MainActor
-enum MoonlightPresentationRoute {
-    static var dismissMenuBar: (@MainActor () -> Void)?
-    static let paletteModel = MoonlightToolPaletteModel(onOpenColorPicker: {
-        presentColorPicker(isolatingFromMainWindow: true)
-    })
-
-    static func presentPalette(
-        preferredActionID: String? = nil,
-        isolatingFromMainWindow: Bool
-    ) {
-        dismissMenuBar?()
-        paletteModel.preparePresentation(preferredActionID: preferredActionID)
-        MoonlightToolPalettePresenter.shared.present(
-            model: paletteModel,
-            isolatingFromMainWindow: isolatingFromMainWindow
-        )
-    }
-
-    static func presentColorPicker(isolatingFromMainWindow: Bool) {
-        dismissMenuBar?()
-        MoonlightToolPalettePresenter.shared.dismiss()
-        MoonlightColorPanelPresenter.shared.present(
-            isolatingFromMainWindow: isolatingFromMainWindow
-        )
-    }
-
 }
