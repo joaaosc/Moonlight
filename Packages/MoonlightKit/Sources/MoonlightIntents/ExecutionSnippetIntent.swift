@@ -21,8 +21,11 @@ public struct ExecutionSnippetIntent: SnippetIntent {
         guard let identifier = UUID(uuidString: executionID) else {
             throw ExecutionIntentError.invalidExecutionIdentifier(executionID)
         }
-        let client = try MoonlightRuntime.client()
-        guard let storedExecution = try await client.execution(identifier) else {
+        // The renderer only reads a stored result by ID. It never re-runs a
+        // command: re-executing here would duplicate history and side effects.
+        guard let storedExecution = try await MoonlightIntentExecutor.execution(
+            id: identifier
+        ) else {
             throw ExecutionIntentError.executionNotFound(identifier)
         }
         let view = await MainActor.run {

@@ -73,16 +73,19 @@ public final class MoonlightToolPaletteModel {
         self.isEditing = preferredActionID != nil && selectedID == preferredActionID
     }
 
+    /// Builds the model from the environment composed by the host process.
+    /// A composition failure keeps the palette usable and visible as an error
+    /// instead of leaving the surface without a model.
     public convenience init(
-        provider: (any CommandCatalogProvider)? = nil,
+        environment: Result<MoonlightEnvironment, MoonlightRuntimeError>,
         preferredActionID: String? = nil,
         onOpenColorPicker: @escaping @MainActor () -> Void = {}
     ) {
-        switch MoonlightRuntime.liveClient {
-        case let .success(client):
+        switch environment {
+        case let .success(environment):
             self.init(
-                client: client,
-                provider: provider,
+                client: environment.client,
+                provider: environment.catalogProvider,
                 preferredActionID: preferredActionID,
                 preferences: .standard,
                 onOpenColorPicker: onOpenColorPicker
@@ -95,7 +98,7 @@ public final class MoonlightToolPaletteModel {
                     execution: { _ in nil },
                     recent: { _ in [] }
                 ),
-                provider: provider,
+                provider: nil,
                 preferredActionID: preferredActionID,
                 onOpenColorPicker: onOpenColorPicker
             )

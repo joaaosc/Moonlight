@@ -35,8 +35,10 @@ public final class MoonlightModel {
             && inputCharacterCount <= CaptureNoteAction.maximumCharacterCount
     }
 
-    public init() {
-        clientResult = MoonlightRuntime.liveClient
+    public init(
+        environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment
+    ) {
+        clientResult = environment.map(\.client)
         historyFileURL = try? FileExecutionStore.defaultFileURL()
         observeExternalHistoryChanges()
     }

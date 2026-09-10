@@ -1,5 +1,6 @@
 import AppKit
 import MoonlightDomain
+import MoonlightInfrastructure
 
 /// Owns palette and color picker presentation for one host process.
 ///
@@ -20,24 +21,24 @@ public final class MoonlightPresentationCoordinator {
     }
 
     public private(set) lazy var paletteModel = MoonlightToolPaletteModel(
-        provider: provider,
+        environment: environment,
         onOpenColorPicker: { [weak self] in
             self?.presentColorPicker(isolatingFromMainWindow: true)
         }
     )
 
-    private let provider: (any CommandCatalogProvider)?
+    private let environment: Result<MoonlightEnvironment, MoonlightRuntimeError>
     private let palettePresenter: MoonlightToolPalettePresenter
     private let colorPanelPresenter: MoonlightColorPanelPresenter
     private var menuBarToken: MenuBarToken?
     private var dismissMenuBar: (@MainActor () -> Void)?
 
     public init(
-        provider: (any CommandCatalogProvider)? = nil,
+        environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment,
         palettePresenter: MoonlightToolPalettePresenter = .shared,
         colorPanelPresenter: MoonlightColorPanelPresenter = .shared
     ) {
-        self.provider = provider
+        self.environment = environment
         self.palettePresenter = palettePresenter
         self.colorPanelPresenter = colorPanelPresenter
     }

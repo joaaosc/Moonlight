@@ -305,28 +305,19 @@ public struct MoonlightRuntimeClient: Sendable {
             recent: { limit in await store.recent(limit: limit) }
         )
     }
-}
 
-public enum MoonlightRuntime {
-    public static let liveClient: Result<MoonlightRuntimeClient, MoonlightRuntimeError> = {
-        do {
-            let store = try FileExecutionStore()
-            let registry = ActionRegistry.standard
-            let runner = ActionRunner(registry: registry, store: store)
-            return .success(
-                MoonlightRuntimeClient(
-                    descriptors: { registry.descriptors },
-                    execute: { request in try await runner.execute(request) },
-                    execution: { identifier in try await store.execution(id: identifier) },
-                    recent: { limit in try await store.recent(limit: limit) }
-                )
-            )
-        } catch {
-            return .failure(.initializationFailed(error.localizedDescription))
-        }
-    }()
-
-    public static func client() throws -> MoonlightRuntimeClient {
-        try liveClient.get()
+    /// Backed by the App Group document shared with the other Moonlight
+    /// processes. The store is per-process; the file is what they share.
+    public static func fileBacked(
+        registry: ActionRegistry = .standard,
+        store: FileExecutionStore
+    ) -> MoonlightRuntimeClient {
+        let runner = ActionRunner(registry: registry, store: store)
+        return MoonlightRuntimeClient(
+            descriptors: { registry.descriptors },
+            execute: { request in try await runner.execute(request) },
+            execution: { identifier in try await store.execution(id: identifier) },
+            recent: { limit in try await store.recent(limit: limit) }
+        )
     }
 }

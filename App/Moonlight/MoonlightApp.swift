@@ -1,6 +1,7 @@
 import AppIntents
 import AppKit
 import MoonlightAppUI
+import MoonlightInfrastructure
 import MoonlightIntents
 import OSLog
 import SwiftUI
@@ -27,7 +28,11 @@ struct MoonlightApp: App {
     )
 
     init() {
-        let coordinator = MoonlightPresentationCoordinator()
+        // The host process composes its dependencies once and hands them to
+        // the surfaces below. The App Intents extension composes its own.
+        let coordinator = MoonlightPresentationCoordinator(
+            environment: MoonlightProcess.environment
+        )
         self.coordinator = coordinator
 
         AppDependencyManager.shared.add(
