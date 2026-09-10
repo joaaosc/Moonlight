@@ -6,7 +6,7 @@
 # and is untouched by an install.
 set -euo pipefail
 
-APP="${1:-build/release/export/Moonlight.app}"
+APP="${1:-build.noindex/release/export/Moonlight.app}"
 DESTINATION="/Applications/Moonlight.app"
 
 if [ ! -d "$APP" ]; then

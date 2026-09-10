@@ -8,7 +8,10 @@ set -euo pipefail
 
 SCHEME="Moonlight"
 PROJECT="Moonlight.xcodeproj"
-BUILD_DIR="${BUILD_DIR:-build/release}"
+# A ".noindex" suffix keeps Spotlight and Launch Services out of the build
+# directory: an app bundle sitting there would otherwise be registered and show
+# up next to the installed copy.
+BUILD_DIR="${BUILD_DIR:-build.noindex/release}"
 ARCHIVE="$BUILD_DIR/Moonlight.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 TEAM_ID="${TEAM_ID:-33FPG9442W}"
@@ -23,6 +26,7 @@ xcodebuild -project "$PROJECT" \
     -configuration Release \
     -destination 'generic/platform=macOS' \
     -archivePath "$ARCHIVE" \
+    -derivedDataPath build.noindex/DerivedData \
     archive
 
 echo "==> Exporting with Developer ID"
@@ -47,6 +51,18 @@ xcodebuild -exportArchive \
     -exportPath "$EXPORT_DIR"
 
 APP="$EXPORT_DIR/Moonlight.app"
+
+echo "==> Unregistering build copies so they do not shadow the installed app"
+# The archive leaves a second bundle behind; both it and the export carry the
+# same identifier as the installed app.
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+ARCHIVED_APP="build.noindex/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Moonlight/InstallationBuildProductsLocation/Applications/Moonlight.app"
+[ -d "$ARCHIVED_APP" ] && "$LSREGISTER" -u "$ARCHIVED_APP" 2>/dev/null
+rm -rf build.noindex/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates
+
+# Two bundles with the same identifier confuse Launch Services and Spotlight,
+# which is what makes several "Moonlight" entries appear in search.
+"$LSREGISTER" -u "$APP" 2>/dev/null || true
 
 echo "==> Verifying the signature"
 # --strict without --deep: the modern check, which also validates the nested

@@ -8,6 +8,15 @@ import AppIntents
 public struct MoonlightAppShortcuts: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
         AppShortcut(
+            intent: OpenMoonlightIntent(),
+            phrases: [
+                "Open \(.applicationName) Tools",
+                "Open the \(.applicationName) palette",
+            ],
+            shortTitle: "Open Moonlight Tools",
+            systemImageName: "command.square"
+        )
+        AppShortcut(
             intent: CleanTextIntent(),
             phrases: [
                 "Clean text with \(.applicationName)",

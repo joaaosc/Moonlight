@@ -68,7 +68,10 @@ public actor ShortcutsEventsClient {
         case OSStatus(connectionInvalid):
             return .unavailable
         default:
-            return .denied
+            // Anything else is unknown, not a refusal. Calling it a denial
+            // would point the user at a Privacy pane that may not even list
+            // the app, and would bury the real error.
+            return .notDetermined
         }
     }
 
@@ -158,9 +161,11 @@ public actor ShortcutsEventsClient {
         case Int(errAENoSuchObject), Int(errAEIllegalIndex):
             return .shortcutNotFound(externalID: externalID)
         default:
+            // The numeric code travels with the message: without it a report
+            // like this one cannot be diagnosed from a screenshot.
             let message = error.userInfo["ErrorString"] as? String
                 ?? error.localizedDescription
-            return .bridgeFailure(message)
+            return .bridgeFailure("\(message) (code \(code))")
         }
     }
 }
