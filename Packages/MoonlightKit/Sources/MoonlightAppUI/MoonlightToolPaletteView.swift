@@ -48,47 +48,47 @@ public struct MoonlightToolPaletteView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 8) {
             if model.isEditing {
-                Button("Back to tools", systemImage: "chevron.left") { goBack() }
+                Button("Back to tools", systemImage: "chevron.backward") { goBack() }
                     .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
                     .help("Back to tools (Escape)")
             } else {
-                Image(systemName: "command.square")
+                Image(systemName: "moon.stars")
+                    .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
+
             Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
                 .font(.headline)
-            if let sourceContext = model.sourceContext {
-                // Where the invocation came from, kept visible while Moonlight
-                // is in front of that app.
-                Text("from \(sourceContext.name)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Invoked from \(sourceContext.name)")
-            }
-            Spacer()
+
+            Spacer(minLength: 0)
+
             if model.isWorking {
                 ProgressView()
                     .controlSize(.small)
                     .accessibilityLabel("Running tool")
             }
-            Button("Search tools", systemImage: "magnifyingglass") {
-                if model.isEditing { _ = model.goBack() }
-                focusedField = .search
-            }
-            .labelStyle(.iconOnly)
-            .keyboardShortcut("l", modifiers: .command)
-            .help("Search tools (⌘L)")
         }
+        // The search field is right below in the catalogue, so a button that
+        // only moves focus there would be a second control for one action.
     }
 
     private var catalogue: some View {
         VStack(spacing: 12) {
-            TextField("Search tools", text: $model.query)
-                .textFieldStyle(.roundedBorder)
-                .accessibilityLabel("Search tools")
-                .focused($focusedField, equals: .search)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+                TextField("Search tools", text: $model.query)
+                    // Plain, so the field reads as the palette's own input
+                    // instead of a bordered form control with a focus ring
+                    // drawn around it.
+                    .textFieldStyle(.plain)
+                    .font(.title3)
+                    .accessibilityLabel("Search tools")
+                    .focused($focusedField, equals: .search)
                 .onSubmit { activateSelectedTool() }
                 .onKeyPress(.tab, phases: .down) { press in
                     guard press.modifiers.isEmpty else { return .ignored }
@@ -104,6 +104,10 @@ public struct MoonlightToolPaletteView: View {
                     model.moveSelection(by: -1)
                     return .handled
                 }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(.quinary, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             if model.filteredDescriptors.isEmpty {
                 ContentUnavailableView(
@@ -116,33 +120,42 @@ public struct MoonlightToolPaletteView: View {
                 ScrollViewReader { scroll in
                     List(selection: $model.selectedID) {
                         ForEach(model.filteredDescriptors) { descriptor in
-                            HStack(spacing: 12) {
+                            let isFavorite = model.favoriteIDs.contains(descriptor.id)
+                            HStack(spacing: 10) {
                                 Image(systemName: model.presentation(for: descriptor).symbolName)
-                                    .frame(width: 28)
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 22)
                                     .accessibilityHidden(true)
-                                VStack(alignment: .leading, spacing: 3) {
+                                VStack(alignment: .leading, spacing: 1) {
                                     Text(descriptor.title)
                                     Text(descriptor.summary)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
                                 Spacer(minLength: 8)
                                 Text("\\" + model.alias(for: descriptor))
                                     .font(.caption.monospaced())
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.tertiary)
                                 Button(
-                                    model.favoriteIDs.contains(descriptor.id) ? "Remove Favorite" : "Add Favorite",
-                                    systemImage: model.favoriteIDs.contains(descriptor.id) ? "star.fill" : "star"
+                                    isFavorite ? "Remove Favorite" : "Add Favorite",
+                                    systemImage: isFavorite ? "star.fill" : "star"
                                 ) {
                                     model.toggleFavorite(descriptor, undoManager: undoManager)
                                 }
                                 .labelStyle(.iconOnly)
                                 .buttonStyle(.plain)
+                                // Filled and tinted only when it means something;
+                                // an outline in black on every row reads as a
+                                // control rather than as state.
+                                .foregroundStyle(isFavorite ? AnyShapeStyle(.tint) : AnyShapeStyle(.tertiary))
                                 .help("Favorite \(descriptor.title)")
                             }
-                            .padding(.vertical, 5)
+                            .padding(.vertical, 4)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
+                            .listRowSeparator(.hidden)
                             .tag(descriptor.id)
                             .id(descriptor.id)
                             .onTapGesture(count: 2) {
@@ -151,8 +164,9 @@ public struct MoonlightToolPaletteView: View {
                             }
                         }
                     }
-                    .listStyle(.plain)
+                    .listStyle(.inset)
                     .scrollContentBackground(.hidden)
+                    .environment(\.defaultMinListRowHeight, 34)
                     .onKeyPress(.return, phases: .down) { press in
                         guard press.modifiers.isEmpty else { return .ignored }
                         activateSelectedTool()
@@ -168,14 +182,33 @@ public struct MoonlightToolPaletteView: View {
                 errorLabel(error)
             }
             Divider()
-            HStack {
-                Text("↑↓ Select · Tab Complete · Return Open")
+            HStack(spacing: 8) {
+                Text("↑↓ Select · Tab Complete")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Spacer()
-                Button("Open Tool") { activateSelectedTool() }
-                    .buttonStyle(.glassProminent)
-                    .disabled(model.selectedDescriptor == nil || model.isWorking)
+                if let sourceContext = model.sourceContext {
+                    // Where the invocation came from: context, not a title.
+                    Text("· from \(sourceContext.name)")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .accessibilityLabel("Invoked from \(sourceContext.name)")
+                }
+                Spacer(minLength: 8)
+                // A palette's primary action is the Return key. A filled button
+                // here would compete with the selected row for attention.
+                Button {
+                    activateSelectedTool()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Open")
+                        Image(systemName: "return")
+                    }
+                    .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .disabled(model.selectedDescriptor == nil || model.isWorking)
             }
         }
     }
@@ -204,8 +237,17 @@ public struct MoonlightToolPaletteView: View {
                 TextEditor(text: $model.input)
                     .font(.body.monospaced())
                     .focused($focusedField, equals: .input)
+                    .scrollContentBackground(.hidden)
+                    .padding(6)
                     .frame(minHeight: 120, maxHeight: .infinity)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color(nsColor: .textBackgroundColor))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.quaternary)
+                    )
                     .accessibilityLabel("Input for \(descriptor.title)")
                     .disabled(model.isWorking)
             }
@@ -252,7 +294,14 @@ public struct MoonlightToolPaletteView: View {
                     }
                 }
                 .padding(12)
-                .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(.quaternary)
+                )
             }
 
             if let error = model.errorMessage { errorLabel(error) }
@@ -263,11 +312,14 @@ public struct MoonlightToolPaletteView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+                // Inside the editor there is a form to submit, so the default
+                // button is the right control — unlike the catalogue, where
+                // Return already acts on the selected row.
                 Button("Run \(descriptor.title)") {
                     Task { await model.execute(descriptor) }
                 }
                 .keyboardShortcut(.return, modifiers: .command)
-                .buttonStyle(.glassProminent)
+                .buttonStyle(.borderedProminent)
                 .disabled(model.isWorking)
             }
         }
