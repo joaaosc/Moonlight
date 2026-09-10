@@ -72,6 +72,9 @@ struct MoonlightApp: App {
                         text: text,
                         isolatingFromMainWindow: true
                     )
+                },
+                presentWindow: {
+                    coordinator.presentWindow(isolatingFromMainWindow: true)
                 }
             )
         )

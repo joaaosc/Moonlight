@@ -71,7 +71,8 @@ public final class MoonlightPresentationCoordinator {
         preferredActionID: String? = nil,
         isolatingFromMainWindow: Bool,
         initialInput: String? = nil,
-        initialQuery: String? = nil
+        initialQuery: String? = nil,
+        activation: MoonlightToolPalettePresenter.Activation = .standard
     ) {
         // Read the origin before anything activates Moonlight.
         let sourceContext = MoonlightSourceContext.current()
@@ -84,7 +85,20 @@ public final class MoonlightPresentationCoordinator {
         )
         palettePresenter.present(
             model: paletteModel,
-            isolatingFromMainWindow: isolatingFromMainWindow
+            isolatingFromMainWindow: isolatingFromMainWindow,
+            activation: activation
+        )
+    }
+
+    /// Opens the Moonlight window and insists on the keyboard.
+    ///
+    /// The catalogue is reset first: a window asked for by name should not open
+    /// on whatever half-typed search the previous invocation left behind.
+    public func presentWindow(isolatingFromMainWindow: Bool) {
+        presentPalette(
+            isolatingFromMainWindow: isolatingFromMainWindow,
+            initialQuery: "",
+            activation: .forced
         )
     }
 

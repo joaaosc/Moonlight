@@ -6,6 +6,19 @@ public final class MoonlightToolPalettePresenter {
     public static let shared = MoonlightToolPalettePresenter()
     public static let panelIdentifier = "moonlight-tool-palette"
 
+    /// How hard the presentation insists on the keyboard.
+    public enum Activation: Sendable {
+        /// Ask for activation and order the panel front. Enough when the
+        /// request already came from Moonlight or from a system surface that
+        /// hands activation over.
+        case standard
+        /// Also order the panel front regardless of which app is active.
+        /// `NSApplication.activate()` is a request, not a guarantee: another
+        /// app can still hold activation, leaving the panel visible but not
+        /// typed into.
+        case forced
+    }
+
     private var panel: MoonlightGlassPanel?
     private var model: MoonlightToolPaletteModel?
 
@@ -13,7 +26,8 @@ public final class MoonlightToolPalettePresenter {
 
     public func present(
         model: MoonlightToolPaletteModel,
-        isolatingFromMainWindow: Bool = true
+        isolatingFromMainWindow: Bool = true,
+        activation: Activation = .standard
     ) {
         let replacingModel = self.model !== model
         self.model = model
@@ -24,8 +38,9 @@ public final class MoonlightToolPalettePresenter {
             if isolatingFromMainWindow {
                 hideMainWindow(excluding: panel)
             }
-            panel.makeKeyAndOrderFront(nil)
             NSApplication.shared.activate()
+            panel.makeKeyAndOrderFront(nil)
+            focus(panel, activation: activation)
             return
         }
 
@@ -48,6 +63,16 @@ public final class MoonlightToolPalettePresenter {
             hideMainWindow(excluding: panel)
         }
         panel.makeKeyAndOrderFront(nil)
+        focus(panel, activation: activation)
+    }
+
+    /// The extra step `.forced` adds. Ordering front regardless is what makes
+    /// the panel reachable when Moonlight did not get activation; making it key
+    /// afterwards is what puts the caret in the search field.
+    private func focus(_ panel: MoonlightGlassPanel, activation: Activation) {
+        guard activation == .forced else { return }
+        panel.orderFrontRegardless()
+        panel.makeKey()
     }
 
     /// The hosting view must not paint: the glass surface inside is the only

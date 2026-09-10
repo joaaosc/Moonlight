@@ -35,6 +35,35 @@ struct MoonlightSurfaceEntityTests {
         #expect(try await query.entities(matching: "OMT").map(\.id) == [MoonlightSurfaceID.tools])
     }
 
+    @Test("Typing the alias resolves the window surface")
+    func windowAliasQuery() async throws {
+        let query = MoonlightSurfaceEntityQuery()
+
+        #expect(try await query.entities(matching: "omw").map(\.id) == [MoonlightSurfaceID.window])
+    }
+
+    @Test("A shared prefix keeps both surfaces available")
+    func sharedPrefixQuery() async throws {
+        let query = MoonlightSurfaceEntityQuery()
+        let ids = try await query.entities(matching: "om").map(\.id)
+
+        #expect(Set(ids) == Set([MoonlightSurfaceID.tools, MoonlightSurfaceID.window]))
+    }
+
+    @Test("Focus-forcing route is reachable from the foreground client")
+    @MainActor
+    func windowRoute() {
+        let probe = WindowProbe()
+        let client = MoonlightForegroundClient(
+            presentColorPicker: {},
+            presentWindow: { probe.count += 1 }
+        )
+
+        client.presentWindow()
+
+        #expect(probe.count == 1)
+    }
+
     @Test("An unrelated query does not surface the launcher")
     func unrelatedQuery() async throws {
         let query = MoonlightSurfaceEntityQuery()
@@ -50,6 +79,11 @@ struct MoonlightSurfaceEntityTests {
             #expect(known.contains(surface.id))
         }
     }
+}
+
+@MainActor
+private final class WindowProbe {
+    var count = 0
 }
 
 private func requireOpenIntent<T: OpenIntent>(_ type: T.Type) {}

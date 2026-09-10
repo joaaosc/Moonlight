@@ -30,6 +30,8 @@ public struct OpenMoonlightSurfaceIntent: OpenIntent {
         switch target.id {
         case MoonlightSurfaceID.tools:
             await foregroundClient.presentToolPalette(actionID: nil)
+        case MoonlightSurfaceID.window:
+            await foregroundClient.presentWindow()
         default:
             // An identifier the index still carries but this build no longer
             // publishes: fall back to the palette rather than doing nothing.

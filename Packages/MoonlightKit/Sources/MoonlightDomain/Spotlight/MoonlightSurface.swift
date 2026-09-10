@@ -55,6 +55,7 @@ public struct MoonlightSurface: Sendable, Hashable, Identifiable {
 
 public enum MoonlightSurfaceID {
     public static let tools = "moonlight.surface.tools"
+    public static let window = "moonlight.surface.window"
 }
 
 /// The surfaces Moonlight publishes to Spotlight.
@@ -72,7 +73,23 @@ public enum MoonlightSurfaceRegistry {
         additionalKeywords: ["tools", "palette", "launcher", "open moonlight tools"]
     )
 
-    public static let standard: [MoonlightSurface] = [tools]
+    /// The same window as `tools`, reached with the focus forced.
+    ///
+    /// Separate from `tools` because the two answer different questions:
+    /// `omt` asks for the tool catalogue, `omw` asks for the window itself,
+    /// wherever the keyboard currently is. Opening `omt` while another app
+    /// holds activation can leave the panel visible but not typed into; this
+    /// alias exists to guarantee the caret.
+    public static let window = MoonlightSurface(
+        id: MoonlightSurfaceID.window,
+        alias: "omw",
+        title: "Window",
+        summary: "Open the Moonlight window and focus it.",
+        symbolName: "macwindow",
+        additionalKeywords: ["window", "focus", "open moonlight window"]
+    )
+
+    public static let standard: [MoonlightSurface] = [tools, window]
 
     public static func surface(id: String) -> MoonlightSurface? {
         standard.first { $0.id == id }

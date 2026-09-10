@@ -6,19 +6,28 @@ public struct MoonlightForegroundClient: Sendable {
     private let copyToPasteboardAction: @MainActor @Sendable (String) -> Void
     private let presentNotesAction: @MainActor @Sendable (String, UUID?) -> Void
     private let presentCommandLineAction: @MainActor @Sendable (String) -> Void
+    private let presentWindowAction: @MainActor @Sendable () -> Void
 
     public init(
         presentColorPicker: @escaping @MainActor @Sendable () -> Void,
         presentToolPalette: @escaping @MainActor @Sendable (String?) -> Void = { _ in },
         copyToPasteboard: @escaping @MainActor @Sendable (String) -> Void = { _ in },
         presentNotes: @escaping @MainActor @Sendable (String, UUID?) -> Void = { _, _ in },
-        presentCommandLine: @escaping @MainActor @Sendable (String) -> Void = { _ in }
+        presentCommandLine: @escaping @MainActor @Sendable (String) -> Void = { _ in },
+        presentWindow: @escaping @MainActor @Sendable () -> Void = {}
     ) {
         presentColorPickerAction = presentColorPicker
         presentToolPaletteAction = presentToolPalette
         copyToPasteboardAction = copyToPasteboard
         presentNotesAction = presentNotes
         presentCommandLineAction = presentCommandLine
+        presentWindowAction = presentWindow
+    }
+
+    /// Opens the Moonlight window and puts the keyboard in it.
+    @MainActor
+    public func presentWindow() {
+        presentWindowAction()
     }
 
     /// Opens the palette on a command the user already typed.

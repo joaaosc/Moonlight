@@ -398,6 +398,19 @@ struct MoonlightPaletteCommandLineTests {
         }
     }
 
+    @Test("Opening the window by name clears a command left behind")
+    func windowPresentationResetsTheField() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.preparePresentation(initialQuery: "/note Buy milk")
+
+        // What `presentWindow` asks the model for: a window requested by name
+        // must not open on the previous invocation's half-typed search.
+        model.preparePresentation(initialQuery: "")
+
+        #expect(model.query.isEmpty)
+        #expect(model.commandLineState == nil)
+    }
+
     @Test("A command arrives in the palette with its text intact")
     func seedsTheSearchField() {
         let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))

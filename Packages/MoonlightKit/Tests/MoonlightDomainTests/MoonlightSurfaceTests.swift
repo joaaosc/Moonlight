@@ -40,6 +40,13 @@ struct MoonlightSurfaceTests {
         #expect(surface.searchKeywords == ["xy", "moonlight", "tools"])
     }
 
+    @Test("Publishes the window surface under the omw alias")
+    func publishesWindowAlias() throws {
+        let surface = try #require(MoonlightSurfaceRegistry.surface(alias: "omw"))
+
+        #expect(surface.id == MoonlightSurfaceID.window)
+    }
+
     @Test("Aliases are unique across published surfaces")
     func aliasesAreUnique() {
         let aliases = MoonlightSurfaceRegistry.standard.map(\.alias)

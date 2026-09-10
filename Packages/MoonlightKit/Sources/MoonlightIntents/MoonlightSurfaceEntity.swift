@@ -133,6 +133,7 @@ public enum MoonlightSurfaceSpotlightIndex {
     /// after a surface is retired so its index item can still be withdrawn.
     public static let knownIdentifiers: [String] = [
         MoonlightSurfaceID.tools,
+        MoonlightSurfaceID.window,
     ]
 
     static func index(_ entities: [MoonlightSurfaceEntity]) async throws {
