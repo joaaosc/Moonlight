@@ -87,6 +87,17 @@ struct MoonlightApp: App {
                 )
             }
         }
+        // A separate index and a separate failure: a broken tool catalogue must
+        // not take the typed aliases down with it.
+        Task {
+            do {
+                try await MoonlightSurfaceSpotlightIndex.refresh()
+            } catch {
+                Self.logger.error(
+                    "Failed to refresh the Moonlight surface index: \(error.localizedDescription, privacy: .public)"
+                )
+            }
+        }
     }
 
     private static func composeEnvironment() -> Result<MoonlightEnvironment, MoonlightRuntimeError> {
