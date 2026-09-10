@@ -11,6 +11,10 @@ struct MoonlightSettingsView: View {
             Tab("General", systemImage: "gearshape") {
                 MoonlightGeneralSettingsView(hotKeyCenter: hotKeyCenter)
             }
+            Tab("Quicklinks", systemImage: "arrow.up.right.square") {
+                QuicklinksView()
+                    .frame(width: 560, height: 460)
+            }
             Tab("Diagnostics", systemImage: "stethoscope") {
                 DiagnosticsView()
                     .frame(width: 560, height: 420)

@@ -12,6 +12,8 @@ public struct CommandPresentation: Sendable, Equatable {
     public enum Destination: String, Sendable, Equatable, Codable, CaseIterable {
         case result
         case colorPicker
+        /// The result is a URL the host opens once the execution is recorded.
+        case externalURL
     }
 
     public let alias: String

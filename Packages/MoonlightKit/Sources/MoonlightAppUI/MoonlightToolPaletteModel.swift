@@ -340,8 +340,19 @@ public final class MoonlightToolPaletteModel {
 
         result = completedDraft.result
         errorMessage = completedDraft.errorMessage
-        if presentation.destination == .colorPicker, completedDraft.result != nil {
+
+        switch presentation.destination {
+        case .colorPicker where completedDraft.result != nil:
             openColorPicker()
+        case .externalURL:
+            // The execution is recorded first; opening is the presentation of
+            // that result, and a bad address is reported like any failure.
+            if let text = completedDraft.result?.resolvedOutput.value.text,
+               let url = URL(string: text) {
+                errorMessage = performer.perform(.open(url))
+            }
+        case .colorPicker, .result:
+            break
         }
     }
 

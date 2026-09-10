@@ -42,6 +42,19 @@ public enum MoonlightStorage {
     public static let notesDidChangeDarwinName =
         "com.joaocosta.Moonlight.notes-did-change"
 
+    public static let quicklinksDidChangeNotification = Notification.Name(
+        "com.joaocosta.Moonlight.quicklinks-did-change"
+    )
+    public static let quicklinksDidChangeDarwinName =
+        "com.joaocosta.Moonlight.quicklinks-did-change"
+
+    static func postQuicklinksDidChange() {
+        post(
+            name: quicklinksDidChangeNotification,
+            darwinName: quicklinksDidChangeDarwinName
+        )
+    }
+
     static func postNotesDidChange() {
         post(name: notesDidChangeNotification, darwinName: notesDidChangeDarwinName)
     }
