@@ -166,7 +166,10 @@ public struct MoonlightToolPaletteView: View {
                 }
             }
 
-            if model.filteredDescriptors.isEmpty {
+            if let commandLineState = model.commandLineState {
+                commandLinePlaceholder(commandLineState)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if model.filteredDescriptors.isEmpty {
                 ContentUnavailableView(
                     "No tools found",
                     systemImage: "magnifyingglass",
@@ -388,6 +391,28 @@ public struct MoonlightToolPaletteView: View {
         case .copy: "c"
         case .save: "s"
         case .open: "o"
+        }
+    }
+
+    /// What a typed command shows while the catalogue is still empty. The text
+    /// the user typed stays on screen: nothing about the command is discarded.
+    @ViewBuilder
+    private func commandLinePlaceholder(
+        _ state: MoonlightToolPaletteModel.CommandLineState
+    ) -> some View {
+        switch state {
+        case let .unpublished(command):
+            ContentUnavailableView(
+                "No /\(command.name) command",
+                systemImage: "command",
+                description: Text("Moonlight does not publish this command yet.")
+            )
+        case let .invalid(message):
+            ContentUnavailableView(
+                "Not a command",
+                systemImage: "exclamationmark.triangle",
+                description: Text(message)
+            )
         }
     }
 

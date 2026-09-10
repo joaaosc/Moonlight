@@ -157,6 +157,32 @@ public final class MoonlightToolPaletteModel {
         }
     }
 
+    /// What the search field currently holds, when it holds a command rather
+    /// than a search. A command and a tool name look nothing alike, so the
+    /// palette must not report "no tools found" for a typed `/name`.
+    public enum CommandLineState: Equatable, Sendable {
+        /// The text is a well formed command with no published implementation.
+        case unpublished(SlashCommand)
+        /// The text starts with a slash but is not a command yet.
+        case invalid(String)
+    }
+
+    public var commandLineState: CommandLineState? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.first == SlashCommand.prefix else { return nil }
+
+        do {
+            let command = try SlashCommandParser().parse(trimmed)
+            guard SlashCommandRegistry.definition(named: command.name) == nil else {
+                // A published command is handled by its own route, not here.
+                return nil
+            }
+            return .unpublished(command)
+        } catch {
+            return .invalid(error.localizedDescription)
+        }
+    }
+
     public var filteredDescriptors: [ActionDescriptor] {
         filteredPresentations.compactMap { catalog.descriptor(for: $0.id) }
     }
@@ -237,10 +263,14 @@ public final class MoonlightToolPaletteModel {
     /// - Parameter initialInput: text supplied by the invocation, such as the
     ///   selection handed over by a macOS service. It replaces the draft for
     ///   the target tool, because the user just chose that text.
+    /// - Parameter initialQuery: text placed in the search field, such as a
+    ///   command typed elsewhere. It only applies when no tool was preselected,
+    ///   because the editor has no search field to seed.
     public func preparePresentation(
         preferredActionID: String? = nil,
         sourceContext: MoonlightSourceContext? = nil,
-        initialInput: String? = nil
+        initialInput: String? = nil,
+        initialQuery: String? = nil
     ) {
         self.sourceContext = sourceContext
         refreshCatalog()
@@ -251,7 +281,7 @@ public final class MoonlightToolPaletteModel {
             isEditing = true
         } else {
             isEditing = false
-            query = ""
+            query = initialQuery ?? ""
             reconcileSelection()
         }
         if let initialInput {

@@ -367,3 +367,44 @@ struct MoonlightShortcutsLoadingTests {
         #expect(model.errorMessage?.contains("did not answer in time") == true)
     }
 }
+
+@Suite("Moonlight command line in the palette")
+@MainActor
+struct MoonlightPaletteCommandLineTests {
+    @Test("Plain text is a search, not a command")
+    func plainTextIsNotACommand() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "json"
+
+        #expect(model.commandLineState == nil)
+    }
+
+    @Test("A well formed command with no implementation is reported as unpublished")
+    func unpublishedCommand() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "/note Buy milk"
+
+        #expect(model.commandLineState == .unpublished(SlashCommand(name: "note", arguments: "Buy milk")))
+    }
+
+    @Test("A malformed command is reported as invalid rather than as no results")
+    func invalidCommand() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "/no+te"
+
+        guard case .invalid = model.commandLineState else {
+            Issue.record("Expected an invalid command, got \(String(describing: model.commandLineState))")
+            return
+        }
+    }
+
+    @Test("A command arrives in the palette with its text intact")
+    func seedsTheSearchField() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+
+        model.preparePresentation(initialQuery: "/note Buy milk")
+
+        #expect(model.query == "/note Buy milk")
+        #expect(!model.isEditing)
+    }
+}

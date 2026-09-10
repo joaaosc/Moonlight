@@ -70,7 +70,8 @@ public final class MoonlightPresentationCoordinator {
     public func presentPalette(
         preferredActionID: String? = nil,
         isolatingFromMainWindow: Bool,
-        initialInput: String? = nil
+        initialInput: String? = nil,
+        initialQuery: String? = nil
     ) {
         // Read the origin before anything activates Moonlight.
         let sourceContext = MoonlightSourceContext.current()
@@ -78,11 +79,24 @@ public final class MoonlightPresentationCoordinator {
         paletteModel.preparePresentation(
             preferredActionID: preferredActionID,
             sourceContext: sourceContext,
-            initialInput: initialInput
+            initialInput: initialInput,
+            initialQuery: initialQuery
         )
         palettePresenter.present(
             model: paletteModel,
             isolatingFromMainWindow: isolatingFromMainWindow
+        )
+    }
+
+    /// Opens the palette on a command the user already started typing.
+    ///
+    /// The text lands in the search field rather than running: a command that
+    /// Moonlight does not publish yet must stay visible and editable instead of
+    /// disappearing into an error.
+    public func presentCommandLine(text: String, isolatingFromMainWindow: Bool) {
+        presentPalette(
+            isolatingFromMainWindow: isolatingFromMainWindow,
+            initialQuery: text
         )
     }
 
