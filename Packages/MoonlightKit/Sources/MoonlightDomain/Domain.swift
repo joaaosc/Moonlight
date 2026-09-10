@@ -198,7 +198,19 @@ public struct Execution: Codable, Equatable, Identifiable, Sendable {
 
 public protocol ActionHandler: Sendable {
     var descriptor: ActionDescriptor { get }
+    var presentation: CommandPresentation { get }
     func perform(request: ActionRequest) async throws -> ActionOutput
+}
+
+public extension ActionHandler {
+    var presentation: CommandPresentation {
+        CommandPresentation(
+            alias: descriptor.id,
+            symbolName: "command",
+            inputKind: .text,
+            destination: .result
+        )
+    }
 }
 
 public struct CaptureNoteAction: ActionHandler {
@@ -277,8 +289,26 @@ public struct ActionRegistry: Sendable {
         handlers.map(\.descriptor)
     }
 
+    public var definitions: [CommandDefinition] {
+        handlers.map { handler in
+            CommandDefinition(
+                descriptor: handler.descriptor,
+                presentation: handler.presentation
+            )
+        }
+    }
+
     public func handler(id: String) -> (any ActionHandler)? {
         handlers.first { $0.descriptor.id == id }
+    }
+
+    public func definition(id: String) -> CommandDefinition? {
+        handlers.first { $0.descriptor.id == id }.map { handler in
+            CommandDefinition(
+                descriptor: handler.descriptor,
+                presentation: handler.presentation
+            )
+        }
     }
 }
 

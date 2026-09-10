@@ -25,6 +25,10 @@ public struct MoonlightToolPaletteView: View {
             header
             Divider()
 
+            if let catalogError = model.catalogErrorMessage {
+                errorLabel(catalogError)
+            }
+
             if model.isEditing, let descriptor = model.selectedDescriptor {
                 editor(for: descriptor)
                     .transition(.opacity)
@@ -151,7 +155,7 @@ public struct MoonlightToolPaletteView: View {
                 }
             }
 
-            if let error = model.errorMessage, model.descriptors.isEmpty {
+            if let error = model.errorMessage {
                 errorLabel(error)
             }
             Divider()
@@ -172,7 +176,7 @@ public struct MoonlightToolPaletteView: View {
             Text(descriptor.summary)
                 .foregroundStyle(.secondary)
 
-            if descriptor.id == MoonlightActionID.base64Text {
+            if model.presentation(for: descriptor).inputKind == .base64 {
                 Picker("Operation", selection: $model.base64Operation) {
                     ForEach(Base64TextOperation.allCases, id: \.self) { operation in
                         Text(operation.rawValue.capitalized).tag(operation)
@@ -240,6 +244,11 @@ public struct MoonlightToolPaletteView: View {
 
     private func activateSelectedTool() {
         guard !model.isWorking, let descriptor = model.selectedDescriptor else { return }
+        let presentation = model.presentation(for: descriptor)
+        if presentation.destination == .colorPicker {
+            Task { await model.execute(descriptor) }
+            return
+        }
         model.openSelectedTool()
         if !model.acceptsInput(descriptor) {
             Task { await model.execute(descriptor) }

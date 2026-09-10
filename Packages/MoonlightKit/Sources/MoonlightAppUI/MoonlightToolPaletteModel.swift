@@ -23,35 +23,57 @@ public final class MoonlightToolPaletteModel {
     public var base64Operation: Base64TextOperation = .encode
     public private(set) var result: Execution?
     public private(set) var errorMessage: String?
+    public private(set) var catalogErrorMessage: String?
     public private(set) var isWorking = false
     public let preferredActionID: String?
     public private(set) var favoriteIDs: Set<String> = []
 
     private let client: MoonlightRuntimeClient
+    private let provider: (any CommandCatalogProvider)?
     private let preferences: UserDefaults?
     private let openColorPicker: @MainActor () -> Void
-    private let catalog: MoonlightToolCatalog
+    private var catalog: MoonlightToolCatalog
     private let search = MoonlightToolSearch()
     private let draftStore = MoonlightToolDraftStore()
 
     public init(
         client: MoonlightRuntimeClient,
+        provider: (any CommandCatalogProvider)? = nil,
         preferredActionID: String? = nil,
         preferences: UserDefaults? = nil,
         onOpenColorPicker: @escaping @MainActor () -> Void = {}
     ) {
         self.client = client
+        self.provider = provider
         self.preferences = preferences
         self.preferredActionID = preferredActionID
         self.openColorPicker = onOpenColorPicker
-        catalog = MoonlightToolCatalog(descriptors: client.descriptors())
-        descriptors = catalog.descriptors
-        favoriteIDs = Set(preferences?.stringArray(forKey: "favoriteToolIDs") ?? [])
-        selectedID = descriptors.first { $0.id == preferredActionID }?.id ?? descriptors.first?.id
-        isEditing = preferredActionID != nil && selectedID == preferredActionID
+        self.favoriteIDs = Set(preferences?.stringArray(forKey: "favoriteToolIDs") ?? [])
+
+        var loadedCatalog = MoonlightToolCatalog(descriptors: [])
+        var initialCatalogError: String?
+
+        do {
+            let definitions: [CommandDefinition]
+            if let provider {
+                definitions = try provider.snapshot()
+            } else {
+                definitions = Self.makeDefinitions(from: client.descriptors())
+            }
+            loadedCatalog = try MoonlightToolCatalog(definitions: definitions)
+        } catch {
+            initialCatalogError = error.localizedDescription
+        }
+
+        self.catalog = loadedCatalog
+        self.descriptors = loadedCatalog.descriptors
+        self.catalogErrorMessage = initialCatalogError
+        self.selectedID = descriptors.first { $0.id == preferredActionID }?.id ?? descriptors.first?.id
+        self.isEditing = preferredActionID != nil && selectedID == preferredActionID
     }
 
     public convenience init(
+        provider: (any CommandCatalogProvider)? = nil,
         preferredActionID: String? = nil,
         onOpenColorPicker: @escaping @MainActor () -> Void = {}
     ) {
@@ -59,18 +81,68 @@ public final class MoonlightToolPaletteModel {
         case let .success(client):
             self.init(
                 client: client,
+                provider: provider,
                 preferredActionID: preferredActionID,
                 preferences: .standard,
                 onOpenColorPicker: onOpenColorPicker
             )
         case let .failure(error):
-            self.init(client: .init(
-                descriptors: { [] },
-                execute: { _ in throw error },
-                execution: { _ in nil },
-                recent: { _ in [] }
-            ), preferredActionID: preferredActionID, onOpenColorPicker: onOpenColorPicker)
-            errorMessage = error.localizedDescription
+            self.init(
+                client: .init(
+                    descriptors: { [] },
+                    execute: { _ in throw error },
+                    execution: { _ in nil },
+                    recent: { _ in [] }
+                ),
+                provider: provider,
+                preferredActionID: preferredActionID,
+                onOpenColorPicker: onOpenColorPicker
+            )
+            self.errorMessage = error.localizedDescription
+            self.catalogErrorMessage = error.localizedDescription
+        }
+    }
+
+    private static func makeDefinitions(from descriptors: [ActionDescriptor]) -> [CommandDefinition] {
+        let builtinRegistry = ActionRegistry.standard
+        return descriptors.map { descriptor in
+            let presentation = builtinRegistry.definition(id: descriptor.id)?.presentation ?? CommandPresentation(
+                alias: descriptor.id,
+                symbolName: "command",
+                inputKind: .text,
+                destination: .result
+            )
+            return CommandDefinition(descriptor: descriptor, presentation: presentation)
+        }
+    }
+
+    public func refreshCatalog() {
+        do {
+            let definitions: [CommandDefinition]
+            if let provider {
+                definitions = try provider.snapshot()
+            } else {
+                definitions = Self.makeDefinitions(from: client.descriptors())
+            }
+            let newCatalog = try MoonlightToolCatalog(definitions: definitions)
+            catalog = newCatalog
+            descriptors = newCatalog.descriptors
+            catalogErrorMessage = nil
+
+            if isEditing {
+                if let currentSelectedID = selectedID, descriptors.contains(where: { $0.id == currentSelectedID }) {
+                    // Se editando e ID existe, preservar selecao.
+                } else {
+                    // Se selecionado foi removido enquanto isEditing, voltar ao catalogo em vez de abrir editor de outra ferramenta automaticamente.
+                    isEditing = false
+                    reconcileSelection()
+                }
+            } else {
+                // Se nao editando, reconcileSelection sempre para respeitar busca quando titulo mudar.
+                reconcileSelection()
+            }
+        } catch {
+            catalogErrorMessage = error.localizedDescription
         }
     }
 
@@ -118,6 +190,7 @@ public final class MoonlightToolPaletteModel {
     }
 
     public func preparePresentation(preferredActionID: String? = nil) {
+        refreshCatalog()
         if let preferredActionID,
            descriptors.contains(where: { $0.id == preferredActionID }) {
             query = ""
@@ -185,13 +258,26 @@ public final class MoonlightToolPaletteModel {
         var completedDraft = currentDraft
         defer { isWorking = false }
 
+        let presentation = presentation(for: descriptor)
         let request: ActionRequest
-        if descriptor.id == MoonlightActionID.base64Text {
-            request = .transformBase64(input: input, operation: base64Operation)
-        } else {
+        switch presentation.inputKind {
+        case .base64:
             request = ActionRequest(
                 actionID: descriptor.id,
-                input: input(for: descriptor)
+                input: input,
+                parameters: ActionParameters(
+                    values: [TransformBase64Action.operationParameterName: base64Operation.rawValue]
+                )
+            )
+        case .text:
+            request = ActionRequest(
+                actionID: descriptor.id,
+                input: input
+            )
+        case .none:
+            request = ActionRequest(
+                actionID: descriptor.id,
+                input: ""
             )
         }
 
@@ -199,7 +285,7 @@ public final class MoonlightToolPaletteModel {
             let execution = try await client.execute(request)
             if execution.status == .succeeded {
                 completedDraft.result = execution
-                if descriptor.id == MoonlightActionID.openColorPicker,
+                if presentation.destination == .colorPicker,
                    selectedID == selectionAtStart {
                     openColorPicker()
                 }
@@ -221,9 +307,5 @@ public final class MoonlightToolPaletteModel {
 
     public func acceptsInput(_ descriptor: ActionDescriptor) -> Bool {
         presentation(for: descriptor).acceptsInput
-    }
-
-    private func input(for descriptor: ActionDescriptor) -> String {
-        acceptsInput(descriptor) ? input : ""
     }
 }

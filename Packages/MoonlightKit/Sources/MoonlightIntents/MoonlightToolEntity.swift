@@ -39,23 +39,16 @@ public struct MoonlightToolEntity: IndexedEntity {
         )
     }
 
+    public init(definition: CommandDefinition) {
+        self.init(
+            id: definition.descriptor.id,
+            name: definition.descriptor.title,
+            summary: definition.descriptor.summary
+        )
+    }
+
     private var systemImageName: String {
-        switch id {
-        case MoonlightActionID.captureNote:
-            "note.text.badge.plus"
-        case MoonlightActionID.openColorPicker:
-            "paintpalette"
-        case MoonlightActionID.cleanText:
-            "text.badge.checkmark"
-        case MoonlightActionID.formatJSON:
-            "curlybraces"
-        case MoonlightActionID.generateUUID:
-            "number"
-        case MoonlightActionID.base64Text:
-            "textformat.abc"
-        default:
-            "command"
-        }
+        ActionRegistry.standard.definition(id: id)?.presentation.symbolName ?? "command"
     }
 }
 
@@ -96,8 +89,8 @@ public struct MoonlightToolEntityQuery: EntityStringQuery, IndexedEntityQuery {
     }
 
     public static var allEntities: [MoonlightToolEntity] {
-        ActionRegistry.standard.descriptors
-            .map(MoonlightToolEntity.init(descriptor:))
+        ActionRegistry.standard.definitions
+            .map(MoonlightToolEntity.init(definition:))
             .sorted { $0.name < $1.name }
     }
 }
