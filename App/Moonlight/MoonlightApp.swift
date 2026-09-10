@@ -74,9 +74,11 @@ struct MoonlightApp: App {
 
     private static func composeEnvironment() -> Result<MoonlightEnvironment, MoonlightRuntimeError> {
         do {
+            let shortcuts = ShortcutsEventsClient()
             return .success(
                 try MoonlightEnvironment.live(
-                    shortcuts: ShortcutsEventsClient().catalogClient()
+                    shortcuts: shortcuts.catalogClient(),
+                    shortcutRunner: shortcuts.runClient()
                 )
             )
         } catch {

@@ -142,6 +142,12 @@ public actor ShortcutBindingsStore {
         return bindings
     }
 
+    /// Reads the document without opening an actor, so a composition root can
+    /// fill the catalog cache before any surface asks for it.
+    public static func storedBindings(at fileURL: URL) throws -> [ShortcutCommandBinding] {
+        try readBindings(at: fileURL)
+    }
+
     public static func defaultFileURL(
         groupContainerResolver: (String) -> URL? = {
             FileManager.default.containerURL(

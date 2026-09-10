@@ -317,24 +317,31 @@ public struct OpenColorPickerAction: ActionHandler {
 
 public struct ActionRegistry: Sendable {
     private let handlers: [any ActionHandler]
+    /// Sources of handlers whose identifiers only exist at runtime, such as the
+    /// shortcuts a user registered. Compiled-in handlers always win a tie.
+    private let resolvers: [any ActionHandlerResolver]
 
-    public init(handlers: [any ActionHandler]) {
+    public init(
+        handlers: [any ActionHandler],
+        resolvers: [any ActionHandlerResolver] = []
+    ) {
         self.handlers = handlers
+        self.resolvers = resolvers
     }
 
-    public static let standard = ActionRegistry(
-        handlers: [
-            CaptureNoteAction(),
-            OpenColorPickerAction(),
-            CleanTextAction(),
-            FormatJSONAction(),
-            GenerateUUIDAction(),
-            TransformBase64Action(),
-        ]
-    )
+    public static let standardHandlers: [any ActionHandler] = [
+        CaptureNoteAction(),
+        OpenColorPickerAction(),
+        CleanTextAction(),
+        FormatJSONAction(),
+        GenerateUUIDAction(),
+        TransformBase64Action(),
+    ]
+
+    public static let standard = ActionRegistry(handlers: standardHandlers)
 
     public var descriptors: [ActionDescriptor] {
-        handlers.map(\.descriptor)
+        definitions.map(\.descriptor)
     }
 
     public var definitions: [CommandDefinition] {
@@ -343,20 +350,38 @@ public struct ActionRegistry: Sendable {
                 descriptor: handler.descriptor,
                 presentation: handler.presentation
             )
-        }
+        } + resolvers.flatMap(\.definitions)
     }
 
     public func handler(id: String) -> (any ActionHandler)? {
-        handlers.first { $0.descriptor.id == id }
+        if let handler = handlers.first(where: { $0.descriptor.id == id }) {
+            return handler
+        }
+        for resolver in resolvers {
+            if let handler = resolver.handler(id: id) {
+                return handler
+            }
+        }
+        return nil
     }
 
     public func definition(id: String) -> CommandDefinition? {
-        handlers.first { $0.descriptor.id == id }.map { handler in
-            CommandDefinition(
+        if let handler = handlers.first(where: { $0.descriptor.id == id }) {
+            return CommandDefinition(
                 descriptor: handler.descriptor,
                 presentation: handler.presentation
             )
         }
+        return resolvers
+            .lazy
+            .compactMap { $0.handler(id: id) }
+            .first
+            .map { handler in
+                CommandDefinition(
+                    descriptor: handler.descriptor,
+                    presentation: handler.presentation
+                )
+            }
     }
 }
 

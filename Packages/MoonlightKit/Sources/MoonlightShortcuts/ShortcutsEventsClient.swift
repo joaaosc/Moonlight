@@ -97,7 +97,7 @@ public actor ShortcutsEventsClient {
         }
     }
 
-    private func withBridge<Value>(
+    internal func withBridge<Value>(
         _ body: (any ShortcutsEventsApplication, ShortcutsEventsBridgeDelegate) throws -> Value
     ) throws -> Value {
         guard let application = SBApplication(bundleIdentifier: Self.bundleIdentifier) else {
@@ -133,7 +133,10 @@ public actor ShortcutsEventsClient {
         )
     }
 
-    private static func clientError(from error: NSError) -> ShortcutsClientError {
+    internal static func clientError(
+        from error: NSError,
+        externalID: String = ""
+    ) -> ShortcutsClientError {
         let code = (error.userInfo["ErrorNumber"] as? NSNumber)?.intValue ?? error.code
         switch code {
         case Int(errAEEventNotPermitted), Int(errAEPrivilegeError):
@@ -143,7 +146,7 @@ public actor ShortcutsEventsClient {
         case Int(procNotFound), Int(connectionInvalid), Int(errAEEventNotHandled):
             return .unavailable
         case Int(errAENoSuchObject), Int(errAEIllegalIndex):
-            return .shortcutNotFound(externalID: "")
+            return .shortcutNotFound(externalID: externalID)
         default:
             let message = error.userInfo["ErrorString"] as? String
                 ?? error.localizedDescription

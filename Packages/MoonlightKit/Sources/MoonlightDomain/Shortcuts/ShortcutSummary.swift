@@ -43,6 +43,11 @@ public enum ShortcutsClientError: Error, Equatable, LocalizedError, Sendable, Co
     /// side stopped, so no automatic retry follows it.
     case timedOut
     case shortcutNotFound(externalID: String)
+    /// The same shortcut is already running. Moonlight refuses to start it
+    /// twice instead of queueing or retrying.
+    case alreadyRunning
+    /// The shortcut answered with a value Moonlight does not convert.
+    case unsupportedOutput(String)
     /// The bridge answered with something Moonlight cannot interpret.
     case bridgeFailure(String)
 
@@ -56,6 +61,10 @@ public enum ShortcutsClientError: Error, Equatable, LocalizedError, Sendable, Co
             "Shortcuts did not answer in time. Moonlight did not retry."
         case let .shortcutNotFound(externalID):
             "The shortcut \(externalID) no longer exists in Shortcuts."
+        case .alreadyRunning:
+            "This shortcut is already running. Moonlight did not start it again."
+        case let .unsupportedOutput(typeDescription):
+            "The shortcut returned \(typeDescription), which Moonlight cannot show as text."
         case let .bridgeFailure(message):
             "Moonlight could not read the Shortcuts library: \(message)"
         }
@@ -67,6 +76,8 @@ public enum ShortcutsClientError: Error, Equatable, LocalizedError, Sendable, Co
         case .unavailable: "shortcuts-unavailable"
         case .timedOut: "shortcuts-timed-out"
         case .shortcutNotFound: "shortcut-not-found"
+        case .alreadyRunning: "shortcut-already-running"
+        case .unsupportedOutput: "shortcut-unsupported-output"
         case .bridgeFailure: "shortcuts-bridge-failure"
         }
     }

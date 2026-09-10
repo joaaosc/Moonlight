@@ -4,8 +4,8 @@ import ScriptingBridge
 /// The slice of the Shortcuts scripting dictionary Moonlight reads.
 ///
 /// Declared by hand instead of generating a header: only these members are
-/// used, and every one of them is read-only. The `run` command is deliberately
-/// absent — listing must not be able to start a workflow.
+/// used. Reading and running are separate protocols so the listing path has no
+/// way to start a workflow.
 @objc protocol ShortcutsEventsApplication: NSObjectProtocol {
     @objc optional func shortcuts() -> SBElementArray
 }
@@ -18,8 +18,15 @@ import ScriptingBridge
     @objc optional var actionCount: Int { get }
 }
 
+/// The `run` command from the Shortcuts suite. Separated from the read-only
+/// protocol so that reaching it is always a deliberate choice in the code.
+@objc protocol ShortcutsEventsRunnableShortcut: NSObjectProtocol {
+    @objc optional func run(withInput input: Any?) -> Any?
+}
+
 extension SBApplication: ShortcutsEventsApplication {}
 extension SBObject: ShortcutsEventsShortcut {}
+extension SBObject: ShortcutsEventsRunnableShortcut {}
 
 /// Captures the error Apple event instead of letting Scripting Bridge raise an
 /// Objective-C exception, which Swift could not catch.

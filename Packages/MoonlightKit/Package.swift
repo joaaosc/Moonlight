@@ -59,6 +59,13 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "MoonlightShortcutsTests",
+            dependencies: [
+                "MoonlightDomain",
+                "MoonlightShortcuts",
+            ]
+        ),
+        .testTarget(
             name: "MoonlightIntentsTests",
             dependencies: [
                 "MoonlightDomain",

@@ -35,23 +35,45 @@ public struct MoonlightEnvironment: Sendable {
     }
 
     /// Composes the environment backed by the shared history document.
-    /// - Parameter shortcuts: supplied by the host, which is the only process
-    ///   allowed to send Apple Events.
+    /// - Parameters:
+    ///   - shortcuts: supplied by the host, which is the only process allowed
+    ///     to send Apple Events.
+    ///   - shortcutRunner: runs registered shortcuts. A process without Apple
+    ///     Events keeps the unavailable client, so a personal command fails
+    ///     with a stated reason instead of silently doing nothing.
     public static func live(
-        registry: ActionRegistry = .standard,
+        handlers: [any ActionHandler] = ActionRegistry.standardHandlers,
         store: FileExecutionStore? = nil,
-        shortcuts: ShortcutsCatalogClient = .failing(.unavailable, status: .unavailable)
+        shortcuts: ShortcutsCatalogClient = .failing(.unavailable, status: .unavailable),
+        shortcutRunner: ShortcutsRunClient = .unavailable()
     ) throws -> MoonlightEnvironment {
         let store = try store ?? FileExecutionStore()
+        let bindingsStore = try ShortcutBindingsStore()
+        let cache = ShortcutBindingsCache()
+
+        // The catalog must be correct on the first request, so stored bindings
+        // are read here instead of after the first surface appears.
+        let bindingsFileURL = try ShortcutBindingsStore.defaultFileURL()
+        if let stored = try? ShortcutBindingsStore.storedBindings(at: bindingsFileURL) {
+            cache.replaceBindings(stored)
+        }
+
+        let registry = ActionRegistry(
+            handlers: handlers,
+            resolvers: [
+                ShortcutCommandHandlerResolver(cache: cache, client: shortcutRunner),
+            ]
+        )
+
         return MoonlightEnvironment(
             client: .fileBacked(registry: registry, store: store),
-            // Registered shortcuts are managed and persisted, but they are not
-            // published to the palette yet: nothing can execute them, and a
-            // command that cannot run must not be announced.
-            catalogProvider: BuiltInCommandProvider(registry: registry),
+            catalogProvider: CompositeCommandCatalogProvider(
+                BuiltInCommandProvider(registry: ActionRegistry(handlers: handlers)),
+                UserShortcutCommandProvider(cache: cache)
+            ),
             shortcuts: shortcuts,
-            bindingsStore: try ShortcutBindingsStore(),
-            bindingsCache: ShortcutBindingsCache()
+            bindingsStore: bindingsStore,
+            bindingsCache: cache
         )
     }
 
@@ -63,6 +85,33 @@ public struct MoonlightEnvironment: Sendable {
         MoonlightEnvironment(
             client: .inMemory(registry: registry, store: store),
             catalogProvider: BuiltInCommandProvider(registry: registry)
+        )
+    }
+
+    /// Composes an environment whose personal commands run against a supplied
+    /// client, for tests and previews that must not reach Apple Events.
+    public static func inMemory(
+        handlers: [any ActionHandler] = ActionRegistry.standardHandlers,
+        store: InMemoryExecutionStore = InMemoryExecutionStore(),
+        shortcuts: ShortcutsCatalogClient,
+        shortcutRunner: ShortcutsRunClient,
+        cache: ShortcutBindingsCache
+    ) -> MoonlightEnvironment {
+        let registry = ActionRegistry(
+            handlers: handlers,
+            resolvers: [
+                ShortcutCommandHandlerResolver(cache: cache, client: shortcutRunner),
+            ]
+        )
+        return MoonlightEnvironment(
+            client: .inMemory(registry: registry, store: store),
+            catalogProvider: CompositeCommandCatalogProvider(
+                BuiltInCommandProvider(registry: ActionRegistry(handlers: handlers)),
+                UserShortcutCommandProvider(cache: cache)
+            ),
+            shortcuts: shortcuts,
+            bindingsStore: nil,
+            bindingsCache: cache
         )
     }
 }
