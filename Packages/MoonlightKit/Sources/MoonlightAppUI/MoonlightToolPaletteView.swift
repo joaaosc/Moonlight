@@ -3,28 +3,46 @@ import SwiftUI
 import MoonlightDomain
 
 public struct MoonlightToolPaletteView: View {
+    /// Where the palette is being shown.
+    ///
+    /// The same view backs the floating launcher and the menu bar popover. The
+    /// launcher owns its whole window and can afford the lighter, chrome-free
+    /// treatment; the popover is already inside system chrome and would read as
+    /// a panel inside a panel if it borrowed it.
+    public enum Appearance: Sendable {
+        case glassPanel
+        case embedded
+    }
+
     @Bindable private var model: MoonlightToolPaletteModel
     @FocusState private var focusedField: Field?
     @Environment(\.undoManager) private var undoManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let appearance: Appearance
     private let onDismiss: () -> Void
 
     private enum Field: Hashable {
         case search, input
     }
 
+    private var isGlassPanel: Bool { appearance == .glassPanel }
+
     public init(
         model: MoonlightToolPaletteModel,
+        appearance: Appearance = .embedded,
         onDismiss: @escaping () -> Void = { MoonlightToolPalettePresenter.shared.dismiss() }
     ) {
         self.model = model
+        self.appearance = appearance
         self.onDismiss = onDismiss
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            Divider()
+            if !isGlassPanel || model.isEditing {
+                Divider()
+            }
 
             if let catalogError = model.catalogErrorMessage {
                 errorLabel(catalogError)
@@ -38,7 +56,7 @@ public struct MoonlightToolPaletteView: View {
                     .transition(.opacity)
             }
         }
-        .padding(16)
+        .padding(isGlassPanel ? MoonlightGlassMetrics.contentPadding : 16)
         .frame(minWidth: 480, idealWidth: 640, minHeight: 420, idealHeight: 520)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.14), value: model.isEditing)
         .onAppear { restoreFocus() }
@@ -47,21 +65,23 @@ public struct MoonlightToolPaletteView: View {
         .onExitCommand { goBack() }
     }
 
+    @ViewBuilder
     private var header: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             if model.isEditing {
-                Button("Back to tools", systemImage: "chevron.backward") { goBack() }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
-                    .help("Back to tools (Escape)")
-            } else {
+                backButton
+            } else if !isGlassPanel {
                 Image(systemName: "moon.stars")
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
 
-            Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
-                .font(.headline)
+            // In the launcher the search field below is the title: repeating
+            // the app's name above it would be chrome with nothing to say.
+            if model.isEditing || !isGlassPanel {
+                Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
+                    .font(isGlassPanel ? .title3.weight(.semibold) : .headline)
+            }
 
             Spacer(minLength: 0)
 
@@ -75,6 +95,26 @@ public struct MoonlightToolPaletteView: View {
         // only moves focus there would be a second control for one action.
     }
 
+    @ViewBuilder
+    private var backButton: some View {
+        let label = Image(systemName: "chevron.backward")
+            .font(.body.weight(.medium))
+
+        if isGlassPanel {
+            Button { goBack() } label: {
+                label.frame(width: 28, height: 28)
+            }
+            .buttonStyle(.glass)
+            .accessibilityLabel("Back to tools")
+            .help("Back to tools (Escape)")
+        } else {
+            Button("Back to tools", systemImage: "chevron.backward") { goBack() }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .help("Back to tools (Escape)")
+        }
+    }
+
     private var catalogue: some View {
         VStack(spacing: 12) {
             HStack(spacing: 8) {
@@ -86,7 +126,7 @@ public struct MoonlightToolPaletteView: View {
                     // instead of a bordered form control with a focus ring
                     // drawn around it.
                     .textFieldStyle(.plain)
-                    .font(.title3)
+                    .font(isGlassPanel ? .title2 : .title3)
                     .accessibilityLabel("Search tools")
                     .focused($focusedField, equals: .search)
                 .onSubmit { activateSelectedTool() }
@@ -105,9 +145,26 @@ public struct MoonlightToolPaletteView: View {
                     return .handled
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(.quinary, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .padding(.horizontal, isGlassPanel ? 14 : 10)
+            .padding(.vertical, isGlassPanel ? 11 : 8)
+            .background {
+                if isGlassPanel {
+                    // The field is the panel's primary control, so it gets its
+                    // own glass rather than a filled rectangle competing with
+                    // the surface behind it.
+                    Capsule(style: .continuous)
+                        .fill(.white.opacity(0.08))
+                } else {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(.quinary)
+                }
+            }
+            .overlay {
+                if isGlassPanel {
+                    Capsule(style: .continuous)
+                        .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+                }
+            }
 
             if model.filteredDescriptors.isEmpty {
                 ContentUnavailableView(

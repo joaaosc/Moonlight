@@ -47,6 +47,17 @@ enum MoonlightSnapshots {
             preferences: nil
         )
 
+        let launcherModel = MoonlightToolPaletteModel(
+            client: .inMemory(store: InMemoryExecutionStore()),
+            preferences: nil
+        )
+
+        let launcherEditingModel = MoonlightToolPaletteModel(
+            client: .inMemory(store: InMemoryExecutionStore()),
+            preferredActionID: MoonlightActionID.base64Text,
+            preferences: nil
+        )
+
         let shortcutsModel = MoonlightShortcutsModel(
             shortcuts: .stub([
                 ShortcutSummary(
@@ -80,6 +91,25 @@ enum MoonlightSnapshots {
             )),
             ("palette-editor", CGSize(width: 640, height: 520), AnyView(
                 MoonlightToolPaletteView(model: editingModel, onDismiss: {})
+            )),
+            // The launcher renders with its own chrome: the panel it lives in
+            // draws nothing, so the snapshot has to include the glass surface
+            // to show what the user actually sees.
+            ("launcher-catalog", CGSize(width: 640, height: 520), AnyView(
+                MoonlightToolPaletteView(
+                    model: launcherModel,
+                    appearance: .glassPanel,
+                    onDismiss: {}
+                )
+                .moonlightGlassSurface()
+            )),
+            ("launcher-editor", CGSize(width: 640, height: 520), AnyView(
+                MoonlightToolPaletteView(
+                    model: launcherEditingModel,
+                    appearance: .glassPanel,
+                    onDismiss: {}
+                )
+                .moonlightGlassSurface()
             )),
             ("settings-shortcuts", CGSize(width: 560, height: 460), AnyView(
                 ShortcutBindingsView(model: shortcutsModel)

@@ -6,7 +6,7 @@ public final class MoonlightToolPalettePresenter {
     public static let shared = MoonlightToolPalettePresenter()
     public static let panelIdentifier = "moonlight-tool-palette"
 
-    private var panel: NSPanel?
+    private var panel: MoonlightGlassPanel?
     private var model: MoonlightToolPaletteModel?
 
     private init() {}
@@ -19,7 +19,7 @@ public final class MoonlightToolPalettePresenter {
         self.model = model
         if let panel {
             if replacingModel {
-                panel.contentView = NSHostingView(rootView: MoonlightToolPaletteView(model: model))
+                panel.contentView = Self.makeContentView(model: model)
             }
             if isolatingFromMainWindow {
                 hideMainWindow(excluding: panel)
@@ -29,11 +29,8 @@ public final class MoonlightToolPalettePresenter {
             return
         }
 
-        let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 520),
-            styleMask: [.titled, .closable, .resizable],
-            backing: .buffered,
-            defer: false
+        let panel = MoonlightGlassPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 640, height: 520)
         )
         panel.identifier = NSUserInterfaceItemIdentifier(Self.panelIdentifier)
         panel.title = "Moonlight Tools"
@@ -42,7 +39,7 @@ public final class MoonlightToolPalettePresenter {
         panel.level = .floating
         panel.isReleasedWhenClosed = false
         panel.contentMinSize = NSSize(width: 480, height: 420)
-        panel.contentView = NSHostingView(rootView: MoonlightToolPaletteView(model: model))
+        panel.contentView = Self.makeContentView(model: model)
         panel.center()
         panel.setFrameAutosaveName("MoonlightToolPalette")
         self.panel = panel
@@ -51,6 +48,19 @@ public final class MoonlightToolPalettePresenter {
             hideMainWindow(excluding: panel)
         }
         panel.makeKeyAndOrderFront(nil)
+    }
+
+    /// The hosting view must not paint: the glass surface inside is the only
+    /// thing that draws a background, and an opaque host would square off the
+    /// panel's rounded corners.
+    private static func makeContentView(model: MoonlightToolPaletteModel) -> NSView {
+        let hostingView = NSHostingView(
+            rootView: MoonlightToolPaletteView(model: model, appearance: .glassPanel)
+                .moonlightGlassSurface()
+        )
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = .clear
+        return hostingView
     }
 
     public func dismiss() {
