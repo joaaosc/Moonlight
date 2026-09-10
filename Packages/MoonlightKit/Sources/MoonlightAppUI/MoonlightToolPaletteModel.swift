@@ -1,6 +1,8 @@
+import AppIntents
 import Foundation
 import MoonlightDomain
 import MoonlightInfrastructure
+import MoonlightIntents
 import Observation
 
 @MainActor
@@ -375,6 +377,13 @@ public final class MoonlightToolPaletteModel {
         result = completedDraft.result
         errorMessage = completedDraft.errorMessage
 
+        // Donated only for a command the user ran on purpose, and only after it
+        // succeeded. One donation describes the generic action with its target,
+        // so predictions never need an intent generated per command.
+        if completedDraft.result != nil {
+            donate(commandID: invocation.toolID, title: descriptor.title, presentation: presentation)
+        }
+
         switch presentation.destination {
         case .colorPicker where completedDraft.result != nil:
             openColorPicker()
@@ -412,6 +421,25 @@ public final class MoonlightToolPaletteModel {
     /// Runs a result action and surfaces its failure in the palette.
     public func perform(_ action: ExecutionResultAction) {
         errorMessage = performer.perform(action)
+    }
+
+    private func donate(
+        commandID: String,
+        title: String,
+        presentation: MoonlightToolPresentation
+    ) {
+        let entity = MoonlightToolEntity(
+            id: commandID,
+            name: title,
+            summary: presentation.summary,
+            symbolName: presentation.symbolName
+        )
+        let intent = RunUserShortcutIntent(command: entity)
+        Task {
+            // A failed donation is a prediction that will not improve, not a
+            // failed command: it must never surface as an execution error.
+            try? await IntentDonationManager.shared.donate(intent: intent)
+        }
     }
 
     public func acceptsInput(_ descriptor: ActionDescriptor) -> Bool {

@@ -39,6 +39,10 @@ let package = Package(
             dependencies: [
                 "MoonlightDomain",
                 "MoonlightInfrastructure",
+                // For the entity identifiers the UI annotates onscreen content
+                // with. MoonlightIntents does not depend on the UI, so this
+                // does not create a cycle.
+                "MoonlightIntents",
             ]
         ),
         // Apple Events live in their own target: the App Intents extension
