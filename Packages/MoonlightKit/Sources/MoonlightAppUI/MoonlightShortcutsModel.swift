@@ -21,29 +21,34 @@ public final class MoonlightShortcutsModel {
     private let shortcuts: ShortcutsCatalogClient
     private let store: ShortcutBindingsStore?
     private let cache: ShortcutBindingsCache
+    private let reindexCatalog: (@Sendable () async throws -> Void)?
 
     public init(
         shortcuts: ShortcutsCatalogClient,
         store: ShortcutBindingsStore?,
-        cache: ShortcutBindingsCache
+        cache: ShortcutBindingsCache,
+        reindexCatalog: (@Sendable () async throws -> Void)? = nil
     ) {
         self.shortcuts = shortcuts
         self.store = store
         self.cache = cache
+        self.reindexCatalog = reindexCatalog
         if store == nil {
             storageMessage = "Moonlight cannot reach its shared container, so shortcut commands cannot be saved."
         }
     }
 
     public convenience init(
-        environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment
+        environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment,
+        reindexCatalog: (@Sendable () async throws -> Void)? = nil
     ) {
         switch environment {
         case let .success(environment):
             self.init(
                 shortcuts: environment.shortcuts,
                 store: environment.bindingsStore,
-                cache: environment.bindingsCache
+                cache: environment.bindingsCache,
+                reindexCatalog: reindexCatalog
             )
         case let .failure(error):
             self.init(
@@ -167,6 +172,26 @@ public final class MoonlightShortcutsModel {
         }
     }
 
+    /// Publishes or withdraws a personal command from Spotlight. Off by
+    /// default: Shortcuts already indexes the user's own items.
+    public func setSpotlightExposure(
+        _ isExposed: Bool,
+        for binding: ShortcutCommandBinding
+    ) async {
+        guard let store else { return }
+        var updated = binding
+        updated.isSpotlightExposed = isExposed
+
+        do {
+            let stored = try await store.update(updated)
+            apply(stored)
+            errorMessage = nil
+            await reindex()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     /// Points an existing command at another shortcut. The command keeps its
     /// identity, alias and history; only the link moves.
     public func relink(_ binding: ShortcutCommandBinding, to summary: ShortcutSummary) async {
@@ -187,6 +212,7 @@ public final class MoonlightShortcutsModel {
             let stored = try await store.remove(id: binding.id)
             apply(stored)
             errorMessage = nil
+            await reindex()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -222,6 +248,17 @@ public final class MoonlightShortcutsModel {
     private func apply(_ stored: [ShortcutCommandBinding]) {
         bindings = stored
         cache.replaceBindings(stored)
+    }
+
+    /// Republishes the catalog after the published set changed. Supplied by the
+    /// host, since the index lives outside the domain.
+    private func reindex() async {
+        guard let reindexCatalog else { return }
+        do {
+            try await reindexCatalog()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private static func message(for status: ShortcutsAuthorizationStatus) -> String? {

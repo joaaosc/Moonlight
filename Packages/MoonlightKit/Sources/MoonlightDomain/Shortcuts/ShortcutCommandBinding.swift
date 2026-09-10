@@ -26,6 +26,10 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
     public let createdAt: Date
     /// When the shortcut was last seen in the library.
     public var lastSeenAt: Date?
+    /// Whether this command is published to Spotlight. Opt-in per binding:
+    /// Shortcuts already indexes the user's own items, and duplicating the
+    /// whole library would add exactly the noise Moonlight exists to avoid.
+    public var isSpotlightExposed: Bool
 
     public var commandID: String {
         Self.commandIDPrefix + id.uuidString.lowercased()
@@ -40,7 +44,8 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
         symbolName: String = "link",
         inputKind: CommandPresentation.InputKind = .none,
         createdAt: Date = Date(),
-        lastSeenAt: Date? = nil
+        lastSeenAt: Date? = nil,
+        isSpotlightExposed: Bool = false
     ) {
         self.id = id
         self.externalID = externalID
@@ -51,6 +56,25 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
         self.inputKind = inputKind
         self.createdAt = createdAt
         self.lastSeenAt = lastSeenAt
+        self.isSpotlightExposed = isSpotlightExposed
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        externalID = try container.decode(String.self, forKey: .externalID)
+        cachedName = try container.decode(String.self, forKey: .cachedName)
+        cachedSubtitle = try container.decode(String.self, forKey: .cachedSubtitle)
+        alias = try container.decode(String.self, forKey: .alias)
+        symbolName = try container.decode(String.self, forKey: .symbolName)
+        inputKind = try container.decode(CommandPresentation.InputKind.self, forKey: .inputKind)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        lastSeenAt = try container.decodeIfPresent(Date.self, forKey: .lastSeenAt)
+        // Bindings stored before Spotlight exposure existed stay private.
+        isSpotlightExposed = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .isSpotlightExposed
+        ) ?? false
     }
 
     /// Builds a binding from a listing entry. Registering never runs anything.

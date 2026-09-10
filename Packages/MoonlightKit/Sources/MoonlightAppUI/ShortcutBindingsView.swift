@@ -118,6 +118,15 @@ public struct ShortcutBindingsView: View {
                     }
                 }
 
+                Toggle("Show in Spotlight", isOn: Binding(
+                    get: { binding.isSpotlightExposed },
+                    set: { newValue in
+                        Task { await model.setSpotlightExposure(newValue, for: binding) }
+                    }
+                ))
+                .toggleStyle(.checkbox)
+                .help("Shortcuts already indexes your library; publish only what you want in Spotlight.")
+
                 Picker("Input", selection: Binding(
                     get: { binding.inputKind },
                     set: { newValue in

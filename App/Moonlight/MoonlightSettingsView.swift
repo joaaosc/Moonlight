@@ -1,5 +1,6 @@
 import AppKit
 import MoonlightAppUI
+import MoonlightIntents
 import SwiftUI
 
 struct MoonlightSettingsView: View {
@@ -11,8 +12,12 @@ struct MoonlightSettingsView: View {
                 MoonlightGeneralSettingsView(hotKeyCenter: hotKeyCenter)
             }
             Tab("Shortcuts", systemImage: "link") {
-                ShortcutBindingsView()
-                    .frame(width: 560, height: 420)
+                ShortcutBindingsView(
+                    model: MoonlightShortcutsModel(
+                        reindexCatalog: { try await MoonlightToolSpotlightIndex.refresh() }
+                    )
+                )
+                .frame(width: 560, height: 460)
             }
         }
         .scenePadding()

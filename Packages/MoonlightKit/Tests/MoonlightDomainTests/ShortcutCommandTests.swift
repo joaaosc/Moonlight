@@ -153,3 +153,40 @@ struct ShortcutRelinkTests {
         #expect(relinked.lastSeenAt != nil)
     }
 }
+
+@Suite("Spotlight exposure")
+struct ShortcutSpotlightExposureTests {
+    @Test("A new command stays out of Spotlight until it is published")
+    func defaultsToPrivate() {
+        let binding = ShortcutCommandBinding(
+            summary: ShortcutSummary(externalID: "external-1", name: "Daily Note"),
+            alias: "daily-note"
+        )
+
+        #expect(!binding.isSpotlightExposed)
+    }
+
+    @Test("A binding stored before exposure existed decodes as private")
+    func decodesHistoricalBindingAsPrivate() throws {
+        let json = """
+        {
+          "id": "8B1F0F1C-4D5E-4A2B-9C3D-1E2F3A4B5C6D",
+          "externalID": "external-1",
+          "cachedName": "Daily Note",
+          "cachedSubtitle": "",
+          "alias": "daily-note",
+          "symbolName": "link",
+          "inputKind": "none",
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+        """
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let binding = try decoder.decode(ShortcutCommandBinding.self, from: Data(json.utf8))
+
+        #expect(!binding.isSpotlightExposed)
+        #expect(binding.alias == "daily-note")
+        #expect(binding.lastSeenAt == nil)
+    }
+}
