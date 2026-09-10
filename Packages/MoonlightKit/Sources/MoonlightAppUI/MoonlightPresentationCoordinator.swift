@@ -65,14 +65,16 @@ public final class MoonlightPresentationCoordinator {
 
     public func presentPalette(
         preferredActionID: String? = nil,
-        isolatingFromMainWindow: Bool
+        isolatingFromMainWindow: Bool,
+        initialInput: String? = nil
     ) {
         // Read the origin before anything activates Moonlight.
         let sourceContext = MoonlightSourceContext.current()
         dismissMenuBar?()
         paletteModel.preparePresentation(
             preferredActionID: preferredActionID,
-            sourceContext: sourceContext
+            sourceContext: sourceContext,
+            initialInput: initialInput
         )
         palettePresenter.present(
             model: paletteModel,

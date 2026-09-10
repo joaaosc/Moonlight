@@ -26,5 +26,23 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Moonlight lists your shortcuts so you can add them as commands.</string>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send Text to Moonlight</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>sendTextToMoonlight</string>
+			<key>NSPortName</key>
+			<string>Moonlight</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

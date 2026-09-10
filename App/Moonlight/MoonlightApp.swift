@@ -25,6 +25,8 @@ struct MoonlightApp: App {
     /// Moonlight's own system-wide shortcut. Registered with macOS; unrelated
     /// to Spotlight and never announced as a Spotlight feature.
     private let hotKeyCenter = GlobalHotKeyCenter()
+    /// Kept alive for the process: the Services machinery holds it unowned.
+    private let servicesProvider: MoonlightServicesProvider
 
     private static let logger = Logger(
         subsystem: "com.joaocosta.Moonlight",
@@ -42,6 +44,8 @@ struct MoonlightApp: App {
         hotKeyCenter.start {
             coordinator.presentPalette(isolatingFromMainWindow: true)
         }
+        servicesProvider = MoonlightServicesProvider(coordinator: coordinator)
+        servicesProvider.install()
 
         AppDependencyManager.shared.add(
             dependency: MoonlightForegroundClient(

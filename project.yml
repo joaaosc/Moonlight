@@ -37,6 +37,13 @@ targets:
         LSApplicationCategoryType: public.app-category.productivity
         LSUIElement: true
         NSAppleEventsUsageDescription: Moonlight lists your shortcuts so you can add them as commands.
+        NSServices:
+          - NSMenuItem:
+              default: Send Text to Moonlight
+            NSMessage: sendTextToMoonlight
+            NSPortName: Moonlight
+            NSSendTypes:
+              - public.utf8-plain-text
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.joaocosta.Moonlight

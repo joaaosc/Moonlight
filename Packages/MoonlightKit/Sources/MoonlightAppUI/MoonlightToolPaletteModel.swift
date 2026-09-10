@@ -198,9 +198,13 @@ public final class MoonlightToolPaletteModel {
         descriptors.first { $0.id == selectedID }
     }
 
+    /// - Parameter initialInput: text supplied by the invocation, such as the
+    ///   selection handed over by a macOS service. It replaces the draft for
+    ///   the target tool, because the user just chose that text.
     public func preparePresentation(
         preferredActionID: String? = nil,
-        sourceContext: MoonlightSourceContext? = nil
+        sourceContext: MoonlightSourceContext? = nil,
+        initialInput: String? = nil
     ) {
         self.sourceContext = sourceContext
         refreshCatalog()
@@ -213,6 +217,11 @@ public final class MoonlightToolPaletteModel {
             isEditing = false
             query = ""
             reconcileSelection()
+        }
+        if let initialInput {
+            input = initialInput
+            result = nil
+            errorMessage = nil
         }
         presentationID = UUID()
     }
