@@ -36,10 +36,47 @@ public struct MoonlightDiagnostics: Sendable, Equatable {
 
     public let appGroupIdentifier: String
     public let documents: [Document]
+    public let installation: Installation
 
-    public init(appGroupIdentifier: String, documents: [Document]) {
+    public init(
+        appGroupIdentifier: String,
+        documents: [Document],
+        installation: Installation = .current()
+    ) {
         self.appGroupIdentifier = appGroupIdentifier
         self.documents = documents
+        self.installation = installation
+    }
+
+    /// Where this copy of Moonlight is running from, and whether that is the
+    /// canonical location.
+    ///
+    /// A copy launched from a build directory registers its extensions and
+    /// shortcuts under that path; when it moves, the system can keep pointing
+    /// at a bundle that is gone. Naming the path makes that visible instead of
+    /// leaving it to be discovered as a bug.
+    public struct Installation: Sendable, Equatable {
+        public static let canonicalDirectory = "/Applications"
+
+        public let bundlePath: String
+        public let version: String
+        public let build: String
+        public let isCanonical: Bool
+
+        public init(bundlePath: String, version: String, build: String) {
+            self.bundlePath = bundlePath
+            self.version = version
+            self.build = build
+            isCanonical = bundlePath.hasPrefix(Self.canonicalDirectory + "/")
+        }
+
+        public static func current(bundle: Bundle = .main) -> Installation {
+            Installation(
+                bundlePath: bundle.bundleURL.path,
+                version: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—",
+                build: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+            )
+        }
     }
 
     /// Collects the current state. Reads only: nothing is created or repaired

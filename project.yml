@@ -6,6 +6,10 @@ options:
   deploymentTarget:
     macOS: "27.0"
 
+configs:
+  Debug: debug
+  Release: release
+
 settings:
   base:
     MARKETING_VERSION: 0.1.0-pre-alpha.3
@@ -16,6 +20,12 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
     SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
+  configs:
+    Release:
+      # A secure timestamp is required for notarization; without it the upload
+      # is accepted and then rejected.
+      OTHER_CODE_SIGN_FLAGS: --timestamp
+      SWIFT_COMPILATION_MODE: wholemodule
 
 packages:
   MoonlightKit:

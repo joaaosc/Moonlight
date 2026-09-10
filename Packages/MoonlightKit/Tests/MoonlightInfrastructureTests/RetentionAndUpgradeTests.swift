@@ -113,3 +113,29 @@ struct MoonlightUpgradeTests {
         #expect(reopenedQuicklinks.first?.commandID == quicklink.commandID)
     }
 }
+
+@Suite("Installation location")
+struct MoonlightInstallationTests {
+    @Test("Only a copy inside the canonical directory counts as installed")
+    func recognizesCanonicalLocation() {
+        let installed = MoonlightDiagnostics.Installation(
+            bundlePath: "/Applications/Moonlight.app",
+            version: "0.1.0",
+            build: "23"
+        )
+        let derived = MoonlightDiagnostics.Installation(
+            bundlePath: "/Users/someone/Library/Developer/Xcode/DerivedData/Moonlight.app",
+            version: "0.1.0",
+            build: "23"
+        )
+        let lookalike = MoonlightDiagnostics.Installation(
+            bundlePath: "/Users/someone/Applications-old/Moonlight.app",
+            version: "0.1.0",
+            build: "23"
+        )
+
+        #expect(installed.isCanonical)
+        #expect(!derived.isCanonical)
+        #expect(!lookalike.isCanonical)
+    }
+}

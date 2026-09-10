@@ -18,6 +18,27 @@ public struct DiagnosticsView: View {
 
     public var body: some View {
         Form {
+            Section("Installation") {
+                if let installation = diagnostics?.installation {
+                    LabeledContent(
+                        "Version",
+                        value: "\(installation.version) (\(installation.build))"
+                    )
+                    Text(installation.bundlePath)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                    if !installation.isCanonical {
+                        Label(
+                            "Running outside \(MoonlightDiagnostics.Installation.canonicalDirectory). System features registered from here stop working if this copy moves.",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    }
+                }
+            }
+
             Section("Storage") {
                 if let diagnostics {
                     LabeledContent("App Group", value: diagnostics.appGroupIdentifier)
