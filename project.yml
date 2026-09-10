@@ -182,9 +182,16 @@ schemes:
         MoonlightAppIntentsUITests: [test]
     run:
       config: Debug
+    # Two plans, because the two suites answer to different things.
+    # Moonlight.xctestplan is deterministic and runs anywhere, including an
+    # ephemeral Xcode Cloud runner. MoonlightSystem.xctestplan drives real App
+    # Intents registration through the system and only passes on a machine
+    # where that registration resolves, so it is a gate to run on purpose and
+    # never the default.
     test:
       config: Debug
       gatherCoverageData: true
-      targets:
-        - name: MoonlightTests
-        - name: MoonlightAppIntentsUITests
+      testPlans:
+        - path: TestPlans/Moonlight.xctestplan
+          defaultPlan: true
+        - path: TestPlans/MoonlightSystem.xctestplan

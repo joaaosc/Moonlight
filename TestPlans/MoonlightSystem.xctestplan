@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "A1B2C3D4-0002-4000-8000-000000000002",
+      "name" : "System",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Moonlight.xcodeproj",
+        "identifier" : "B903F3A8DB0E518F15FD7AAB",
+        "name" : "MoonlightAppIntentsUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

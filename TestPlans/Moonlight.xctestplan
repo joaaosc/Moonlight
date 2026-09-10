@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "A1B2C3D4-0001-4000-8000-000000000001",
+      "name" : "Default",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Moonlight.xcodeproj",
+        "identifier" : "4079599CED65240152DCACC1",
+        "name" : "MoonlightTests"
+      }
+    }
+  ],
+  "version" : 1
+}
