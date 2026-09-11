@@ -38,6 +38,11 @@ public final class GlobalHotKeyCenter {
     @ObservationIgnored private var action: @MainActor () -> Void = {}
     @ObservationIgnored private let preferences: UserDefaults
     @ObservationIgnored private let storageKey: String
+    /// Distinguishes this registration from any other the app makes. Carbon
+    /// delivers every hot key carrying this signature to every handler
+    /// installed on the target, so without it a second shortcut would also fire
+    /// the first one's action.
+    @ObservationIgnored fileprivate let hotKeyID: UInt32
     @ObservationIgnored private static let signature: OSType = 0x4D4F_4F4E // 'MOON'
     @ObservationIgnored private static let logger = Logger(
         subsystem: "com.joaocosta.Moonlight",
@@ -46,10 +51,12 @@ public final class GlobalHotKeyCenter {
 
     public init(
         preferences: UserDefaults = .standard,
-        storageKey: String = "globalHotKey"
+        storageKey: String = "globalHotKey",
+        hotKeyID: UInt32 = 1
     ) {
         self.preferences = preferences
         self.storageKey = storageKey
+        self.hotKeyID = hotKeyID
         hotKey = Self.storedHotKey(in: preferences, key: storageKey)
     }
 
@@ -92,7 +99,7 @@ public final class GlobalHotKeyCenter {
 
     private func activate(_ hotKey: MoonlightHotKey) {
         var reference: EventHotKeyRef?
-        let identifier = EventHotKeyID(signature: Self.signature, id: 1)
+        let identifier = EventHotKeyID(signature: Self.signature, id: hotKeyID)
         let status = RegisterEventHotKey(
             hotKey.keyCode,
             hotKey.carbonModifiers,
@@ -148,13 +155,18 @@ public final class GlobalHotKeyCenter {
 
                 // Carbon delivers hot keys on the main run loop, which is the
                 // main actor; no hop is needed and none would be safe here.
-                MainActor.assumeIsolated {
-                    Unmanaged<GlobalHotKeyCenter>
+                return MainActor.assumeIsolated {
+                    let center = Unmanaged<GlobalHotKeyCenter>
                         .fromOpaque(userData)
                         .takeUnretainedValue()
-                        .action()
+                    // Every handler on the target sees every Moonlight hot key,
+                    // so each one answers only for its own registration.
+                    guard identifier.id == center.hotKeyID else {
+                        return OSStatus(eventNotHandledErr)
+                    }
+                    center.action()
+                    return noErr
                 }
-                return noErr
             },
             1,
             &specification,
