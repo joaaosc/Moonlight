@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Hero featured card at the top of the Liquid Glass Control Panel matching "Featured Landmark - Mount Fuji".
-'public struct MoonlightFeaturedIntentHero: View {
+public struct MoonlightFeaturedIntentHero: View {
     public let item: MoonlightIntentItem
     public let onRun: () -> Void
 
