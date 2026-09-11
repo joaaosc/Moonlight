@@ -32,6 +32,19 @@ bash Scripts/dev-install.sh
 
 Compila Debug no DerivedData do repositório, encerra a cópia em execução, substitui `/Applications/Moonlight.app`, verifica a assinatura, registra o bundle e desregistra as demais cópias. Assinatura, entitlements, sandbox e hardened runtime são os mesmos do Release, então o que o sistema enxerga é equivalente para validação. O projeto só é regenerado quando `project.yml` estiver mais novo que o `.xcodeproj`, para não reescrever o arquivo sob um Xcode aberto.
 
+### Instalação automática a partir do Xcode
+
+Um build iniciado pela interface do Xcode carimba o número correto sozinho: o scheme `Moonlight` tem uma pre-action de build, declarada em `project.yml`, que executa `Scripts/version.sh` antes de o target resolver os xcconfigs. Uma build phase seria tarde demais, porque os xcconfigs já teriam sido lidos.
+
+Falta instalar, e isso é o que a tela `Xcode > Settings > Behaviors` resolve:
+
+- em **When build succeeds**, marcar *Run script* e apontar para `Scripts/dev-install.sh --skip-build`;
+- em **When build starts**, nada. Behaviors são configuração global do usuário, não acompanham o repositório e rodam fora do ambiente do build, sem `CONFIGURATION` nem `TARGET_BUILD_DIR`. Um script de versão ali afetaria o build seguinte, não o atual.
+
+`--skip-build` instala um produto já compilado em vez de compilar de novo. Ele escolhe o bundle construído mais recentemente entre o DerivedData do repositório e o DerivedData global que a interface do Xcode usa, porque o build pode ter vindo de qualquer um dos dois.
+
+`MARKETING_VERSION` continua manual, em `Config/Version.xcconfig`: muda por decisão, não por build.
+
 `Scripts/status.sh` responde se a cópia instalada corresponde ao checkout, e sai com código diferente de zero quando não corresponde, de modo a poder condicionar uma validação de runtime:
 
 ```text
