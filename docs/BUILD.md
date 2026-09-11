@@ -38,8 +38,16 @@ Um build iniciado pela interface do Xcode carimba o número correto sozinho: o s
 
 Falta instalar, e isso é o que a tela `Xcode > Settings > Behaviors` resolve:
 
-- em **When build succeeds**, marcar *Run script* e apontar para `Scripts/dev-install.sh --skip-build`;
-- em **When build starts**, nada. Behaviors são configuração global do usuário, não acompanham o repositório e rodam fora do ambiente do build, sem `CONFIGURATION` nem `TARGET_BUILD_DIR`. Um script de versão ali afetaria o build seguinte, não o atual.
+- em **When build succeeds**, marcar *Run script* e apontar para `Scripts/install-after-build.sh`;
+- em **When build starts**, nada. Behaviors são configuração global do usuário, não acompanham o repositório e rodam fora do ambiente do build, sem `CONFIGURATION` nem `TARGET_BUILD_DIR`. Um script ali roda antes de o produto existir e instalaria o bundle anterior.
+
+A tela aceita apenas o caminho de um script, sem argumentos, e por isso existe `Scripts/install-after-build.sh`: ele é o ponto de entrada sem parâmetros que chama `dev-install.sh --skip-build`.
+
+O wrapper também decide se vale instalar. O Behavior dispara em todo build bem-sucedido, inclusive builds de teste, e instalar significa encerrar a cópia em execução; quando `status.sh` diz que a cópia instalada já está em dia, ele não faz nada. Como a saída de um Behavior não aparece em lugar nenhum, o resultado vai para o log do sistema:
+
+```sh
+log show --last 10m --info --predicate 'process == "logger"' | grep moonlight-install
+```
 
 `--skip-build` instala um produto já compilado em vez de compilar de novo. Ele escolhe o bundle construído mais recentemente entre o DerivedData do repositório e o DerivedData global que a interface do Xcode usa, porque o build pode ter vindo de qualquer um dos dois.
 
