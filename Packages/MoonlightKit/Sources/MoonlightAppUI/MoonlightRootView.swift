@@ -22,7 +22,7 @@ public struct MoonlightRootView: View {
 
         public var symbolName: String {
             switch self {
-            case .intents: "sparkles.rectangle.stack.fill"
+            case .intents: "square.grid.2x2"
             case .history: "clock.arrow.circlepath"
             case .notes: "note.text"
             }
@@ -31,12 +31,12 @@ public struct MoonlightRootView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.undoManager) private var undoManager
-    @Environment(\.colorScheme) private var colorScheme
 
     @State private var model: MoonlightModel
     @State private var notesModel: MoonlightNotesModel
-    @State private var section: Section = .intents
-    @State private var isSidebarVisible = true
+    // Optional because that is what a `List` selection binds to; the sidebar
+    // always has a row selected in practice.
+    @State private var section: Section? = .intents
     @State private var noteSearchText = ""
     @State private var selectedNoteID: MoonlightNote.ID?
     @State private var selectedExecutionID: Execution.ID?
@@ -68,85 +68,19 @@ public struct MoonlightRootView: View {
     }
 
     public var body: some View {
-        ZStack {
-            // Atmospheric Scenic Backdrop (Mount Fuji, sakura blossoms, and dawn sky)
-            MoonlightAtmosphericBackground()
-                .ignoresSafeArea()
-
-            // Main Content Layout
-            HStack(spacing: 16) {
-                // Floating Liquid Glass Sidebar
-                if isSidebarVisible {
-                    MoonlightGlassSidebar(
-                        selection: $section,
-                        items: [
-                            MoonlightGlassSidebar.Item(
-                                id: .intents,
-                                title: "Intents",
-                                symbolName: "sparkles.rectangle.stack.fill"
-                            ),
-                            MoonlightGlassSidebar.Item(
-                                id: .history,
-                                title: "History",
-                                symbolName: "clock.arrow.circlepath",
-                                badgeCount: model.executions.count
-                            ),
-                            MoonlightGlassSidebar.Item(
-                                id: .notes,
-                                title: "Notes",
-                                symbolName: "note.text",
-                                badgeCount: notesModel.notes.count
-                            )
-                        ]
-                    ) {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                            isSidebarVisible.toggle()
-                        }
-                    }
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                }
-
-                // Detail Area
-                VStack(spacing: 0) {
-                    if !isSidebarVisible {
-                        HStack {
-                            Button {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                                    isSidebarVisible = true
-                                }
-                            } label: {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "sidebar.left")
-                                    Text("Show Sidebar")
-                                }
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background {
-                                    Capsule()
-                                        .fill(.ultraThinMaterial)
-                                        .overlay {
-                                            Capsule().strokeBorder(.white.opacity(0.35), lineWidth: 0.8)
-                                        }
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.top, 12)
-                            .padding(.leading, 16)
-
-                            Spacer()
-                        }
-                    }
-
-                    detailContent
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // A real split view, so the sidebar gets the system's own Liquid Glass
+        // — translucent over the desktop — instead of a hand-built slab. Glass
+        // belongs to the navigation layer; the detail side stays content.
+        NavigationSplitView {
+            List(Section.allCases, selection: $section) { item in
+                Label(item.title, systemImage: item.symbolName)
+                    .tag(item)
             }
-            .padding(14)
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 260)
+        } detail: {
+            detailContent
         }
-        .frame(minWidth: 860, minHeight: 560)
+        .frame(minWidth: 820, minHeight: 540)
         .safeAreaInset(edge: .bottom) {
             if !isShowingComposer, let errorMessage = model.errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle")
@@ -210,96 +144,57 @@ public struct MoonlightRootView: View {
                 notesModel: notesModel
             )
         case .history:
-            glassSplitContent {
-                HStack(spacing: 0) {
-                    ExecutionHistoryView(
-                        executions: model.executions,
-                        isLoading: model.isLoading,
-                        selection: $selectedExecutionID
-                    )
-                    .frame(width: 320)
+            HStack(spacing: 0) {
+                ExecutionHistoryView(
+                    executions: model.executions,
+                    isLoading: model.isLoading,
+                    selection: $selectedExecutionID
+                )
+                .frame(width: 280)
 
-                    Divider()
+                Divider()
 
-                    Group {
-                        if let selectedExecution {
-                            ExecutionDetailView(execution: selectedExecution)
-                                .id(selectedExecution.id)
-                        } else {
-                            ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
-                        }
+                Group {
+                    if let selectedExecution {
+                        ExecutionDetailView(execution: selectedExecution)
+                            .id(selectedExecution.id)
+                    } else {
+                        ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         case .notes:
-            glassSplitContent {
-                HStack(spacing: 0) {
-                    NotesListView(
-                        notes: visibleNotes,
-                        isLoading: notesModel.isLoading,
-                        selection: $selectedNoteID
-                    )
-                    .searchable(text: $noteSearchText, prompt: "Search notes")
-                    .frame(width: 320)
+            HStack(spacing: 0) {
+                NotesListView(
+                    notes: visibleNotes,
+                    isLoading: notesModel.isLoading,
+                    selection: $selectedNoteID
+                )
+                .searchable(text: $noteSearchText, prompt: "Search notes")
+                .frame(width: 280)
 
-                    Divider()
+                Divider()
 
-                    Group {
-                        if let selectedNote {
-                            NoteDetailView(note: selectedNote) {
-                                Task { await deleteSelectedNote(selectedNote) }
-                            }
-                            .id(selectedNote.id)
-                        } else {
-                            ContentUnavailableView(
-                                "Select a note",
-                                systemImage: "note.text",
-                                description: Text("Notes are kept separately from execution history.")
-                            )
+                Group {
+                    if let selectedNote {
+                        NoteDetailView(note: selectedNote) {
+                            Task { await deleteSelectedNote(selectedNote) }
                         }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
-        }
-    }
-
-    private func glassSplitContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(.regularMaterial)
-                    .overlay {
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(colorScheme == .dark ? 0.08 : 0.25),
-                                Color.clear
-                            ],
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: 400
+                        .id(selectedNote.id)
+                    } else {
+                        ContentUnavailableView(
+                            "Select a note",
+                            systemImage: "note.text",
+                            description: Text("Notes are kept separately from execution history.")
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     }
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(colorScheme == .dark ? 0.40 : 0.65),
-                                .white.opacity(colorScheme == .dark ? 0.10 : 0.20)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.2
-                    )
-            }
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.15), radius: 16, y: 6)
+        case nil:
+            MoonlightIntentsGalleryView(model: model, notesModel: notesModel)
+        }
     }
 
     private var selectedNote: MoonlightNote? {
