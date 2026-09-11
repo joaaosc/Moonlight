@@ -180,6 +180,18 @@ schemes:
         MoonlightWidgets: all
         MoonlightTests: [test]
         MoonlightAppIntentsUITests: [test]
+      # The build number is derived from the commit count and lives in an
+      # untracked xcconfig, so something has to write it before the build reads
+      # it. A build phase is too late: xcconfigs are resolved before any phase
+      # runs, so the phase would stamp the previous number. A pre-action runs
+      # before the target resolves its settings, which makes a build started
+      # from Xcode carry the same number as one started by Scripts/dev-install.sh.
+      preActions:
+        - name: Write the build number
+          script: bash "$PROJECT_DIR/Scripts/version.sh"
+          # Without a settings target the action gets no build settings at all,
+          # and $PROJECT_DIR would be empty.
+          settingsTarget: Moonlight
     run:
       config: Debug
     # Two plans, because the two suites answer to different things.
