@@ -115,6 +115,14 @@ public final class MoonlightLauncherModel {
         Task { await persist() }
     }
 
+    /// Fills the model in without reading the disk, for previews and for the
+    /// snapshot renderer, which draws offscreen and cannot wait on a task.
+    public func preload(apps installed: [InstalledApp], layout preloaded: LauncherLayout? = nil) {
+        apps = Dictionary(uniqueKeysWithValues: installed.map { ($0.bundleIdentifier, $0) })
+        layout = preloaded ?? reconciler.initialLayout(catalog: installed)
+        failure = nil
+    }
+
     // MARK: - Reading
 
     public func app(for identifier: String) -> InstalledApp? {

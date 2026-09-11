@@ -10,6 +10,12 @@ import SwiftUI
 /// Exists so the interface can be inspected without launching the app and
 /// without anyone watching a screen: the renderer draws the same SwiftUI views
 /// the app uses, from fixtures, and writes them to disk.
+/// Carries a value across the detached task that produces it. Safe here
+/// because the semaphore makes the two accesses strictly ordered.
+private final class UncheckedBox<Value>: @unchecked Sendable {
+    var value: Value?
+}
+
 @MainActor
 enum MoonlightSnapshots {
     static func run() {
@@ -33,6 +39,19 @@ enum MoonlightSnapshots {
         for (name, size, view) in screens() {
             render(view, named: name, size: size, in: outputDirectory)
         }
+    }
+
+    /// Drains an immediate async answer on the current run loop. Only sound
+    /// for the stub catalogue, which never actually suspends.
+    private static func awaitApps(_ catalog: StubAppCatalog) throws -> [InstalledApp] {
+        let box = UncheckedBox<[InstalledApp]>()
+        let semaphore = DispatchSemaphore(value: 0)
+        Task.detached {
+            box.value = try? await catalog.apps()
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return box.value ?? []
     }
 
     private static func screens() -> [(String, CGSize, AnyView)] {
@@ -80,6 +99,32 @@ enum MoonlightSnapshots {
             cache: ShortcutBindingsCache()
         )
 
+        // The launcher draws whatever the catalogue reports, so the snapshot
+        // seeds one rather than reading this machine's /Applications: the image
+        // has to be the same wherever it is rendered.
+        let appNames = [
+            "Activity Monitor", "Automator", "Books", "Calculator", "Calendar",
+            "Chess", "Clock", "Contacts", "Dictionary", "FaceTime",
+            "Find My", "Font Book", "Freeform", "Home", "Image Playground",
+            "Journal", "Keychain Access", "Mail", "Maps", "Messages",
+            "Music", "News", "Notes", "Passwords", "Photos",
+            "Podcasts", "Preview", "Reminders", "Safari", "Shortcuts",
+            "Stocks", "System Settings", "Terminal", "TextEdit", "Weather",
+        ]
+        let installedApps = StubAppCatalog.named(appNames)
+        let launcherGridModel = MoonlightLauncherModel(
+            catalog: installedApps,
+            store: nil
+        )
+        launcherGridModel.preload(apps: (try? awaitApps(installedApps)) ?? [])
+
+        let launcherSearchModel = MoonlightLauncherModel(
+            catalog: installedApps,
+            store: nil
+        )
+        launcherSearchModel.preload(apps: (try? awaitApps(installedApps)) ?? [])
+        launcherSearchModel.query = "ca"
+
         let quicklinksModel = MoonlightQuicklinksModel(
             store: nil,
             cache: QuicklinkCache(quicklinks: [
@@ -124,6 +169,14 @@ enum MoonlightSnapshots {
                     onDismiss: {}
                 )
                 .moonlightGlassSurface()
+            )),
+            ("app-launcher-grid", CGSize(width: 1100, height: 720), AnyView(
+                MoonlightLauncherView(model: launcherGridModel)
+                    .moonlightGlassSurface()
+            )),
+            ("app-launcher-search", CGSize(width: 1100, height: 720), AnyView(
+                MoonlightLauncherView(model: launcherSearchModel)
+                    .moonlightGlassSurface()
             )),
             ("settings-shortcuts", CGSize(width: 560, height: 460), AnyView(
                 ShortcutBindingsView(model: shortcutsModel)

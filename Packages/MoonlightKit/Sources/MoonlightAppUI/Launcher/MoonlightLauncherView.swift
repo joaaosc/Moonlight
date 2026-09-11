@@ -71,12 +71,19 @@ public struct MoonlightLauncherView: View {
     private var columns: Int { model.layout.grid.columns }
 
     private var gridColumns: [GridItem] {
+        gridColumns(count: columns)
+    }
+
+    /// The arrangement always reserves a full row, because an empty slot is
+    /// part of it. A result list does not: six results should read as six
+    /// centred icons, not as six icons and a gap where the seventh would be.
+    private func gridColumns(count: Int) -> [GridItem] {
         Array(
             repeating: GridItem(
                 .fixed(LauncherMetrics.tileWidth),
                 spacing: LauncherMetrics.tileSpacing
             ),
-            count: columns
+            count: max(1, min(count, columns))
         )
     }
 
@@ -103,17 +110,32 @@ public struct MoonlightLauncherView: View {
     }
 
     private var page: some View {
-        VStack(spacing: 14) {
-            LazyVGrid(columns: gridColumns, spacing: LauncherMetrics.tileSpacing) {
-                ForEach(model.items(onPage: model.currentPage)) { item in
-                    tile(for: item)
+        VStack(spacing: 20) {
+            Spacer(minLength: 0)
+
+            centered {
+                LazyVGrid(columns: gridColumns, spacing: LauncherMetrics.tileSpacing) {
+                    ForEach(model.items(onPage: model.currentPage)) { item in
+                        tile(for: item)
+                    }
                 }
             }
-            .frame(maxHeight: .infinity, alignment: .top)
 
             if model.pageCount > 1 {
                 pageIndicator
             }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Centres a fixed-width grid in whatever space the screen gives it.
+    private func centered(@ViewBuilder content: () -> some View) -> some View {
+        HStack(spacing: 0) {
+            Spacer(minLength: 0)
+            content()
+            Spacer(minLength: 0)
         }
     }
 
@@ -144,19 +166,25 @@ public struct MoonlightLauncherView: View {
 
     private var searchResults: some View {
         ScrollView {
-            LazyVGrid(columns: gridColumns, spacing: LauncherMetrics.tileSpacing) {
-                ForEach(model.searchResults) { app in
-                    LauncherAppTile(
-                        app: app,
-                        icon: model.icon(for: app),
-                        isSelected: model.selection == app.bundleIdentifier
-                    )
-                    .onTapGesture { Task { await launch(app) } }
-                    .contextMenu { appMenu(app) }
+            centered {
+                LazyVGrid(
+                    columns: gridColumns(count: model.searchResults.count),
+                    spacing: LauncherMetrics.tileSpacing
+                ) {
+                    ForEach(model.searchResults) { app in
+                        LauncherAppTile(
+                            app: app,
+                            icon: model.icon(for: app),
+                            isSelected: model.selection == app.bundleIdentifier
+                        )
+                        .onTapGesture { Task { await launch(app) } }
+                        .contextMenu { appMenu(app) }
+                    }
                 }
             }
-            .padding(.top, 4)
+            .padding(.top, 12)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .scrollIndicators(.never)
         .overlay {
             if model.searchResults.isEmpty {
@@ -185,6 +213,8 @@ public struct MoonlightLauncherView: View {
             .accessibilityLabel("Page \(index + 1)")
     }
 
+    /// Centred rather than pinned to a corner: on a full screen the corner is
+    /// nowhere near anything the user is looking at.
     private var footer: some View {
         HStack(spacing: 10) {
             KeyHint(symbol: "arrow.up.and.down.and.arrow.left.and.right", action: "Select")
@@ -193,9 +223,8 @@ public struct MoonlightLauncherView: View {
                 KeyHint(symbol: "arrow.right.to.line", action: "Next page")
             }
             KeyHint(symbol: "escape", action: "Close")
-            Spacer()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     @ViewBuilder
@@ -214,7 +243,10 @@ public struct MoonlightLauncherView: View {
             Text(folder.name)
                 .font(.headline)
 
-            LazyVGrid(columns: gridColumns, spacing: LauncherMetrics.tileSpacing) {
+            LazyVGrid(
+                columns: gridColumns(count: folder.appIdentifiers.count),
+                spacing: LauncherMetrics.tileSpacing
+            ) {
                 ForEach(folder.appIdentifiers, id: \.self) { identifier in
                     if let app = model.app(for: identifier) {
                         LauncherAppTile(
