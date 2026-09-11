@@ -2,13 +2,9 @@
 
 ## DerivedData isolado
 
-O DerivedData canônico do Moonlight fica fora do repositório, em:
+O DerivedData do Moonlight fica em `build.noindex/DerivedData`, dentro do repositório e ignorado pelo Git. É o caminho que `Scripts/release.sh` usa.
 
-```text
-/Users/joaocosta/Library/Developer/Xcode/DerivedData.noindex/Moonlight
-```
-
-O sufixo `.noindex` reduz a indexação de produtos de compilação pelo Spotlight, mas não impede registros no Launch Services/PlugInKit criados por builds ou testes. Ele não altera a preferência global do Xcode nem afeta outros projetos. O conteúdo é regenerável e pode ser removido sem perder fontes, histórico ou configurações.
+O sufixo `.noindex` reduz a indexação de produtos de compilação pelo Spotlight, mas não impede registros no Launch Services/PlugInKit criados por builds ou testes. O conteúdo é regenerável e pode ser removido sem perder fontes, histórico ou configurações.
 
 O Xcode aberto pela interface não passa a usar esse caminho automaticamente. Para builds reproduzíveis, informar explicitamente:
 
@@ -18,7 +14,7 @@ xcodebuild \
   -scheme Moonlight \
   -configuration Debug \
   -destination 'platform=macOS' \
-  -derivedDataPath /Users/joaocosta/Library/Developer/Xcode/DerivedData.noindex/Moonlight \
+  -derivedDataPath build.noindex/DerivedData \
   build
 ```
 
@@ -45,11 +41,11 @@ bash Scripts/version.sh
 
 `Scripts/release.sh` chama o script antes de gerar o projeto, então uma release local não exige nenhuma edição de arquivo versionado.
 
-Os dois espaços não colidem: o Xcode Cloud está configurado para começar em `1000` e o contador local está em `67`. Um checkout sem o arquivo gerado ainda compila, com build `1`.
+Os dois espaços não colidem: o Xcode Cloud está configurado para começar em `1000` e o contador local acompanha a contagem de commits. Um checkout sem o arquivo gerado ainda compila, com build `1`.
 
 ## Versão atual
 
-- Marketing version: `2.0-alpha`;
+- Marketing version: `2.0.1`;
 - build local: derivado da contagem de commits;
 - build do Xcode Cloud: atribuído pelo serviço a partir de `1000`;
 - deployment target: macOS `27.0`.
@@ -60,7 +56,7 @@ O produto já existe em `MoonlightTools.xcodeproj/xcshareddata/xcodecloud/manife
 
 `ci_scripts/ci_post_clone.sh` roda depois do clone e faz duas coisas: escreve o build number a partir de `CI_BUILD_NUMBER` e regenera o projeto a partir de `project.yml` com XcodeGen instalado por Homebrew. Se o XcodeGen não instalar, o build segue com o projeto versionado e registra o aviso no log.
 
-O workflow de validação deve executar build e testes, sem arquivar nem distribuir: uma branch experimental não deve produzir versão no App Store Connect.
+O workflow de validação deve executar build e testes, sem arquivar nem distribuir: uma validação de branch não deve produzir versão no App Store Connect.
 
 ### Bloqueio atual: o Xcode Cloud não alcança o toolchain do projeto
 
@@ -75,7 +71,7 @@ O repositório já está pronto para quando o ambiente existir: `ci_scripts/ci_p
 1. No Xcode, `Integrate > Xcode Cloud > Create Workflow…`, ou a aba Xcode Cloud do app no App Store Connect.
 2. Environment com a versão de Xcode que suporte macOS 27, quando disponível.
 3. Ações: apenas Build e Test. Nenhum Archive, nenhum Distribute.
-4. Start condition em mudança de branch, incluindo `experimental`.
+4. Start condition em mudança de branch em `main`, a única branch do repositório.
 5. Em `Settings > Build Number`, definir o próximo build number como `1000`, mantendo o espaço do serviço separado do contador local.
 
 Observações registradas para esse momento:
