@@ -78,6 +78,20 @@ public enum LauncherItem: Sendable, Equatable, Codable, Identifiable {
     public static func empty() -> LauncherItem { .empty(UUID()) }
 }
 
+/// What a drop did to the arrangement.
+///
+/// Reported rather than inferred: the caller needs to know whether the gesture
+/// was accepted, and "the layout changed" is not the same question — dropping
+/// an app back where it already was changes nothing and is still a no-op the
+/// user should see no feedback for.
+public enum LauncherDropOutcome: Sendable, Equatable {
+    /// The drop was refused: same slot, nothing being dragged, or nowhere to
+    /// drop it.
+    case ignored
+    case moved
+    case grouped
+}
+
 /// Where an item sits.
 public struct LauncherPosition: Sendable, Hashable, Codable {
     public let page: Int
@@ -261,6 +275,40 @@ public struct LauncherLayout: Sendable, Equatable, Codable {
             index += 1
         }
         normalize()
+    }
+
+    /// Resolves one drag-and-drop gesture.
+    ///
+    /// One app landing on another occupied slot groups them; everything else
+    /// moves. This is the rule the gesture obeys, and it lives here rather than
+    /// in the view because it is a statement about arrangement, not about
+    /// pointers — and because a rule in a view cannot be tested.
+    @discardableResult
+    public mutating func drop(
+        from source: LauncherPosition,
+        to destination: LauncherPosition,
+        folderName: (String) -> String = { $0 }
+    ) -> LauncherDropOutcome {
+        normalize()
+        guard source != destination,
+              let dragged = item(at: source), !dragged.isEmpty,
+              let target = item(at: destination)
+        else { return .ignored }
+
+        // Only an app groups. Dropping a folder onto something rearranges it;
+        // folders inside folders are a structure nobody asked for.
+        if dragged.appIdentifier != nil, !target.isEmpty {
+            // The one way this refuses is a folder that already holds the app,
+            // which the layout's own invariant prevents — an app is in exactly
+            // one place. Falling through to a move is the safe answer if it
+            // ever happens anyway.
+            if group(source, into: destination, folderName: folderName) {
+                return .grouped
+            }
+        }
+
+        move(from: source, to: destination)
+        return .moved
     }
 
     // MARK: - Folders

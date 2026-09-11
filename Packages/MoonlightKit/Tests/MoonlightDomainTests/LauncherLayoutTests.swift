@@ -288,3 +288,139 @@ struct LauncherLayoutReconcilerTests {
         #expect(twice == once)
     }
 }
+
+@Suite("Launcher drop")
+struct LauncherDropTests {
+    private func layout(_ items: [LauncherItem]) -> LauncherLayout {
+        var layout = LauncherLayout(grid: smallGrid, pages: [items])
+        layout.normalize()
+        return layout
+    }
+
+    private func position(_ slot: Int, page: Int = 0) -> LauncherPosition {
+        LauncherPosition(page: page, slot: slot)
+    }
+
+    @Test("An app dropped on an empty slot moves there")
+    func moveToEmptySlot() {
+        var subject = layout([.app("a"), .app("b")])
+
+        let outcome = subject.drop(from: position(0), to: position(4))
+
+        #expect(outcome == .moved)
+        #expect(subject.pages[0][4].appIdentifier == "a")
+        #expect(subject.position(ofApp: "b") == position(0))
+    }
+
+    @Test("An app dropped on another app makes a folder of the two")
+    func groupOnApp() {
+        var subject = layout([.app("a"), .app("b")])
+
+        let outcome = subject.drop(
+            from: position(0),
+            to: position(1),
+            folderName: { _ in "Utilities" }
+        )
+
+        #expect(outcome == .grouped)
+        #expect(subject.pages[0][0].isEmpty)
+        #expect(subject.pages[0][1].folder?.appIdentifiers == ["b", "a"])
+        #expect(subject.pages[0][1].folder?.name == "Utilities")
+    }
+
+    @Test("An app dropped on a folder joins it")
+    func groupOnFolder() {
+        let folder = LauncherFolder(name: "Utilities", appIdentifiers: ["b", "c"])
+        var subject = layout([.app("a"), .folder(folder)])
+
+        let outcome = subject.drop(from: position(0), to: position(1))
+
+        #expect(outcome == .grouped)
+        #expect(subject.pages[0][1].folder?.appIdentifiers == ["b", "c", "a"])
+    }
+
+    @Test("A folder dropped on an app moves rather than nesting")
+    func folderOntoAppMoves() {
+        let folder = LauncherFolder(name: "Utilities", appIdentifiers: ["b", "c"])
+        var subject = layout([.folder(folder), .app("a")])
+
+        let outcome = subject.drop(from: position(0), to: position(1))
+
+        #expect(outcome == .moved)
+        // Nothing became a member of anything: both items are still there.
+        #expect(subject.pages[0].compactMap(\.folder).count == 1)
+        #expect(subject.position(ofApp: "a") != nil)
+    }
+
+    @Test("Dropping an item on itself does nothing")
+    func sameSlotIsIgnored() {
+        var subject = layout([.app("a")])
+        let before = subject
+
+        let outcome = subject.drop(from: position(0), to: position(0))
+
+        #expect(outcome == .ignored)
+        #expect(subject == before)
+    }
+
+    @Test("Dragging from an empty slot does nothing")
+    func emptySourceIsIgnored() {
+        var subject = layout([.app("a")])
+        let before = subject
+
+        let outcome = subject.drop(from: position(3), to: position(4))
+
+        #expect(outcome == .ignored)
+        #expect(subject == before)
+    }
+
+    @Test("Dropping outside the grid does nothing")
+    func outOfBoundsIsIgnored() {
+        var subject = layout([.app("a")])
+        let before = subject
+
+        let offPage = subject.drop(from: position(0), to: position(0, page: 9))
+        let offSlot = subject.drop(from: position(0), to: position(99))
+
+        #expect(offPage == .ignored)
+        #expect(offSlot == .ignored)
+        #expect(subject == before)
+    }
+
+    @Test("An app can be dropped onto another page")
+    func moveAcrossPages() {
+        var subject = LauncherLayout(
+            grid: smallGrid,
+            pages: [[.app("a"), .app("b"), .app("c"), .app("d"), .app("e"), .app("f")], [.app("g")]]
+        )
+        subject.normalize()
+
+        let outcome = subject.drop(from: position(0), to: position(1, page: 1))
+
+        #expect(outcome == .moved)
+        #expect(subject.position(ofApp: "a")?.page == 1)
+        #expect(subject.placedAppIdentifiers.count == 7)
+    }
+
+    @Test("Grouping twice puts three apps in one folder")
+    func groupAccumulates() {
+        var subject = layout([.app("a"), .app("b"), .app("c")])
+
+        _ = subject.drop(from: position(0), to: position(1))
+        let outcome = subject.drop(from: position(2), to: position(1))
+
+        #expect(outcome == .grouped)
+        #expect(subject.pages[0][1].folder?.appIdentifiers.count == 3)
+        #expect(subject.placedAppIdentifiers.sorted() == ["a", "b", "c"])
+    }
+
+    @Test("No app is lost or duplicated by a drop")
+    func dropPreservesEveryApp() {
+        var subject = layout([.app("a"), .app("b"), .app("c"), .app("d")])
+
+        _ = subject.drop(from: position(3), to: position(1))
+        _ = subject.drop(from: position(0), to: position(2))
+
+        #expect(subject.placedAppIdentifiers.sorted() == ["a", "b", "c", "d"])
+    }
+}
