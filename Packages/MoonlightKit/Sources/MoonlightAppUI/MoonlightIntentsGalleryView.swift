@@ -7,8 +7,10 @@ public struct MoonlightIntentsGalleryView: View {
     public var notesModel: MoonlightNotesModel?
 
     @State private var searchText = ""
+    @State private var isSearchExpanded = false
     @State private var selectedItemForRunner: MoonlightIntentItem?
     @State private var featuredItem: MoonlightIntentItem = MoonlightIntentCatalog.featuredItem
+    @FocusState private var isSearchFocused: Bool
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -50,7 +52,7 @@ public struct MoonlightIntentsGalleryView: View {
                         ForEach(MoonlightIntentCategory.allCases) { category in
                             let categoryItems = MoonlightIntentCatalog.items(for: category)
                             if !categoryItems.isEmpty {
-                                categorySection(title: category.rawValue, subtitle: category.subtitle, items: categoryItems)
+                                categorySection(category: category, items: categoryItems)
                             }
                         }
                     } else {
@@ -74,73 +76,92 @@ public struct MoonlightIntentsGalleryView: View {
     }
 
     private var topHeader: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Moonlight Intents")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: "sparkles.rectangle.stack.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.90))
 
-                Text("Liquid Glass · macOS 27")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.80))
-            }
+            Text("Intents")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
 
             Spacer()
 
-            // Search Glass Pill (Matching "Search" pill button in the top right of reference)
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
+            searchControl
+        }
+    }
 
-                TextField("Search intents...", text: $searchText)
+    /// Collapses to a single icon button until tapped — a search field with
+    /// nothing typed into it is a decoration, not a control.
+    @ViewBuilder
+    private var searchControl: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+
+            if isSearchExpanded {
+                TextField("", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
                     .foregroundStyle(.white)
                     .frame(width: 140)
+                    .focused($isSearchFocused)
+                    .accessibilityLabel("Search intents")
+                    .onSubmit { collapseSearchIfEmpty() }
 
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.white.opacity(0.70))
-                    }
-                    .buttonStyle(.plain)
+                Button {
+                    searchText = ""
+                    collapseSearchIfEmpty()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.70))
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background {
-                Capsule()
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(.white.opacity(0.35), lineWidth: 1)
-                    }
-            }
-            .shadow(color: .black.opacity(0.20), radius: 6, y: 2)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background {
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    Capsule()
+                        .strokeBorder(.white.opacity(0.35), lineWidth: 1)
+                }
+        }
+        .shadow(color: .black.opacity(0.20), radius: 6, y: 2)
+        .contentShape(Capsule())
+        .onTapGesture {
+            isSearchExpanded = true
+            isSearchFocused = true
+        }
+        .help("Search intents")
+    }
+
+    private func collapseSearchIfEmpty() {
+        guard searchText.isEmpty else { return }
+        isSearchExpanded = false
+        isSearchFocused = false
     }
 
     private func categorySection(
-        title: String,
-        subtitle: String,
+        category: MoonlightIntentCategory,
         items: [MoonlightIntentItem]
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Section Header (Matching "Asia", "Africa")
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+            // Section Header — an icon carries the category, the subtitle sentence doesn't.
+            HStack(spacing: 8) {
+                Image(systemName: category.symbolName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+
+                Text(category.rawValue)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.35), radius: 2, y: 1)
-
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.75))
             }
 
             // Horizontal Scroll of Intent Cards

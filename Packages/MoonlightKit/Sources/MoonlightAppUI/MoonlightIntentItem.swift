@@ -10,14 +10,11 @@ public enum MoonlightIntentCategory: String, CaseIterable, Identifiable, Sendabl
 
     public var id: String { rawValue }
 
-    public var subtitle: String {
+    public var symbolName: String {
         switch self {
-        case .core:
-            "Everyday capture, validation, and text formatting actions"
-        case .transforms:
-            "Encoding, cryptographic hashing, and data conversions"
-        case .system:
-            "System utilities, launcher controls, and workflow shortcuts"
+        case .core: "text.badge.checkmark"
+        case .transforms: "arrow.left.arrow.right"
+        case .system: "gearshape.2.fill"
         }
     }
 }

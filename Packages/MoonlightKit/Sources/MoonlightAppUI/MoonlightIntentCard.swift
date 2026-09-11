@@ -62,41 +62,37 @@ public struct MoonlightIntentCard: View {
 
                         Spacer()
 
-                        // Action / Mode Pill
-                        HStack(spacing: 4) {
-                            Text(item.requiresInput ? "Input" : "Instant")
-                                .font(.system(size: 10, weight: .bold, design: .rounded))
-                            Image(systemName: item.requiresInput ? "arrow.right.circle" : "bolt.fill")
-                                .font(.system(size: 9, weight: .bold))
-                        }
-                        .foregroundStyle(.white.opacity(0.92))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background {
-                            Capsule()
-                                .fill(.black.opacity(0.22))
-                                .overlay {
-                                    Capsule()
-                                        .strokeBorder(.white.opacity(0.25), lineWidth: 0.8)
-                                }
-                        }
+                        // Mode badge — icon only. "Input" vs "Instant" is a
+                        // state a symbol can carry without spelling it out.
+                        Image(systemName: item.requiresInput ? "arrow.right.circle.fill" : "bolt.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.92))
+                            .frame(width: 26, height: 26)
+                            .background {
+                                Circle()
+                                    .fill(.black.opacity(0.22))
+                                    .overlay {
+                                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.8)
+                                    }
+                            }
+                            .accessibilityLabel(item.requiresInput ? "Requires input" : "Runs instantly")
                     }
                     .padding(14)
 
                     Spacer()
                 }
 
-                // Dark Gradient Scrim for crisp text readability (matching the reference design)
+                // Dark Gradient Scrim for crisp text readability
                 LinearGradient(
                     colors: [
                         .clear,
-                        .black.opacity(0.35),
-                        .black.opacity(0.80)
+                        .black.opacity(0.30),
+                        .black.opacity(0.75)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(height: 72)
+                .frame(height: 50)
                 .clipShape(
                     UnevenRoundedRectangle(
                         bottomLeadingRadius: 18,
@@ -104,20 +100,14 @@ public struct MoonlightIntentCard: View {
                     )
                 )
 
-                // Title & Subtitle Labels
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.30), radius: 2, y: 1)
-
-                    Text(item.subtitle)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .lineLimit(1)
-                }
-                .padding(.horizontal, 14)
-                .padding(.bottom, 12)
+                // Title — the icon badge and mode symbol already carry the rest.
+                Text(item.title)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.30), radius: 2, y: 1)
+                    .lineLimit(1)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 12)
             }
             .frame(width: 210, height: 140)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -145,6 +135,7 @@ public struct MoonlightIntentCard: View {
             .animation(.spring(response: 0.30, dampingFraction: 0.75), value: isHovered)
         }
         .buttonStyle(.plain)
+        .help(item.subtitle)
         .onHover { hovering in
             isHovered = hovering
         }
