@@ -52,7 +52,7 @@ public struct MoonlightNoteEntity {
             let notes = try await notes()
             guard !query.isEmpty else { return notes.map(MoonlightNoteEntity.init(note:)) }
             return notes
-                .filter { $0.text.localizedCaseInsensitiveContains(query) }
+                .filter { $0.text.localizedStandardContains(query) }
                 .map(MoonlightNoteEntity.init(note:))
         }
 

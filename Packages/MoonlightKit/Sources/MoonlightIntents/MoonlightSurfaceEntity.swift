@@ -79,8 +79,8 @@ public struct MoonlightSurfaceEntityQuery: EntityStringQuery, IndexedEntityQuery
         // those letters should not surface the launcher.
         return Self.allEntities.filter { entity in
             entity.alias.hasPrefix(query.lowercased())
-                || entity.name.localizedCaseInsensitiveContains(query)
-                || entity.summary.localizedCaseInsensitiveContains(query)
+                || entity.name.localizedStandardContains(query)
+                || entity.summary.localizedStandardContains(query)
         }
     }
 

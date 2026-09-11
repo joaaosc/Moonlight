@@ -240,7 +240,7 @@ public struct MoonlightToolPaletteView: View {
 
         HStack(spacing: 12) {
             Image(systemName: model.presentation(for: descriptor).symbolName)
-                .font(.system(size: 15))
+                .font(.body)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 26, height: 26)
                 .foregroundStyle(isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
@@ -289,10 +289,7 @@ public struct MoonlightToolPaletteView: View {
             // without knowing which tool is selected. The label is dropped
             // because a two-choice segmented control states its own question.
             ForEach(model.presentation(for: descriptor).options) { option in
-                Picker(option.title, selection: Binding(
-                    get: { model.optionValue(option) },
-                    set: { model.setOptionValue($0, for: option) }
-                )) {
+                Picker(option.title, selection: model.binding(for: option)) {
                     ForEach(option.choices) { choice in
                         Text(choice.title).tag(choice.value)
                     }

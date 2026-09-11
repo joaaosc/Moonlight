@@ -21,7 +21,7 @@ struct MoonlightNoteVisualQuery: IntentValueQuery {
 
         let notes = try await store.notes(limit: 500)
         let matches = notes.filter { note in
-            labels.contains { note.text.localizedCaseInsensitiveContains($0) }
+            labels.contains { note.text.localizedStandardContains($0) }
         }
 
         // A short list keeps the search view fast; the full list is one tap

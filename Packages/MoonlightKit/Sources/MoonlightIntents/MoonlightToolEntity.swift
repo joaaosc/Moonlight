@@ -81,8 +81,8 @@ public struct MoonlightToolEntityQuery: EntityStringQuery, IndexedEntityQuery {
         guard !query.isEmpty else { return Self.allEntities }
 
         return Self.allEntities.filter {
-            $0.name.localizedCaseInsensitiveContains(query)
-                || $0.summary.localizedCaseInsensitiveContains(query)
+            $0.name.localizedStandardContains(query)
+                || $0.summary.localizedStandardContains(query)
         }
     }
 
