@@ -115,8 +115,14 @@ public struct MoonlightLauncherView: View {
 
             centered {
                 LazyVGrid(columns: gridColumns, spacing: LauncherMetrics.tileSpacing) {
-                    ForEach(model.items(onPage: model.currentPage)) { item in
-                        tile(for: item)
+                    ForEach(
+                        Array(model.items(onPage: model.currentPage).enumerated()),
+                        id: \.element.id
+                    ) { slot, item in
+                        tile(
+                            for: item,
+                            at: LauncherPosition(page: model.currentPage, slot: slot)
+                        )
                     }
                 }
             }
@@ -140,28 +146,78 @@ public struct MoonlightLauncherView: View {
     }
 
     @ViewBuilder
-    private func tile(for item: LauncherItem) -> some View {
-        switch item {
-        case .empty:
-            LauncherEmptyTile()
-        case let .app(identifier):
-            if let app = model.app(for: identifier) {
-                LauncherAppTile(
-                    app: app,
-                    icon: model.icon(for: app),
-                    isSelected: model.selection == identifier
+    private func tile(for item: LauncherItem, at position: LauncherPosition) -> some View {
+        Group {
+            switch item {
+            case .empty:
+                LauncherEmptyTile()
+            case let .app(identifier):
+                if let app = model.app(for: identifier) {
+                    LauncherAppTile(
+                        app: app,
+                        icon: model.icon(for: app),
+                        isSelected: model.selection == identifier
+                    )
+                    .onTapGesture { Task { await launch(app) } }
+                    .contextMenu { appMenu(app) }
+                    .draggable(LauncherDragPayload(position))
+                }
+            case let .folder(folder):
+                LauncherFolderTile(
+                    folder: folder,
+                    icons: folder.appIdentifiers
+                        .compactMap { model.app(for: $0) }
+                        .map { model.icon(for: $0) },
+                    isSelected: false
                 )
-                .onTapGesture { Task { await launch(app) } }
-                .contextMenu { appMenu(app) }
+                .onTapGesture {
+                    model.openFolder = folder
+                    folderName = folder.name
+                }
+                .contextMenu { folderMenu(at: position) }
+                .draggable(LauncherDragPayload(position))
             }
-        case let .folder(folder):
-            LauncherFolderTile(
-                folder: folder,
-                icons: folder.appIdentifiers.compactMap { model.app(for: $0) }.map { model.icon(for: $0) },
-                isSelected: false
-            )
-            .onTapGesture { model.openFolder = folder }
         }
+        .dropDestination(for: LauncherDragPayload.self) { payloads, _ in
+            drop(payloads, at: position)
+        } isTargeted: { targeted in
+            dropTarget = targeted ? position : (dropTarget == position ? nil : dropTarget)
+        }
+        .background {
+            if dropTarget == position, !item.isEmpty {
+                // A ring rather than a fill: the tile under the pointer is
+                // about to receive the drag, and filling it would hide the icon
+                // the user is aiming at.
+                RoundedRectangle(cornerRadius: LauncherMetrics.selectionRadius, style: .continuous)
+                    .strokeBorder(.primary.opacity(0.35), lineWidth: 2)
+            } else if dropTarget == position {
+                RoundedRectangle(cornerRadius: LauncherMetrics.selectionRadius, style: .continuous)
+                    .fill(.primary.opacity(0.08))
+            }
+        }
+    }
+
+    /// Where the drag currently hovers, so the target can show it.
+    ///
+    /// Held here rather than in the model: it is a property of the pointer, not
+    /// of the arrangement, and it changes far too often to be worth publishing.
+    @State private var dropTarget: LauncherPosition?
+    @State private var folderName = ""
+
+    /// Dropping onto an app or a folder groups; dropping anywhere else moves.
+    private func drop(_ payloads: [LauncherDragPayload], at destination: LauncherPosition) -> Bool {
+        guard let source = payloads.first?.position, source != destination else { return false }
+        guard !model.isArrangementLocked else { return false }
+
+        let target = model.layout.item(at: destination)
+        let dragged = model.layout.item(at: source)
+
+        if dragged?.appIdentifier != nil, let target, !target.isEmpty {
+            if model.group(source, into: destination) { return true }
+        }
+
+        model.move(from: source, to: destination)
+        return true
     }
 
     private var searchResults: some View {
@@ -238,10 +294,25 @@ public struct MoonlightLauncherView: View {
         Button("Hide from Launcher") { model.hide(app) }
     }
 
+    @ViewBuilder
+    private func folderMenu(at position: LauncherPosition) -> some View {
+        Button("Rename…") {
+            model.openFolder = model.layout.item(at: position)?.folder
+            folderName = model.openFolder?.name ?? ""
+        }
+    }
+
     private func folderOverlay(_ folder: LauncherFolder) -> some View {
         VStack(spacing: 14) {
-            Text(folder.name)
+            TextField("Folder", text: $folderName)
+                .textFieldStyle(.plain)
                 .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 220)
+                .onSubmit {
+                    guard let position = model.position(of: .folder(folder)) else { return }
+                    model.renameFolder(at: position, to: folderName)
+                }
 
             LazyVGrid(
                 columns: gridColumns(count: folder.appIdentifiers.count),
@@ -255,6 +326,12 @@ public struct MoonlightLauncherView: View {
                             isSelected: model.selection == identifier
                         )
                         .onTapGesture { Task { await launch(app) } }
+                        .contextMenu {
+                            Button("Remove from Folder") {
+                                guard let position = model.position(of: .folder(folder)) else { return }
+                                model.ungroup(app, from: position)
+                            }
+                        }
                     }
                 }
             }

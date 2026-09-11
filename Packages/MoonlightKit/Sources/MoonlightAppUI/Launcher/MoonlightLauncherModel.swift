@@ -165,6 +165,69 @@ public final class MoonlightLauncherModel {
         mutate { $0.hide(app: app.bundleIdentifier) }
     }
 
+    // MARK: - Rearranging
+
+    /// The name a folder gets when the user makes one by dropping an app on
+    /// another. Generic on purpose: the folder is renamed in place, and
+    /// guessing a category from a bundle identifier is wrong more often than it
+    /// is right.
+    public static let defaultFolderName = "Folder"
+
+    public func move(from source: LauncherPosition, to destination: LauncherPosition) {
+        guard !isArrangementLocked else { return }
+        mutate { $0.move(from: source, to: destination) }
+    }
+
+    /// Drops one app onto another, which either makes a folder or joins one.
+    @discardableResult
+    public func group(_ source: LauncherPosition, into destination: LauncherPosition) -> Bool {
+        guard !isArrangementLocked else { return false }
+        var grouped = false
+        mutate { layout in
+            grouped = layout.group(
+                source,
+                into: destination,
+                folderName: { _ in Self.defaultFolderName }
+            )
+        }
+        return grouped
+    }
+
+    public func ungroup(_ app: InstalledApp, from position: LauncherPosition) {
+        mutate { layout in
+            _ = layout.ungroup(app: app.bundleIdentifier, from: position)
+        }
+        // The open folder is a copy; re-read it so the sheet reflects the change
+        // instead of showing the app it no longer holds.
+        if let openFolder {
+            self.openFolder = layout.item(at: position)?.folder
+                ?? (openFolder.appIdentifiers.count <= 2 ? nil : openFolder)
+        }
+    }
+
+    public func renameFolder(at position: LauncherPosition, to name: String) {
+        mutate { _ = $0.renameFolder(at: position, to: name) }
+        openFolder = layout.item(at: position)?.folder
+    }
+
+    public func position(of item: LauncherItem) -> LauncherPosition? {
+        for (pageIndex, page) in layout.pages.enumerated() {
+            for (slotIndex, candidate) in page.enumerated() where candidate.id == item.id {
+                return LauncherPosition(page: pageIndex, slot: slotIndex)
+            }
+        }
+        return nil
+    }
+
+    /// True while the user is holding the key that freezes the arrangement.
+    ///
+    /// Dragging across a dense grid of icons is easy to do by accident, and an
+    /// arrangement that silently changed is hard to undo by hand. Holding
+    /// Option refuses every rearrangement for as long as it is down.
+    public var isArrangementLocked: Bool {
+        NSEvent.modifierFlags.contains(.option)
+    }
+
     // MARK: - Navigating
 
     public func goToNextPage() {
