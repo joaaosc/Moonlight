@@ -26,9 +26,9 @@ public struct MoonlightIntentsGalleryView: View {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return MoonlightIntentCatalog.allIntents }
         return MoonlightIntentCatalog.allIntents.filter {
-            $0.title.localizedCaseInsensitiveContains(query) ||
-            $0.subtitle.localizedCaseInsensitiveContains(query) ||
-            $0.category.rawValue.localizedCaseInsensitiveContains(query)
+            $0.title.localizedStandardContains(query) ||
+            $0.subtitle.localizedStandardContains(query) ||
+            $0.category.rawValue.localizedStandardContains(query)
         }
     }
 
@@ -48,7 +48,7 @@ public struct MoonlightIntentsGalleryView: View {
         .background(.background)
         .overlay {
             if filteredIntents.isEmpty {
-                ContentUnavailableView.search(text: searchText)
+                ContentUnavailableView.search
             }
         }
         .searchable(text: $searchText, placement: .toolbar, prompt: "Search intents")

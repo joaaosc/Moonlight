@@ -11,7 +11,7 @@ struct KeyHint: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.caption2.weight(.semibold))
+            .font(.caption)
             .frame(width: 18, height: 16)
             .background(
                 RoundedRectangle(cornerRadius: 4, style: .continuous)

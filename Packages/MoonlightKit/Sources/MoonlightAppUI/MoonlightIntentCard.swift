@@ -27,7 +27,7 @@ public struct MoonlightIntentCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 14) {
                 Image(systemName: item.symbolName)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.title3)
                     .foregroundStyle(item.accentColor)
                     .frame(width: 36, height: 36)
                     .background(item.accentColor.opacity(0.12), in: ConcentricRectangle())
