@@ -36,10 +36,10 @@ struct AppIntentsAdapterTests {
         #expect(intent.json == #"{"moonlight":true}"#)
     }
 
-    @Test("Moonlight foreground route remains executable but is not a second public entry")
+    @Test("Moonlight foreground route runs only in the app process")
     func openMoonlightContract() {
         requireAppIntent(OpenMoonlightIntent.self)
-        #expect(!OpenMoonlightIntent.isDiscoverable)
+        #expect(OpenMoonlightIntent.isDiscoverable)
         #expect(OpenMoonlightIntent.supportedModes.contains(.foreground(.immediate)))
         #expect(OpenMoonlightIntent.allowedExecutionTargets.contains(.main))
         #expect(!OpenMoonlightIntent.allowedExecutionTargets.contains(.appIntentsExtension))
@@ -54,9 +54,12 @@ struct AppIntentsAdapterTests {
         #expect(OpenMoonlightToolIntent.isDiscoverable)
         #expect(OpenMoonlightToolIntent.allowedExecutionTargets.contains(.main))
         #expect(!OpenMoonlightToolIntent.allowedExecutionTargets.contains(.appIntentsExtension))
-        #expect(entities.map(\.id) == ActionRegistry.standard.descriptors
-            .sorted { $0.title < $1.title }
-            .map(\.id))
+        // Composed at runtime: the built-in tools are always published, and the
+        // personal commands the user exposed may join them. Asserting equality
+        // would make the test depend on the data of the machine running it.
+        let builtInIDs = Set(ActionRegistry.standard.descriptors.map(\.id))
+        #expect(builtInIDs.isSubset(of: Set(entities.map(\.id))))
+        #expect(entities.map(\.name) == entities.map(\.name).sorted())
         #expect(try await query.entities(matching: "json").map(\.id) == [MoonlightActionID.formatJSON])
         #expect(try await query.entities(for: [MoonlightActionID.generateUUID]).map(\.id) == [MoonlightActionID.generateUUID])
     }
@@ -141,7 +144,7 @@ struct AppIntentsAdapterTests {
     func curatedAppShortcuts() {
         let shortcuts = MoonlightAppShortcuts.appShortcuts
 
-        #expect(shortcuts.count == 4)
+        #expect(shortcuts.count == 5)
         #expect(shortcuts.count < ActionRegistry.standard.descriptors.count)
     }
 

@@ -107,7 +107,7 @@ struct MoonlightModelTests {
 @Suite("Moonlight Control Panel and Intent Catalog")
 @MainActor
 struct MoonlightControlPanelTests {
-    @Test("Intent catalog contains core intents with symbols and gradients")
+    @Test("Intent catalog contains core intents with symbols and an accent")
     func catalogContent() {
         let all = MoonlightIntentCatalog.allIntents
         #expect(!all.isEmpty)
@@ -121,27 +121,18 @@ struct MoonlightControlPanelTests {
         for item in all {
             #expect(!item.title.isEmpty)
             #expect(!item.symbolName.isEmpty)
-            #expect(!item.gradientColors.isEmpty)
+            #expect(!item.subtitle.isEmpty)
         }
     }
 
-    @Test("Categories partition the catalog cleanly")
-    func categoryFiltering() {
-        let coreItems = MoonlightIntentCatalog.items(for: .core)
-        let transformItems = MoonlightIntentCatalog.items(for: .transforms)
-        let systemItems = MoonlightIntentCatalog.items(for: .system)
+    @Test("Every category is represented and the catalog has no duplicate ids")
+    func categoryCoverage() {
+        let all = MoonlightIntentCatalog.allIntents
 
-        #expect(!coreItems.isEmpty)
-        #expect(!transformItems.isEmpty)
-        #expect(!systemItems.isEmpty)
-        #expect(coreItems.count + transformItems.count + systemItems.count == MoonlightIntentCatalog.allIntents.count)
-    }
-
-    @Test("Featured intent is capture note")
-    func featuredIntent() {
-        let featured = MoonlightIntentCatalog.featuredItem
-        #expect(featured.id == MoonlightActionID.captureNote)
-        #expect(featured.isFeatured)
+        for category in MoonlightIntentCategory.allCases {
+            #expect(all.contains { $0.category == category })
+        }
+        #expect(Set(all.map(\.id)).count == all.count)
     }
 
     @Test("Model generic execute executes and records in history")
