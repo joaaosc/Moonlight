@@ -43,7 +43,11 @@ public struct MoonlightIntentRunnerSheet: View {
 
             Divider()
 
-            ScrollView {
+            // No scroll view here on purpose: the input is line-limited and the
+            // result area caps its own height, so the sheet can size itself to
+            // the tool instead of reserving a fixed rectangle every tool has to
+            // fill.
+            if hasConfigurableBody {
                 VStack(alignment: .leading, spacing: 16) {
                     if let parameterKey = item.parameterKey, !item.parameterOptions.isEmpty {
                         Picker(parameterKey.capitalized, selection: $selectedParameterValue) {
@@ -58,12 +62,6 @@ public struct MoonlightIntentRunnerSheet: View {
                     if item.requiresInput {
                         inputSection
                     }
-
-                    Button("Run \(item.title)", systemImage: "play.fill", action: run)
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .frame(maxWidth: .infinity)
-                        .disabled(isRunning || !hasRunnableInput)
 
                     if let errorMessage {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
@@ -83,11 +81,27 @@ public struct MoonlightIntentRunnerSheet: View {
                             onSaveToNotes: saveToNotes
                         )
                     }
-                }
-                .padding(20)
             }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Divider()
+            }
+
+            // The primary action sits at the trailing edge of a bottom bar, the
+            // place macOS puts it in every sheet the system draws itself.
+            HStack {
+                Spacer()
+                Button("Close", action: onDismiss)
+                    .keyboardShortcut(.cancelAction)
+                Button("Run", systemImage: "play.fill", action: run)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(isRunning || !hasRunnableInput)
+            }
+            .padding(20)
         }
-        .frame(minWidth: 460, idealWidth: 520, minHeight: 420, idealHeight: 520)
+        .frame(minWidth: 460, idealWidth: 520)
     }
 
     private var header: some View {
@@ -115,11 +129,6 @@ public struct MoonlightIntentRunnerSheet: View {
                     .controlSize(.small)
                     .accessibilityLabel("Running \(item.title)")
             }
-
-            Button("Close", systemImage: "xmark", action: onDismiss)
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
-                .keyboardShortcut(.cancelAction)
         }
     }
 
@@ -151,6 +160,16 @@ public struct MoonlightIntentRunnerSheet: View {
                 .background(.quinary, in: .rect(cornerRadius: 10))
                 .accessibilityLabel("Input for \(item.title)")
         }
+    }
+
+    /// Whether there is anything between the header and the action bar. A tool
+    /// that takes no input and has not run yet has nothing to show, and an empty
+    /// padded strip between two dividers is worse than no strip at all.
+    private var hasConfigurableBody: Bool {
+        item.requiresInput
+            || item.parameterKey != nil
+            || outputText != nil
+            || errorMessage != nil
     }
 
     private var hasRunnableInput: Bool {
@@ -241,3 +260,23 @@ public struct MoonlightIntentRunnerSheet: View {
         withAnimation { apply(false) }
     }
 }
+
+#if DEBUG
+#Preview("With options") {
+    MoonlightIntentRunnerSheet(
+        item: MoonlightIntentCatalog.allIntents.first { $0.parameterKey != nil }
+            ?? MoonlightIntentCatalog.allIntents[0],
+        model: MoonlightPreviewFixtures.model(),
+        onDismiss: {}
+    )
+}
+
+#Preview("Without input") {
+    MoonlightIntentRunnerSheet(
+        item: MoonlightIntentCatalog.allIntents.first { !$0.requiresInput }
+            ?? MoonlightIntentCatalog.allIntents[0],
+        model: MoonlightPreviewFixtures.model(),
+        onDismiss: {}
+    )
+}
+#endif
