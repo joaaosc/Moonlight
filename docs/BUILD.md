@@ -20,6 +20,33 @@ xcodebuild \
 
 Não configurar `DerivedDataLocation` global nem executar limpeza ampla do índice Spotlight como parte do build.
 
+## Ciclo de desenvolvimento e cópia instalada
+
+App Intents, widgets e as superfícies Spotlight leem o bundle registrado no Launch Services, e este projeto mantém exatamente uma cópia registrada, em `/Applications`. Uma mudança só é observável depois de instalada ali.
+
+`Scripts/release.sh` não serve para esse ciclo: ele arquiva em Release com otimização de módulo inteiro e exporta com Developer ID, o que existe para notarização. O ciclo é `Scripts/dev-install.sh`:
+
+```text
+bash Scripts/dev-install.sh
+```
+
+Compila Debug no DerivedData do repositório, encerra a cópia em execução, substitui `/Applications/Moonlight.app`, verifica a assinatura, registra o bundle e desregistra as demais cópias. Assinatura, entitlements, sandbox e hardened runtime são os mesmos do Release, então o que o sistema enxerga é equivalente para validação. O projeto só é regenerado quando `project.yml` estiver mais novo que o `.xcodeproj`, para não reescrever o arquivo sob um Xcode aberto.
+
+`Scripts/status.sh` responde se a cópia instalada corresponde ao checkout, e sai com código diferente de zero quando não corresponde, de modo a poder condicionar uma validação de runtime:
+
+```text
+bash Scripts/status.sh
+```
+
+São duas verificações independentes, porque falham por motivos diferentes:
+
+- `CFBundleVersion` instalado contra `git rev-list --count HEAD`, que mede defasagem em commits;
+- data do executável instalado contra a fonte mais recente em `App/`, `Packages/`, `Config/` e `project.yml`, que detecta edições ainda não instaladas, commitadas ou não.
+
+O comando também lista as cópias registradas no Launch Services. Mais de uma entrada é a causa das entradas duplicadas do Moonlight no Spotlight; `Scripts/clean-app-registrations.sh` remove as excedentes e `dev-install.sh` já o executa.
+
+Build verde não substitui esse gate: o Xcode registra cada produto que escreve, inclusive em DerivedData globais de checkouts antigos, e essas cópias competem com a instalada.
+
 ## Número de build
 
 O build não está no controle de versão. Ele era `CURRENT_PROJECT_VERSION` em `project.yml`, o que transformava cada build em um commit e impedia que duas branches o incrementassem sem colidir.
