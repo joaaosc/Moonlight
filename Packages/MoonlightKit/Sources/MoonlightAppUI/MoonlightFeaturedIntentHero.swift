@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// Hero featured card at the top of the Liquid Glass Control Panel matching "Featured Landmark - Mount Fuji".
+/// Hero featured card at the top of the Control Panel gallery: an abstract
+/// gradient slab, one icon badge, a title, and an icon-only run button — no
+/// paragraph of sales copy competing with the cards below it.
 public struct MoonlightFeaturedIntentHero: View {
     public let item: MoonlightIntentItem
     public let onRun: () -> Void
@@ -18,7 +20,6 @@ public struct MoonlightFeaturedIntentHero: View {
 
     public var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // Scenic hero gradient background
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(
                     LinearGradient(
@@ -40,60 +41,14 @@ public struct MoonlightFeaturedIntentHero: View {
                     )
                 )
 
-            // Radiant sunrise glow behind mountain
-            RadialGradient(
-                colors: [
-                    Color(red: 1.0, green: 0.82, blue: 0.55).opacity(colorScheme == .dark ? 0.35 : 0.60),
-                    Color(red: 1.0, green: 0.50, blue: 0.60).opacity(0.20),
-                    .clear
-                ],
-                center: UnitPoint(x: 0.78, y: 0.38),
-                startRadius: 0,
-                endRadius: 280
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-
-            // Mountain silhouette inside hero card
-            GeometryReader { proxy in
-                Path { path in
-                    let w = proxy.size.width
-                    let h = proxy.size.height
-                    let peakX = w * 0.76
-                    let peakY = h * 0.25
-
-                    path.move(to: CGPoint(x: w * 0.35, y: h))
-                    path.addCurve(
-                        to: CGPoint(x: peakX, y: peakY),
-                        control1: CGPoint(x: w * 0.50, y: h * 0.85),
-                        control2: CGPoint(x: peakX - w * 0.12, y: h * 0.45)
-                    )
-                    path.addCurve(
-                        to: CGPoint(x: w, y: h * 0.90),
-                        control1: CGPoint(x: peakX + w * 0.10, y: h * 0.45),
-                        control2: CGPoint(x: w * 0.92, y: h * 0.80)
-                    )
-                    path.addLine(to: CGPoint(x: w, y: h))
-                    path.closeSubpath()
-                }
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.40),
-                            Color(red: 0.18, green: 0.12, blue: 0.30).opacity(0.85)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            abstractShapes
 
             // Dark gradient scrim overlay at the bottom for typography contrast
             LinearGradient(
                 colors: [
                     .clear,
-                    .black.opacity(0.25),
-                    .black.opacity(0.75)
+                    .black.opacity(0.20),
+                    .black.opacity(0.70)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -101,77 +56,57 @@ public struct MoonlightFeaturedIntentHero: View {
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
 
             // Foreground Content
-            VStack(alignment: .leading, spacing: 12) {
-                // Featured Intent Tag Badge
-                HStack(spacing: 6) {
+            HStack(alignment: .bottom, spacing: 18) {
+                VStack(alignment: .leading, spacing: 10) {
+                    // Featured badge — sparkle only, the position at the top
+                    // of the gallery already says what it means.
                     Image(systemName: "sparkles")
-                        .font(.system(size: 11, weight: .bold))
-                    Text("FEATURED INTENT")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(1.2)
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background {
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(.white.opacity(0.4), lineWidth: 0.8)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background {
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .overlay {
+                                    Circle().strokeBorder(.white.opacity(0.4), lineWidth: 0.8)
+                                }
                         }
-                }
+                        .accessibilityLabel("Featured intent")
 
-                // Title and Subtitle
-                VStack(alignment: .leading, spacing: 6) {
                     Text(item.title)
-                        .font(.system(size: 32, weight: .heavy, design: .rounded))
+                        .font(.system(size: 30, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
-
-                    Text(item.subtitle)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.92))
-                        .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
-                        .frame(maxWidth: 480, alignment: .leading)
                 }
 
                 Spacer()
 
-                // "Run Intent" Liquid Glass pill button (matching "Learn More" in reference)
+                // Run button — the icon is the verb.
                 Button {
                     onRun()
                 } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: item.symbolName)
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Run \(item.title)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .background {
-                        Capsule()
-                            .fill(.ultraThinMaterial)
-                            .overlay {
-                                Capsule()
-                                    .fill(item.accentColor.opacity(0.35))
-                            }
-                            .overlay {
-                                Capsule()
-                                    .strokeBorder(.white.opacity(0.55), lineWidth: 1.2)
-                            }
-                    }
-                    .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 52, height: 52)
+                        .background {
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .overlay { Circle().fill(item.accentColor.opacity(0.40)) }
+                                .overlay { Circle().strokeBorder(.white.opacity(0.55), lineWidth: 1.2) }
+                        }
+                        .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+                        .scaleEffect(isHovered ? 1.06 : 1.0)
                 }
                 .buttonStyle(.plain)
+                .help("Run \(item.title)")
+                .accessibilityLabel("Run \(item.title)")
+                .onHover { isHovered = $0 }
+                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isHovered)
             }
-            .padding(26)
+            .padding(24)
         }
-        .frame(height: 195)
+        .frame(height: 150)
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
@@ -186,5 +121,26 @@ public struct MoonlightFeaturedIntentHero: View {
                 )
         }
         .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.20), radius: 18, y: 8)
+    }
+
+    /// Abstract blurred discs standing in for the scenic illustration —
+    /// texture without a literal scene.
+    private var abstractShapes: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Circle()
+                    .fill(Color(red: 1.0, green: 0.82, blue: 0.55).opacity(colorScheme == .dark ? 0.30 : 0.45))
+                    .frame(width: proxy.size.height * 1.4)
+                    .blur(radius: 40)
+                    .position(x: proxy.size.width * 0.82, y: proxy.size.height * 0.30)
+
+                Circle()
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.18))
+                    .frame(width: proxy.size.height * 0.9)
+                    .blur(radius: 30)
+                    .position(x: proxy.size.width * 0.62, y: proxy.size.height * 0.85)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
