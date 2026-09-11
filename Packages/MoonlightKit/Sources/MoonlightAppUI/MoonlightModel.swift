@@ -14,7 +14,6 @@ public final class MoonlightModel {
     public private(set) var isLoading = false
 
     private let clientResult: Result<MoonlightRuntimeClient, MoonlightRuntimeError>
-    private let historyFileURL: URL?
     @ObservationIgnored private var historyObserver: DarwinNotificationToken?
 
     public var inputCharacterCount: Int {
@@ -39,13 +38,11 @@ public final class MoonlightModel {
         environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment
     ) {
         clientResult = environment.map(\.client)
-        historyFileURL = try? FileExecutionStore.defaultFileURL()
         observeExternalHistoryChanges()
     }
 
     public init(client: MoonlightRuntimeClient) {
         clientResult = .success(client)
-        historyFileURL = nil
     }
 
     public func load() async {
@@ -117,23 +114,6 @@ public final class MoonlightModel {
         text
             .precomposedStringWithCanonicalMapping
             .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    var historyRevision: String? {
-        guard
-            let historyFileURL,
-            let attributes = try? FileManager.default.attributesOfItem(
-                atPath: historyFileURL.path
-            )
-        else {
-            return nil
-        }
-
-        let modificationDate = (attributes[.modificationDate] as? Date)?
-            .timeIntervalSinceReferenceDate ?? 0
-        let fileSize = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
-        let fileNumber = (attributes[.systemFileNumber] as? NSNumber)?.uint64Value ?? 0
-        return "\(fileNumber):\(fileSize):\(modificationDate)"
     }
 
     private func observeExternalHistoryChanges() {

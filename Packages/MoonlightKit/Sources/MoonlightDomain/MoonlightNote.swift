@@ -61,26 +61,3 @@ public struct NoteRecorder: Sendable {
     public static let none = NoteRecorder(record: { _, _ in })
 }
 
-public actor InMemoryNoteStore: NoteStore {
-    private var notes: [UUID: MoonlightNote]
-
-    public init(notes: [MoonlightNote] = []) {
-        self.notes = Dictionary(uniqueKeysWithValues: notes.map { ($0.id, $0) })
-    }
-
-    public func save(_ note: MoonlightNote) {
-        notes[note.id] = note
-    }
-
-    public func notes(limit: Int) -> [MoonlightNote] {
-        guard limit > 0 else { return [] }
-        return notes.values
-            .sorted { $0.updatedAt > $1.updatedAt }
-            .prefix(limit)
-            .map { $0 }
-    }
-
-    public func delete(id: UUID) {
-        notes[id] = nil
-    }
-}

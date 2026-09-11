@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 import MoonlightDomain
 import SwiftUI
@@ -40,14 +39,7 @@ public struct MoonlightRootView: View {
     @State private var noteSearchText = ""
     @State private var selectedNoteID: MoonlightNote.ID?
     @State private var selectedExecutionID: Execution.ID?
-    @State private var historyRevision: String?
     @State private var isShowingComposer = false
-
-    private let historyTimer = Timer.publish(
-        every: 0.25,
-        on: .main,
-        in: .common
-    ).autoconnect()
 
     private let notesFocus: MoonlightNotesFocus?
 
@@ -64,7 +56,7 @@ public struct MoonlightRootView: View {
     private var visibleNotes: [MoonlightNote] {
         let query = noteSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return notesModel.notes }
-        return notesModel.notes.filter { $0.text.localizedCaseInsensitiveContains(query) }
+        return notesModel.notes.filter { $0.text.localizedStandardContains(query) }
     }
 
     public var body: some View {
@@ -121,14 +113,8 @@ public struct MoonlightRootView: View {
         .task {
             await load()
         }
-        .onReceive(historyTimer) { _ in
-            refreshWhenHistoryChanges()
-        }
         .onChange(of: scenePhase) { _, newPhase in
             refreshWhenActive(newPhase)
-        }
-        .onChange(of: notesFocus?.revision) { _, _ in
-            applyNotesFocus()
         }
         .task(id: notesFocus?.revision) {
             applyNotesFocus()
@@ -229,18 +215,8 @@ public struct MoonlightRootView: View {
             selectedNoteID = notesModel.notes.first?.id
         }
         await model.load()
-        historyRevision = model.historyRevision
         if !model.executions.contains(where: { $0.id == selectedExecutionID }) {
             selectedExecutionID = model.executions.first?.id
-        }
-    }
-
-    private func refreshWhenHistoryChanges() {
-        let nextRevision = model.historyRevision
-        guard nextRevision != historyRevision, !model.isLoading else { return }
-        historyRevision = nextRevision
-        Task {
-            await load()
         }
     }
 
