@@ -7,7 +7,6 @@ import SwiftUI
 /// stores a link — it never runs the workflow.
 public struct ShortcutBindingsView: View {
     @State private var model: MoonlightShortcutsModel
-    @State private var editedAliases: [UUID: String] = [:]
 
     public init(model: MoonlightShortcutsModel = MoonlightShortcutsModel()) {
         _model = State(initialValue: model)
@@ -25,7 +24,7 @@ public struct ShortcutBindingsView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(model.bindings) { binding in
-                        bindingRow(binding)
+                        ShortcutBindingRowView(binding: binding, model: model)
                     }
                 }
             }
@@ -68,84 +67,6 @@ public struct ShortcutBindingsView: View {
         }
         .formStyle(.grouped)
         .task { await model.loadBindings() }
-    }
-
-    private func bindingRow(_ binding: ShortcutCommandBinding) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Label(binding.cachedName, systemImage: binding.symbolName)
-                    .font(.body.weight(.medium))
-                if model.isUnavailable(binding) {
-                    Label("Unavailable", systemImage: "exclamationmark.triangle")
-                        .labelStyle(.titleAndIcon)
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                    // The shortcut behind this command is gone. Relinking keeps
-                    // the command, its alias and its history.
-                    Menu("Relink") {
-                        ForEach(model.unregisteredLibrary) { summary in
-                            Button(summary.name) {
-                                Task { await model.relink(binding, to: summary) }
-                            }
-                        }
-                    }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
-                    .disabled(model.unregisteredLibrary.isEmpty)
-                }
-                Spacer()
-                Button("Remove", systemImage: "minus.circle") {
-                    Task { await model.remove(binding) }
-                }
-                .labelStyle(.iconOnly)
-                .help("Remove this command. The shortcut stays in Shortcuts.")
-            }
-
-            HStack(spacing: 12) {
-                TextField(
-                    "Alias",
-                    text: Binding(
-                        get: { editedAliases[binding.id] ?? binding.alias },
-                        set: { editedAliases[binding.id] = $0 }
-                    )
-                )
-                .frame(maxWidth: 180)
-                .onSubmit {
-                    let alias = editedAliases[binding.id] ?? binding.alias
-                    Task {
-                        await model.updateAlias(alias, for: binding)
-                        editedAliases[binding.id] = nil
-                    }
-                }
-
-                Toggle("Show in Spotlight", isOn: Binding(
-                    get: { binding.isSpotlightExposed },
-                    set: { newValue in
-                        Task { await model.setSpotlightExposure(newValue, for: binding) }
-                    }
-                ))
-                .toggleStyle(.checkbox)
-                .help("Shortcuts already indexes your library; publish only what you want in Spotlight.")
-
-                Picker("Input", selection: Binding(
-                    get: { binding.inputKind },
-                    set: { newValue in
-                        Task { await model.updateInputKind(newValue, for: binding) }
-                    }
-                )) {
-                    Text("No input").tag(CommandPresentation.InputKind.none)
-                    Text("Text").tag(CommandPresentation.InputKind.text)
-                }
-                .frame(maxWidth: 200)
-            }
-
-            if !binding.cachedSubtitle.isEmpty {
-                Text(binding.cachedSubtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
     }
 
     private func libraryRow(_ summary: ShortcutSummary) -> some View {
