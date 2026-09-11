@@ -204,20 +204,10 @@ public struct MoonlightLauncherView: View {
     @State private var dropTarget: LauncherPosition?
     @State private var folderName = ""
 
-    /// Dropping onto an app or a folder groups; dropping anywhere else moves.
+    /// Hands the gesture to the layout, which owns what a drop means.
     private func drop(_ payloads: [LauncherDragPayload], at destination: LauncherPosition) -> Bool {
-        guard let source = payloads.first?.position, source != destination else { return false }
-        guard !model.isArrangementLocked else { return false }
-
-        let target = model.layout.item(at: destination)
-        let dragged = model.layout.item(at: source)
-
-        if dragged?.appIdentifier != nil, let target, !target.isEmpty {
-            if model.group(source, into: destination) { return true }
-        }
-
-        model.move(from: source, to: destination)
-        return true
+        guard let source = payloads.first?.position else { return false }
+        return model.drop(from: source, to: destination) != .ignored
     }
 
     private var searchResults: some View {

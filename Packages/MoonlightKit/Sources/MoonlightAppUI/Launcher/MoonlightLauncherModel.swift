@@ -173,24 +173,27 @@ public final class MoonlightLauncherModel {
     /// is right.
     public static let defaultFolderName = "Folder"
 
-    public func move(from source: LauncherPosition, to destination: LauncherPosition) {
-        guard !isArrangementLocked else { return }
-        mutate { $0.move(from: source, to: destination) }
-    }
-
-    /// Drops one app onto another, which either makes a folder or joins one.
+    /// Applies one drag-and-drop gesture.
+    ///
+    /// What a drop means — group or move — is the layout's rule, not this
+    /// type's. All that belongs here is the part that is about the gesture: the
+    /// key the user may be holding to freeze the arrangement.
     @discardableResult
-    public func group(_ source: LauncherPosition, into destination: LauncherPosition) -> Bool {
-        guard !isArrangementLocked else { return false }
-        var grouped = false
+    public func drop(
+        from source: LauncherPosition,
+        to destination: LauncherPosition
+    ) -> LauncherDropOutcome {
+        guard !isArrangementLocked else { return .ignored }
+
+        var outcome = LauncherDropOutcome.ignored
         mutate { layout in
-            grouped = layout.group(
-                source,
-                into: destination,
+            outcome = layout.drop(
+                from: source,
+                to: destination,
                 folderName: { _ in Self.defaultFolderName }
             )
         }
-        return grouped
+        return outcome
     }
 
     public func ungroup(_ app: InstalledApp, from position: LauncherPosition) {
