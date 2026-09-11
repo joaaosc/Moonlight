@@ -56,6 +56,7 @@ public struct MoonlightSurface: Sendable, Hashable, Identifiable {
 public enum MoonlightSurfaceID {
     public static let tools = "moonlight.surface.tools"
     public static let window = "moonlight.surface.window"
+    public static let launcher = "moonlight.surface.launcher"
 }
 
 /// The surfaces Moonlight publishes to Spotlight.
@@ -89,7 +90,21 @@ public enum MoonlightSurfaceRegistry {
         additionalKeywords: ["window", "focus", "open moonlight window"]
     )
 
-    public static let standard: [MoonlightSurface] = [tools, window]
+    /// The grid of installed applications.
+    ///
+    /// Earns its alias the same way the others do: Spotlight already finds
+    /// individual apps, but nothing in the system reaches the arrangement of
+    /// all of them in one keystroke.
+    public static let launcher = MoonlightSurface(
+        id: MoonlightSurfaceID.launcher,
+        alias: "oml",
+        title: "Launcher",
+        summary: "Open the Moonlight application launcher.",
+        symbolName: "square.grid.3x3",
+        additionalKeywords: ["launcher", "apps", "applications", "launchpad", "grid"]
+    )
+
+    public static let standard: [MoonlightSurface] = [tools, window, launcher]
 
     public static func surface(id: String) -> MoonlightSurface? {
         standard.first { $0.id == id }

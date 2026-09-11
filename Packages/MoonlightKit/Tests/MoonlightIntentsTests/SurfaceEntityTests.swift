@@ -42,12 +42,25 @@ struct MoonlightSurfaceEntityTests {
         #expect(try await query.entities(matching: "omw").map(\.id) == [MoonlightSurfaceID.window])
     }
 
-    @Test("A shared prefix keeps both surfaces available")
+    @Test("A shared prefix keeps every surface available")
     func sharedPrefixQuery() async throws {
         let query = MoonlightSurfaceEntityQuery()
         let ids = try await query.entities(matching: "om").map(\.id)
+        let expected = Set([
+            MoonlightSurfaceID.tools,
+            MoonlightSurfaceID.window,
+            MoonlightSurfaceID.launcher,
+        ])
 
-        #expect(Set(ids) == Set([MoonlightSurfaceID.tools, MoonlightSurfaceID.window]))
+        #expect(Set(ids) == expected)
+    }
+
+    @Test("The launcher answers to its own alias")
+    func launcherQuery() async throws {
+        let query = MoonlightSurfaceEntityQuery()
+        let ids = try await query.entities(matching: "oml").map(\.id)
+
+        #expect(ids == [MoonlightSurfaceID.launcher])
     }
 
     @Test("Focus-forcing route is reachable from the foreground client")
