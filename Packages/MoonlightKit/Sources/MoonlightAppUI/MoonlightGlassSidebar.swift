@@ -99,24 +99,25 @@ public struct MoonlightGlassSidebar<Selection: Hashable>: View {
 
             Spacer()
 
-            // Bottom System Status / macOS 27 Badge
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 7, height: 7)
-
-                Text("Liquid Glass Active")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.75))
+            // Settings — an icon, not a labelled row, so the rail stays quiet.
+            HStack {
+                SettingsLink {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.80))
+                        .frame(width: 30, height: 30)
+                        .background {
+                            Circle()
+                                .fill(.white.opacity(0.10))
+                                .overlay {
+                                    Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.8)
+                                }
+                        }
+                }
+                .buttonStyle(.plain)
+                .help("Settings")
 
                 Spacer()
-
-                Text("macOS 27")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.60))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(.white.opacity(0.12)))
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 18)
