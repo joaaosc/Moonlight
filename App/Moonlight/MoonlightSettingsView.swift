@@ -6,11 +6,15 @@ import SwiftUI
 
 struct MoonlightSettingsView: View {
     let hotKeyCenter: GlobalHotKeyCenter
+    let launcherHotKeyCenter: GlobalHotKeyCenter
 
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") {
-                MoonlightGeneralSettingsView(hotKeyCenter: hotKeyCenter)
+                MoonlightGeneralSettingsView(
+                    hotKeyCenter: hotKeyCenter,
+                    launcherHotKeyCenter: launcherHotKeyCenter
+                )
             }
             Tab("Quicklinks", systemImage: "arrow.up.right.square") {
                 QuicklinksView()
@@ -35,6 +39,7 @@ struct MoonlightSettingsView: View {
 
 private struct MoonlightGeneralSettingsView: View {
     let hotKeyCenter: GlobalHotKeyCenter
+    let launcherHotKeyCenter: GlobalHotKeyCenter
 
     @AppStorage("showDockIcon") private var showsDockIcon = false
     @AppStorage(MoonlightRetention.executionLimitKey)
@@ -47,6 +52,9 @@ private struct MoonlightGeneralSettingsView: View {
         Form {
             Section("Global Shortcut") {
                 HotKeyRecorderView(center: hotKeyCenter)
+            }
+            Section("Launcher Shortcut") {
+                HotKeyRecorderView(center: launcherHotKeyCenter)
             }
             Section {
                 Stepper(

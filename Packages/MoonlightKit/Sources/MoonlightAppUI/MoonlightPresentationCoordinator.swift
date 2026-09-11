@@ -27,12 +27,18 @@ public final class MoonlightPresentationCoordinator {
         }
     )
 
+    /// The launcher's state. Created on first use, then kept: reading the
+    /// catalogue again on every presentation is fine, rebuilding the model is
+    /// not — it would drop the page the user was on.
+    public private(set) lazy var launcherModel = MoonlightLauncherModel()
+
     /// Requests aimed at the notes section of the main window.
     public let notesFocus = MoonlightNotesFocus()
 
     private let environment: Result<MoonlightEnvironment, MoonlightRuntimeError>
     private let palettePresenter: MoonlightToolPalettePresenter
     private let colorPanelPresenter: MoonlightColorPanelPresenter
+    private let launcherPresenter: MoonlightLauncherPresenter
     private var menuBarToken: MenuBarToken?
     private var dismissMenuBar: (@MainActor () -> Void)?
     private var openMainWindow: (@MainActor () -> Void)?
@@ -40,11 +46,13 @@ public final class MoonlightPresentationCoordinator {
     public init(
         environment: Result<MoonlightEnvironment, MoonlightRuntimeError> = MoonlightProcess.environment,
         palettePresenter: MoonlightToolPalettePresenter = .shared,
-        colorPanelPresenter: MoonlightColorPanelPresenter = .shared
+        colorPanelPresenter: MoonlightColorPanelPresenter = .shared,
+        launcherPresenter: MoonlightLauncherPresenter = .shared
     ) {
         self.environment = environment
         self.palettePresenter = palettePresenter
         self.colorPanelPresenter = colorPanelPresenter
+        self.launcherPresenter = launcherPresenter
     }
 
     /// Registers the dismissal of the menu bar window currently on screen.
@@ -112,6 +120,26 @@ public final class MoonlightPresentationCoordinator {
             isolatingFromMainWindow: isolatingFromMainWindow,
             initialQuery: text
         )
+    }
+
+    /// Opens the launcher, or closes it when it is already up.
+    ///
+    /// Toggling rather than always presenting: the shortcut that opens a
+    /// full-screen surface is the one the user reaches for to get rid of it.
+    public func toggleLauncher() {
+        dismissMenuBar?()
+        palettePresenter.dismiss()
+        launcherPresenter.toggle(model: launcherModel)
+    }
+
+    public func presentLauncher() {
+        dismissMenuBar?()
+        palettePresenter.dismiss()
+        launcherPresenter.present(model: launcherModel)
+    }
+
+    public func dismissLauncher() {
+        launcherPresenter.dismiss()
     }
 
     public func presentColorPicker(isolatingFromMainWindow: Bool) {

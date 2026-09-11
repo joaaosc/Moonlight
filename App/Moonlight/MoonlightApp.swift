@@ -25,6 +25,13 @@ struct MoonlightApp: App {
     /// Moonlight's own system-wide shortcut. Registered with macOS; unrelated
     /// to Spotlight and never announced as a Spotlight feature.
     private let hotKeyCenter = GlobalHotKeyCenter()
+    /// The launcher's own shortcut. A separate registration, with its own
+    /// identifier, because Carbon delivers every Moonlight hot key to every
+    /// handler the app installed.
+    private let launcherHotKeyCenter = GlobalHotKeyCenter(
+        storageKey: "launcherHotKey",
+        hotKeyID: 2
+    )
     /// Kept alive for the process: the Services machinery holds it unowned.
     private let servicesProvider: MoonlightServicesProvider
 
@@ -43,6 +50,9 @@ struct MoonlightApp: App {
         self.coordinator = coordinator
         hotKeyCenter.start {
             coordinator.presentPalette(isolatingFromMainWindow: true)
+        }
+        launcherHotKeyCenter.start {
+            coordinator.toggleLauncher()
         }
         servicesProvider = MoonlightServicesProvider(coordinator: coordinator)
         servicesProvider.install()
@@ -75,6 +85,9 @@ struct MoonlightApp: App {
                 },
                 presentWindow: {
                     coordinator.presentWindow(isolatingFromMainWindow: true)
+                },
+                presentLauncher: {
+                    coordinator.presentLauncher()
                 }
             )
         )
@@ -152,6 +165,11 @@ struct MoonlightApp: App {
                 }
                 .keyboardShortcut("h", modifiers: [.command, .shift])
 
+                Button("Open Launcher") {
+                    coordinator.toggleLauncher()
+                }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+
                 Button("Open Color Picker") {
                     coordinator.presentColorPicker(
                         isolatingFromMainWindow: false
@@ -162,7 +180,10 @@ struct MoonlightApp: App {
         }
 
         Settings {
-            MoonlightSettingsView(hotKeyCenter: hotKeyCenter)
+            MoonlightSettingsView(
+                hotKeyCenter: hotKeyCenter,
+                launcherHotKeyCenter: launcherHotKeyCenter
+            )
         }
 
         MenuBarExtra("Moonlight", systemImage: "moon.stars") {

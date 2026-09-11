@@ -18,6 +18,10 @@ struct MoonlightMenuBarView: View {
             )
             Divider()
             HStack {
+                Button("Launcher", systemImage: "square.grid.3x3") {
+                    dismiss()
+                    coordinator.presentLauncher()
+                }
                 Button("Control Panel", systemImage: "sidebar.left") {
                     dismiss()
                     openWindow(id: "main")
