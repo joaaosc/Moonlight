@@ -4,24 +4,26 @@ import MoonlightDomain
 import SwiftUI
 
 public struct MoonlightRootView: View {
-    /// The two things the control panel shows. Executions are a log that can be
-    /// cleared; notes are content the user keeps.
-    private enum Section: String, CaseIterable, Identifiable {
+    /// Navigation sections in the Liquid Glass Control Panel.
+    public enum Section: String, CaseIterable, Identifiable {
+        case intents
         case history
         case notes
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
-        var title: String {
+        public var title: String {
             switch self {
+            case .intents: "Intents"
             case .history: "History"
             case .notes: "Notes"
             }
         }
 
-        var symbolName: String {
+        public var symbolName: String {
             switch self {
-            case .history: "clock"
+            case .intents: "sparkles.rectangle.stack.fill"
+            case .history: "clock.arrow.circlepath"
             case .notes: "note.text"
             }
         }
@@ -29,9 +31,12 @@ public struct MoonlightRootView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var model: MoonlightModel
     @State private var notesModel: MoonlightNotesModel
-    @State private var section: Section = .history
+    @State private var section: Section = .intents
+    @State private var isSidebarVisible = true
     @State private var noteSearchText = ""
     @State private var selectedNoteID: MoonlightNote.ID?
     @State private var selectedExecutionID: Execution.ID?
@@ -56,7 +61,6 @@ public struct MoonlightRootView: View {
         self.notesFocus = notesFocus
     }
 
-    /// Notes matching the current search. An empty search shows everything.
     private var visibleNotes: [MoonlightNote] {
         let query = noteSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return notesModel.notes }
@@ -64,68 +68,85 @@ public struct MoonlightRootView: View {
     }
 
     public var body: some View {
-        NavigationSplitView {
-            VStack(spacing: 0) {
-                Picker("Section", selection: $section) {
-                    ForEach(Section.allCases) { section in
-                        Label(section.title, systemImage: section.symbolName)
-                            .tag(section)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .padding([.horizontal, .top], 8)
+        ZStack {
+            // Atmospheric Scenic Backdrop (Mount Fuji, sakura blossoms, and dawn sky)
+            MoonlightAtmosphericBackground()
+                .ignoresSafeArea()
 
-                switch section {
-                case .history:
-                    ExecutionHistoryView(
-                        executions: model.executions,
-                        isLoading: model.isLoading,
-                        selection: $selectedExecutionID
-                    )
-                case .notes:
-                    NotesListView(
-                        notes: visibleNotes,
-                        isLoading: notesModel.isLoading,
-                        selection: $selectedNoteID
-                    )
-                    .searchable(text: $noteSearchText, prompt: "Search notes")
-                }
-            }
-        } detail: {
-            Group {
-                switch section {
-                case .history:
-                    if let selectedExecution {
-                        ExecutionDetailView(execution: selectedExecution)
-                            .id(selectedExecution.id)
-                    } else {
-                        ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
-                    }
-                case .notes:
-                    if let selectedNote {
-                        NoteDetailView(note: selectedNote) {
-                            Task { await deleteSelectedNote(selectedNote) }
+            // Main Content Layout
+            HStack(spacing: 16) {
+                // Floating Liquid Glass Sidebar
+                if isSidebarVisible {
+                    MoonlightGlassSidebar(
+                        selection: $section,
+                        items: [
+                            MoonlightGlassSidebar.Item(
+                                id: .intents,
+                                title: "Intents",
+                                symbolName: "sparkles.rectangle.stack.fill"
+                            ),
+                            MoonlightGlassSidebar.Item(
+                                id: .history,
+                                title: "History",
+                                symbolName: "clock.arrow.circlepath",
+                                badgeCount: model.executions.count
+                            ),
+                            MoonlightGlassSidebar.Item(
+                                id: .notes,
+                                title: "Notes",
+                                symbolName: "note.text",
+                                badgeCount: notesModel.notes.count
+                            )
+                        ]
+                    ) {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                            isSidebarVisible.toggle()
                         }
-                        .id(selectedNote.id)
-                    } else {
-                        ContentUnavailableView(
-                            "Select a note",
-                            systemImage: "note.text",
-                            description: Text("Notes are kept separately from execution history.")
-                        )
                     }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
                 }
+
+                // Detail Area
+                VStack(spacing: 0) {
+                    if !isSidebarVisible {
+                        HStack {
+                            Button {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                                    isSidebarVisible = true
+                                }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "sidebar.left")
+                                    Text("Show Sidebar")
+                                }
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background {
+                                    Capsule()
+                                        .fill(.ultraThinMaterial)
+                                        .overlay {
+                                            Capsule().strokeBorder(.white.opacity(0.35), lineWidth: 0.8)
+                                        }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 12)
+                            .padding(.leading, 16)
+
+                            Spacer()
+                        }
+                    }
+
+                    detailContent
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationTitle("Moonlight")
-            .navigationSubtitle(
-                section == .history
-                    ? "Control Panel · Execution History"
-                    : "Control Panel · Notes"
-            )
+            .padding(14)
         }
-        .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 760, minHeight: 480)
+        .frame(minWidth: 860, minHeight: 560)
         .safeAreaInset(edge: .bottom) {
             if !isShowingComposer, let errorMessage = model.errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.triangle")
@@ -180,12 +201,112 @@ public struct MoonlightRootView: View {
         }
     }
 
+    @ViewBuilder
+    private var detailContent: some View {
+        switch section {
+        case .intents:
+            MoonlightIntentsGalleryView(
+                model: model,
+                notesModel: notesModel
+            )
+        case .history:
+            glassSplitContent {
+                HStack(spacing: 0) {
+                    ExecutionHistoryView(
+                        executions: model.executions,
+                        isLoading: model.isLoading,
+                        selection: $selectedExecutionID
+                    )
+                    .frame(width: 320)
+
+                    Divider()
+
+                    Group {
+                        if let selectedExecution {
+                            ExecutionDetailView(execution: selectedExecution)
+                                .id(selectedExecution.id)
+                        } else {
+                            ExecutionPlaceholderView(hasExecutions: !model.executions.isEmpty)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+        case .notes:
+            glassSplitContent {
+                HStack(spacing: 0) {
+                    NotesListView(
+                        notes: visibleNotes,
+                        isLoading: notesModel.isLoading,
+                        selection: $selectedNoteID
+                    )
+                    .searchable(text: $noteSearchText, prompt: "Search notes")
+                    .frame(width: 320)
+
+                    Divider()
+
+                    Group {
+                        if let selectedNote {
+                            NoteDetailView(note: selectedNote) {
+                                Task { await deleteSelectedNote(selectedNote) }
+                            }
+                            .id(selectedNote.id)
+                        } else {
+                            ContentUnavailableView(
+                                "Select a note",
+                                systemImage: "note.text",
+                                description: Text("Notes are kept separately from execution history.")
+                            )
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+        }
+    }
+
+    private func glassSplitContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .background {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(.regularMaterial)
+                    .overlay {
+                        RadialGradient(
+                            colors: [
+                                Color.white.opacity(colorScheme == .dark ? 0.08 : 0.25),
+                                Color.clear
+                            ],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: 400
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    }
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(colorScheme == .dark ? 0.40 : 0.65),
+                                .white.opacity(colorScheme == .dark ? 0.10 : 0.20)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.2
+                    )
+            }
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.15), radius: 16, y: 6)
+    }
+
     private var selectedNote: MoonlightNote? {
         guard let selectedNoteID else { return nil }
         return notesModel.notes.first { $0.id == selectedNoteID }
     }
 
-    /// Applies a request that came from outside the window.
     private func applyNotesFocus() {
         guard let notesFocus else { return }
         guard !notesFocus.searchText.isEmpty || notesFocus.noteID != nil else { return }
@@ -240,7 +361,6 @@ public struct MoonlightRootView: View {
             if let execution = await model.capture() {
                 selectedExecutionID = execution.id
                 isShowingComposer = false
-                // The capture also wrote a durable note; show it right away.
                 await notesModel.load()
                 selectedNoteID = notesModel.notes.first?.id
             }
@@ -249,14 +369,19 @@ public struct MoonlightRootView: View {
 }
 
 #if DEBUG
+#Preview("Intents Gallery") {
+    MoonlightRootView(model: MoonlightPreviewFixtures.model())
+        .frame(width: 950, height: 650)
+}
+
 #Preview("Empty history") {
     MoonlightRootView(model: MoonlightPreviewFixtures.model(executions: []))
-        .frame(width: 900, height: 600)
+        .frame(width: 950, height: 650)
 }
 
 #Preview("History") {
     MoonlightRootView(model: MoonlightPreviewFixtures.model())
-        .frame(width: 900, height: 600)
+        .frame(width: 950, height: 650)
 }
 
 #Preview("Dark, wide") {
@@ -267,11 +392,11 @@ public struct MoonlightRootView: View {
 
 #Preview("Minimum size") {
     MoonlightRootView(model: MoonlightPreviewFixtures.model())
-        .frame(width: 760, height: 480)
+        .frame(width: 860, height: 560)
 }
 
 #Preview("History error") {
     MoonlightRootView(model: MoonlightPreviewFixtures.errorModel)
-        .frame(width: 900, height: 600)
+        .frame(width: 950, height: 650)
 }
 #endif

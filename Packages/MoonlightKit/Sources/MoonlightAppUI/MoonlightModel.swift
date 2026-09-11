@@ -86,6 +86,33 @@ public final class MoonlightModel {
         }
     }
 
+    @discardableResult
+    public func execute(
+        actionID: String,
+        input: String,
+        parameters: ActionParameters = .empty
+    ) async -> Execution? {
+        isWorking = true
+        defer { isWorking = false }
+
+        do {
+            let client = try clientResult.get()
+            let execution = try await client.execute(
+                ActionRequest(actionID: actionID, input: input, parameters: parameters)
+            )
+            if execution.status == .succeeded {
+                errorMessage = nil
+            } else {
+                errorMessage = execution.detail
+            }
+            executions = try await client.recent(50)
+            return execution
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
     private var normalizedInput: String {
         text
             .precomposedStringWithCanonicalMapping
