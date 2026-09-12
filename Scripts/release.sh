@@ -3,8 +3,13 @@
 #
 # The script never notarizes on its own: notarization uploads the app to Apple
 # and needs credentials that belong to the developer, so it is the last step and
-# it is explicit. Run it from the repository root.
+# it is explicit.
 set -euo pipefail
+
+# Every path below is relative to the repository, and xcodegen reads project.yml
+# from the working directory, so running this from Scripts/ used to fail there.
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
 SCHEME="Moonlight"
 PROJECT="MoonlightTools.xcodeproj"
@@ -19,14 +24,14 @@ TEAM_ID="${TEAM_ID:-33FPG9442W}"
 echo "==> Writing the build number"
 # Derived, not committed: the release stamps whatever the commit count says at
 # this moment. Raising a build number is no longer an edit to a tracked file.
-bash "$(dirname "$0")/version.sh"
+bash "Scripts/version.sh"
 
 echo "==> Regenerating the project from project.yml"
 xcodegen generate --quiet
 # Target identifiers are derived from the project, so regenerating can move
 # them. A test plan left pointing at an old identifier runs no tests and still
 # reports success, so the two are re-synced here rather than by hand.
-"$(dirname "$0")/sync-test-plans.sh"
+"Scripts/sync-test-plans.sh"
 
 echo "==> Archiving $SCHEME (Release)"
 rm -rf "$ARCHIVE" "$EXPORT_DIR"
@@ -72,7 +77,7 @@ ARCHIVE_INTERMEDIATES="$(find "$BUILD_DIR" build.noindex -maxdepth 4 -type d -na
 # after the intermediates are gone, so their registrations are dropped in the
 # same pass as the archive's and the export's.
 echo "==> Unregistering build copies so they do not shadow the installed app"
-bash "$(dirname "$0")/clean-app-registrations.sh" >/dev/null 2>&1 || true
+bash "Scripts/clean-app-registrations.sh" >/dev/null 2>&1 || true
 
 echo "==> Verifying the signature"
 # --strict without --deep: the modern check, which also validates the nested
