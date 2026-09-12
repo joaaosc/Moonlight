@@ -172,11 +172,11 @@ enum MoonlightSnapshots {
             )),
             ("app-launcher-grid", CGSize(width: 1100, height: 720), AnyView(
                 MoonlightLauncherView(model: launcherGridModel)
-                    .moonlightGlassSurface()
+                    .moonlightGlassSurface(emphasis: .immersive)
             )),
             ("app-launcher-search", CGSize(width: 1100, height: 720), AnyView(
                 MoonlightLauncherView(model: launcherSearchModel)
-                    .moonlightGlassSurface()
+                    .moonlightGlassSurface(emphasis: .immersive)
             )),
             ("settings-shortcuts", CGSize(width: 560, height: 460), AnyView(
                 ShortcutBindingsView(model: shortcutsModel)
