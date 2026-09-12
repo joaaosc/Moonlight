@@ -29,6 +29,9 @@ struct MoonlightSettingsView: View {
             Tab("Quicklinks", systemImage: "arrow.up.right.square") {
                 QuicklinksView()
             }
+            Tab("Terminal", systemImage: "terminal") {
+                TerminalCommandsView()
+            }
             Tab("Diagnostics", systemImage: "stethoscope") {
                 DiagnosticsView()
             }

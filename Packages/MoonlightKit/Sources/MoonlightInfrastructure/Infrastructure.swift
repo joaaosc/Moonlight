@@ -48,10 +48,23 @@ public enum MoonlightStorage {
     public static let quicklinksDidChangeDarwinName =
         "com.joaocosta.Moonlight.quicklinks-did-change"
 
+    public static let terminalCommandsDidChangeNotification = Notification.Name(
+        "com.joaocosta.Moonlight.terminal-commands-did-change"
+    )
+    public static let terminalCommandsDidChangeDarwinName =
+        "com.joaocosta.Moonlight.terminal-commands-did-change"
+
     static func postQuicklinksDidChange() {
         post(
             name: quicklinksDidChangeNotification,
             darwinName: quicklinksDidChangeDarwinName
+        )
+    }
+
+    static func postTerminalCommandsDidChange() {
+        post(
+            name: terminalCommandsDidChangeNotification,
+            darwinName: terminalCommandsDidChangeDarwinName
         )
     }
 

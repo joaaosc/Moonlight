@@ -435,6 +435,13 @@ public final class MoonlightToolPaletteModel {
                let url = URL(string: text) {
                 errorMessage = performer.perform(.open(url))
             }
+        case .terminalScript:
+            // Same contract: the execution is recorded first, then the host
+            // materializes the script as a `.command` file and opens it in
+            // Terminal. A failure to open is reported like any failure.
+            if let text = completedDraft.result?.resolvedOutput.value.text {
+                errorMessage = performer.runTerminalScript(text)
+            }
         case .colorPicker, .result:
             break
         }

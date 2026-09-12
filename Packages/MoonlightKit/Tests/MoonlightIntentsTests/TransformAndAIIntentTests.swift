@@ -54,6 +54,25 @@ struct TransformAndAIIntentTests {
         #expect(StartTimerIntent(duration: "25m").duration == "25m")
     }
 
+    @Test("A single static intent runs any saved terminal command by entity")
+    func terminalIntentContract() {
+        let entity = MoonlightToolEntity(
+            id: "terminal:8b1f0f1c",
+            name: "Deploy",
+            summary: "Terminal · \\deploy",
+            symbolName: "terminal"
+        )
+        let intent = RunTerminalCommandIntent(command: entity, input: "prod")
+
+        requireAppIntent(RunTerminalCommandIntent.self)
+        #expect(RunTerminalCommandIntent.isDiscoverable)
+        // A `.command` file and Launch Services are only reachable in the app.
+        #expect(RunTerminalCommandIntent.allowedExecutionTargets == [.main])
+        #expect(intent.command.id == entity.id)
+        #expect(intent.input == "prod")
+        #expect(entity.symbolName == "terminal")
+    }
+
     /// The summary moved into the domain when it became a registered action,
     /// so the rule is asserted where it now lives.
     @Test("Summarize is extractive, deterministic and empty-aware")

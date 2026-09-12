@@ -23,6 +23,8 @@ public struct MoonlightEnvironment: Sendable {
     public let noteStore: (any NoteStore)?
     public let quicklinkStore: QuicklinkStore?
     public let quicklinkCache: QuicklinkCache
+    public let terminalStore: TerminalCommandStore?
+    public let terminalCache: TerminalCache
 
     public init(
         client: MoonlightRuntimeClient,
@@ -32,7 +34,9 @@ public struct MoonlightEnvironment: Sendable {
         bindingsCache: ShortcutBindingsCache = ShortcutBindingsCache(),
         noteStore: (any NoteStore)? = nil,
         quicklinkStore: QuicklinkStore? = nil,
-        quicklinkCache: QuicklinkCache = QuicklinkCache()
+        quicklinkCache: QuicklinkCache = QuicklinkCache(),
+        terminalStore: TerminalCommandStore? = nil,
+        terminalCache: TerminalCache = TerminalCache()
     ) {
         self.client = client
         self.catalogProvider = catalogProvider
@@ -42,6 +46,8 @@ public struct MoonlightEnvironment: Sendable {
         self.noteStore = noteStore
         self.quicklinkStore = quicklinkStore
         self.quicklinkCache = quicklinkCache
+        self.terminalStore = terminalStore
+        self.terminalCache = terminalCache
     }
 
     /// Composes the environment backed by the shared history document.
@@ -64,8 +70,10 @@ public struct MoonlightEnvironment: Sendable {
         let bindingsStore = try ShortcutBindingsStore()
         let noteStore = try FileNoteStore(retentionLimit: retention.noteLimit)
         let quicklinkStore = try QuicklinkStore()
+        let terminalStore = try TerminalCommandStore()
         let cache = ShortcutBindingsCache()
         let quicklinkCache = QuicklinkCache()
+        let terminalCache = TerminalCache()
 
         // The catalog must be correct on the first request, so stored bindings
         // are read here instead of after the first surface appears.
@@ -76,6 +84,10 @@ public struct MoonlightEnvironment: Sendable {
         let quicklinkFileURL = try QuicklinkStore.defaultFileURL()
         if let stored = try? QuicklinkStore.storedQuicklinks(at: quicklinkFileURL) {
             quicklinkCache.replace(stored)
+        }
+        let terminalFileURL = try TerminalCommandStore.defaultFileURL()
+        if let stored = try? TerminalCommandStore.storedCommands(at: terminalFileURL) {
+            terminalCache.replace(stored)
         }
 
         // Capturing a note writes to the durable store; the handler list is
@@ -91,6 +103,7 @@ public struct MoonlightEnvironment: Sendable {
             resolvers: [
                 ShortcutCommandHandlerResolver(cache: cache, client: shortcutRunner),
                 QuicklinkCommandHandlerResolver(cache: quicklinkCache),
+                TerminalCommandHandlerResolver(cache: terminalCache),
             ]
         )
 
@@ -99,14 +112,17 @@ public struct MoonlightEnvironment: Sendable {
             catalogProvider: CompositeCommandCatalogProvider(
                 BuiltInCommandProvider(registry: ActionRegistry(handlers: composedHandlers)),
                 UserShortcutCommandProvider(cache: cache),
-                QuicklinkCommandProvider(cache: quicklinkCache)
+                QuicklinkCommandProvider(cache: quicklinkCache),
+                TerminalCommandProvider(cache: terminalCache)
             ),
             shortcuts: shortcuts,
             bindingsStore: bindingsStore,
             bindingsCache: cache,
             noteStore: noteStore,
             quicklinkStore: quicklinkStore,
-            quicklinkCache: quicklinkCache
+            quicklinkCache: quicklinkCache,
+            terminalStore: terminalStore,
+            terminalCache: terminalCache
         )
     }
 

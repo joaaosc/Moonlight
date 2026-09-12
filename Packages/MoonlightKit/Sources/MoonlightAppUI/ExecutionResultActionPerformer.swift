@@ -28,6 +28,38 @@ public struct ExecutionResultActionPerformer {
         }
     }
 
+    /// Writes a shell script to a `.command` file and opens it in Terminal.
+    ///
+    /// Opening through Launch Services keeps this working inside the App
+    /// Sandbox: the sandboxed process asks for the open instead of spawning a
+    /// shell, the same shape as `AppLauncher`.
+    /// - Returns: a message to show when the script could not be opened.
+    @discardableResult
+    public func runTerminalScript(_ script: String) -> String? {
+        do {
+            let url = try writeCommandFile(script: script)
+            guard NSWorkspace.shared.open(url) else {
+                return "No application opened the terminal script."
+            }
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
+    }
+
+    private func writeCommandFile(script: String) throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "Moonlight", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appending(path: "moonlight-\(UUID().uuidString).command")
+        try "#!/bin/zsh\n\(script)\n".write(to: url, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: url.path
+        )
+        return url
+    }
+
     private func save(text: String, suggestedFileName: String) -> String? {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = suggestedFileName

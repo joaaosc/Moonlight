@@ -88,6 +88,9 @@ struct MoonlightApp: App {
                 },
                 presentLauncher: {
                     coordinator.presentLauncher()
+                },
+                runTerminalScript: { script in
+                    _ = ExecutionResultActionPerformer().runTerminalScript(script)
                 }
             )
         )

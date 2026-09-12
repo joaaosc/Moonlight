@@ -14,6 +14,9 @@ public struct CommandPresentation: Sendable, Equatable {
         case colorPicker
         /// The result is a URL the host opens once the execution is recorded.
         case externalURL
+        /// The result is a shell script the host runs in Terminal once the
+        /// execution is recorded.
+        case terminalScript
     }
 
     public let alias: String
