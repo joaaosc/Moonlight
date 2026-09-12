@@ -38,6 +38,7 @@ public enum ToolActionError: Error, Equatable, LocalizedError, Sendable {
     case decodedTextIsNotUTF8
     case invalidPercentEncoding
     case invalidTimestamp
+    case invalidDuration
 
     public var errorDescription: String? {
         switch self {
@@ -63,6 +64,8 @@ public enum ToolActionError: Error, Equatable, LocalizedError, Sendable {
             "Enter text with valid percent-encoding, such as %20."
         case .invalidTimestamp:
             "Enter a Unix timestamp in seconds or an ISO-8601 date."
+        case .invalidDuration:
+            "Enter a duration like 25m, 90s or 1:30."
         }
     }
 }

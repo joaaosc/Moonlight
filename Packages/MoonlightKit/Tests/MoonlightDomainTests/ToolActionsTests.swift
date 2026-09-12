@@ -22,6 +22,8 @@ struct ToolActionsTests {
             MoonlightActionID.hashText,
             MoonlightActionID.urlText,
             MoonlightActionID.convertTimestamp,
+            MoonlightActionID.summarizeText,
+            MoonlightActionID.startTimer,
         ])
 
         #expect(Set(descriptors.map(\.id)) == expectedIDs)
@@ -36,6 +38,8 @@ struct ToolActionsTests {
         #expect(idempotence[MoonlightActionID.base64Text] == true)
         #expect(idempotence[MoonlightActionID.hashText] == true)
         #expect(idempotence[MoonlightActionID.convertTimestamp] == true)
+        #expect(idempotence[MoonlightActionID.summarizeText] == true)
+        #expect(idempotence[MoonlightActionID.startTimer] == false)
     }
 
     @Test("Clean Text normalizes NFC and preserves internal whitespace")
@@ -545,5 +549,59 @@ struct TextWorkflowToolTests {
                 #expect(option.resolvedValue(from: ["other": "value"]) == option.defaultValue)
             }
         }
+    }
+}
+
+@Suite("Timer durations")
+struct StartTimerTests {
+    @Test("Parses every duration shape into seconds")
+    func parsesDurations() throws {
+        #expect(try StartTimerAction.parseDuration("25") == 1_500)
+        #expect(try StartTimerAction.parseDuration("25m") == 1_500)
+        #expect(try StartTimerAction.parseDuration("25 min") == 1_500)
+        #expect(try StartTimerAction.parseDuration("90s") == 90)
+        #expect(try StartTimerAction.parseDuration("90 sec") == 90)
+        #expect(try StartTimerAction.parseDuration("1:30") == 90)
+        #expect(try StartTimerAction.parseDuration("1:05:00") == 3_900)
+        #expect(try StartTimerAction.parseDuration("1h2m30s") == 3_750)
+        #expect(try StartTimerAction.parseDuration("1H 30M") == 5_400)
+    }
+
+    @Test("Rejects blank, zero, over-long and malformed durations")
+    func rejectsInvalidDurations() async throws {
+        let runner = ActionRunner(
+            registry: .standard,
+            store: InMemoryExecutionStore()
+        )
+        for input in ["", "   ", "0", "0s", "25h", "abc", "1:2:3:4", "1:99", "25 30s"] {
+            let execution = try await runner.execute(
+                ActionRequest(actionID: MoonlightActionID.startTimer, input: input)
+            )
+            #expect(execution.status == .failed, "input: \(input)")
+        }
+        let blank = try await runner.execute(
+            ActionRequest(actionID: MoonlightActionID.startTimer, input: "   ")
+        )
+        #expect(blank.resolvedFailure?.code == "empty-input")
+        let malformed = try await runner.execute(
+            ActionRequest(actionID: MoonlightActionID.startTimer, input: "abc")
+        )
+        #expect(malformed.resolvedFailure?.code == "invalid-duration")
+    }
+
+    @Test("Records a human-readable start and formats Clock-style")
+    func recordsStart() async throws {
+        let runner = ActionRunner(
+            registry: .standard,
+            store: InMemoryExecutionStore()
+        )
+        let execution = try await runner.execute(
+            ActionRequest(actionID: MoonlightActionID.startTimer, input: "25m")
+        )
+
+        #expect(execution.status == .succeeded)
+        #expect(execution.detail == "Timer set for 25:00")
+        #expect(StartTimerAction.formatted(seconds: 90) == "1:30")
+        #expect(StartTimerAction.formatted(seconds: 3_900) == "1:05:00")
     }
 }

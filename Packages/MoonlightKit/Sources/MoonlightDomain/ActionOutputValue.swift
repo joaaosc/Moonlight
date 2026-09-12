@@ -122,6 +122,7 @@ extension ToolActionError: CodedActionError {
         case .decodedTextIsNotUTF8: "decoded-text-not-utf8"
         case .invalidPercentEncoding: "invalid-percent-encoding"
         case .invalidTimestamp: "invalid-timestamp"
+        case .invalidDuration: "invalid-duration"
         }
     }
 }

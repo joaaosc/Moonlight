@@ -11,7 +11,11 @@ public struct MoonlightIntentCard: View {
     public let item: MoonlightIntentItem
     public let onSelect: (MoonlightIntentItem) -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
+    /// 0→1→0 on a slow loop. Drives only the faint sheen below: opacities
+    /// stay under a tenth so twelve animated cards read as calm, not busy.
+    @State private var drift = 0.0
 
     public init(
         item: MoonlightIntentItem,
@@ -58,6 +62,10 @@ public struct MoonlightIntentCard: View {
             // The accent reaches the card itself, faintly, so the grid reads as
             // a set of distinct tools rather than as one grey wall.
             .background(item.accentColor.opacity(isHovered ? 0.10 : 0.05), in: shape)
+            // A slow, barely-there sheen over the wash: the same accent
+            // drifting across the card on a seven-second loop. Skipped
+            // entirely under Reduce Motion, where the card stays static.
+            .background(animatedSheen, in: shape)
             .overlay {
                 shape.strokeBorder(
                     item.accentColor.opacity(isHovered ? 0.45 : 0.18),
@@ -69,6 +77,26 @@ public struct MoonlightIntentCard: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 7).repeatForever(autoreverses: true)) {
+                drift = 1
+            }
+        }
+    }
+
+    /// The accent drifting across the card. Both stops stay whisper-quiet —
+    /// the card's identity remains the icon wash, never this layer.
+    private var animatedSheen: LinearGradient {
+        LinearGradient(
+            colors: [
+                item.accentColor.opacity(0.05 + 0.04 * drift),
+                .clear,
+                item.accentColor.opacity(0.02 + 0.03 * (1 - drift)),
+            ],
+            startPoint: UnitPoint(x: 0.15 + 0.4 * drift, y: 0),
+            endPoint: UnitPoint(x: 0.85 - 0.4 * drift, y: 1)
+        )
     }
 
     /// The accent, lit from the corner the icon sits in.
