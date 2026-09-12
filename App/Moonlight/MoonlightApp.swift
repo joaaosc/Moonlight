@@ -185,6 +185,10 @@ struct MoonlightApp: App {
                 launcherHotKeyCenter: launcherHotKeyCenter
             )
         }
+        // A Settings scene is fixed to its content size by default, which is
+        // what kept the window from being resized once the tabs stopped
+        // pinning their own.
+        .windowResizability(.contentMinSize)
 
         MenuBarExtra("Moonlight", systemImage: "moon.stars") {
             MoonlightMenuBarView(coordinator: coordinator)

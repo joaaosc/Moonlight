@@ -8,6 +8,16 @@ struct MoonlightSettingsView: View {
     let hotKeyCenter: GlobalHotKeyCenter
     let launcherHotKeyCenter: GlobalHotKeyCenter
 
+    /// One size for the whole window instead of one per tab.
+    ///
+    /// Each tab used to pin its own width and height, so switching tabs
+    /// resized the window and no tab could be resized at all. The floor lives
+    /// here, the ceiling is the user's.
+    private enum Metrics {
+        static let minimumSize = CGSize(width: 560, height: 440)
+        static let idealSize = CGSize(width: 620, height: 520)
+    }
+
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") {
@@ -18,11 +28,9 @@ struct MoonlightSettingsView: View {
             }
             Tab("Quicklinks", systemImage: "arrow.up.right.square") {
                 QuicklinksView()
-                    .frame(width: 560, height: 460)
             }
             Tab("Diagnostics", systemImage: "stethoscope") {
                 DiagnosticsView()
-                    .frame(width: 560, height: 420)
             }
             Tab("Shortcuts", systemImage: "link") {
                 ShortcutBindingsView(
@@ -30,10 +38,17 @@ struct MoonlightSettingsView: View {
                         reindexCatalog: { try await MoonlightToolSpotlightIndex.refresh() }
                     )
                 )
-                .frame(width: 560, height: 460)
             }
         }
         .scenePadding()
+        .frame(
+            minWidth: Metrics.minimumSize.width,
+            idealWidth: Metrics.idealSize.width,
+            maxWidth: .infinity,
+            minHeight: Metrics.minimumSize.height,
+            idealHeight: Metrics.idealSize.height,
+            maxHeight: .infinity
+        )
     }
 }
 
@@ -100,7 +115,5 @@ private struct MoonlightGeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440)
-        .fixedSize(horizontal: false, vertical: true)
     }
 }

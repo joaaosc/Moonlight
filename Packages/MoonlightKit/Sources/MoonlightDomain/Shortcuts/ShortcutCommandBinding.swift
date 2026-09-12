@@ -104,7 +104,9 @@ public struct ShortcutCommandBinding: Codable, Equatable, Identifiable, Sendable
     /// Two shortcuts may share a name, so the summary carries the subtitle or
     /// the alias to keep the rows distinguishable.
     public func definition(isAvailable: Bool = true) -> CommandDefinition {
-        let detail = cachedSubtitle.isEmpty ? "\\" + alias : cachedSubtitle
+        let detail = cachedSubtitle.isEmpty
+            ? String(SlashCommand.prefix) + alias
+            : cachedSubtitle
         let summary = isAvailable
             ? "Shortcut · \(detail)"
             : "Shortcut unavailable · \(detail)"
