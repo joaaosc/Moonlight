@@ -3,6 +3,26 @@ import SwiftUI
 
 /// Everything the intents gallery lists.
 public enum MoonlightIntentCatalog {
+    /// Cards the interface runs itself, rather than through the action
+    /// registry.
+    ///
+    /// Every other card's `id` is an `ActionHandler`'s identifier, which the
+    /// runner hands straight to the registry. These three have no handler —
+    /// they open a window, pick a shortcut, or parse a slash command — so the
+    /// registry answered `unknownAction` and each press wrote a failed record
+    /// to the history. Named here rather than spelled out at the call site so
+    /// a new card cannot join them silently: the catalogue tests fail on any
+    /// id that is neither registered nor listed below.
+    public static let openMoonlightID = "open-moonlight"
+    public static let runCommandID = "run-command"
+    public static let runUserShortcutID = "run-user-shortcut"
+
+    public static let interfaceHandledIDs: Set<String> = [
+        openMoonlightID,
+        runCommandID,
+        runUserShortcutID,
+    ]
+
     public static let allIntents: [MoonlightIntentItem] = [
         // MARK: - Core & Text
         MoonlightIntentItem(
@@ -80,6 +100,15 @@ public enum MoonlightIntentCatalog {
             defaultParameterValue: "encode"
         ),
         MoonlightIntentItem(
+            id: MoonlightActionID.summarizeText,
+            title: "Summarize Text",
+            subtitle: "Shorten text to its opening sentences, without generating any",
+            category: .core,
+            symbolName: "text.quote",
+            accentColor: .yellow,
+            sampleInput: "Moonlight publishes every tool three ways. A tool is an action in the domain, an App Intent for Shortcuts and Siri, and an indexed entity for Spotlight. Skipping the first one is what leaves a tool reachable only from Shortcuts."
+        ),
+        MoonlightIntentItem(
             id: MoonlightActionID.convertTimestamp,
             title: "Convert Timestamp",
             subtitle: "Convert between Unix timestamps and ISO-8601 dates",
@@ -87,6 +116,15 @@ public enum MoonlightIntentCatalog {
             symbolName: "clock.arrow.2.circlepath",
             accentColor: .orange,
             sampleInput: "1773000000"
+        ),
+        MoonlightIntentItem(
+            id: MoonlightActionID.startTimer,
+            title: "Timer",
+            subtitle: "Start a minimal countdown from 25m, 90s or 1:30",
+            category: .transforms,
+            symbolName: "timer",
+            accentColor: .cyan,
+            sampleInput: "25m"
         ),
 
         // MARK: - System & Automation
@@ -100,7 +138,7 @@ public enum MoonlightIntentCatalog {
             requiresInput: false
         ),
         MoonlightIntentItem(
-            id: "run-user-shortcut",
+            id: MoonlightIntentCatalog.runUserShortcutID,
             title: "Run Shortcut",
             subtitle: "Trigger Apple Shortcuts workflows directly from Moonlight",
             category: .system,
@@ -109,7 +147,7 @@ public enum MoonlightIntentCatalog {
             requiresInput: false
         ),
         MoonlightIntentItem(
-            id: "open-moonlight",
+            id: MoonlightIntentCatalog.openMoonlightID,
             title: "Open Spotlight Palette",
             subtitle: "Summon the floating Liquid Glass command launcher",
             category: .system,
@@ -118,7 +156,7 @@ public enum MoonlightIntentCatalog {
             requiresInput: false
         ),
         MoonlightIntentItem(
-            id: "run-command",
+            id: MoonlightIntentCatalog.runCommandID,
             title: "Command Runner",
             subtitle: "Execute Moonlight slash commands and expressions directly",
             category: .system,

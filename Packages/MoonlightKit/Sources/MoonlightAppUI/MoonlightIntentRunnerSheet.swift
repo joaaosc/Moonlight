@@ -63,6 +63,13 @@ public struct MoonlightIntentRunnerSheet: View {
                         inputSection
                     }
 
+                    // The timer is the one tool whose result is a behaviour,
+                    // not a string: the countdown lives here, next to the
+                    // duration it parses, while Run records the start below.
+                    if item.id == MoonlightActionID.startTimer {
+                        timerSection
+                    }
+
                     if let errorMessage {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
@@ -186,6 +193,44 @@ public struct MoonlightIntentRunnerSheet: View {
         inputText = item.sampleInput
     }
 
+    private var timerSection: some View {
+        Group {
+            if let seconds = try? StartTimerAction.parseDuration(inputText) {
+                MinimalTimerView(totalSeconds: seconds, accent: item.accentColor) {
+                    Task { await recordTimerStart() }
+                }
+            } else {
+                Text("Enter a duration like 25m, 90s or 1:30.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            }
+        }
+    }
+
+    /// Records a timer start kicked off from the countdown itself, so it
+    /// lands in history exactly like a Run press. A failed record surfaces as
+    /// the sheet's error; a resumed countdown records nothing.
+    private func recordTimerStart() async {
+        let execution = await model.execute(
+            actionID: MoonlightActionID.startTimer,
+            input: inputText
+        )
+        if let execution {
+            outputStatus = execution.status
+            if execution.status == .succeeded {
+                outputText = execution.detail
+            } else {
+                errorMessage = execution.detail
+                outputText = nil
+            }
+        } else if let modelError = model.errorMessage {
+            errorMessage = modelError
+            outputStatus = .failed
+        }
+    }
+
     private func clearInput() {
         inputText = ""
     }
@@ -200,6 +245,24 @@ public struct MoonlightIntentRunnerSheet: View {
         isCopied = false
         isSavedToNotes = false
         defer { isRunning = false }
+
+        // Cartões sem ActionRegistry próprio: não passam por model.execute,
+        // que registraria um `unknownAction` no histórico.
+        if item.id == MoonlightIntentCatalog.openMoonlightID {
+            outputText = "You are already in Moonlight's main window. Press ⌘⇧M for the floating palette or ⌘⇧L for the launcher."
+            outputStatus = .succeeded
+            return
+        }
+        if item.id == MoonlightIntentCatalog.runUserShortcutID {
+            errorMessage = "Pick a registered shortcut in Settings → Shortcuts, then run it from Spotlight (Run Moonlight Command) or the Shortcuts app. This card cannot choose a shortcut by itself."
+            outputText = nil
+            outputStatus = .failed
+            return
+        }
+        if item.id == MoonlightIntentCatalog.runCommandID {
+            await runSlashCommandCard()
+            return
+        }
 
         // The colour picker is a panel, not a command: it has no runtime result
         // to record, so it never goes through the execution path.
@@ -240,6 +303,68 @@ public struct MoonlightIntentRunnerSheet: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(outputText, forType: .string)
         Task { await confirm { isCopied = $0 } }
+    }
+
+    /// Resolve `inputText` (ex. `/note Buy milk`) contra os aliases nativos e
+    /// executa o actionID real. Nome desconhecido vira mensagem, nunca um
+    /// `unknownAction` gravado no histórico.
+    private func runSlashCommandCard() async {
+        let raw = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let aliases: [String: String] = [
+            "note": MoonlightActionID.captureNote,
+            "clean": MoonlightActionID.cleanText,
+            "json": MoonlightActionID.formatJSON,
+            "uuid": MoonlightActionID.generateUUID,
+            "base64": MoonlightActionID.base64Text,
+            "hash": MoonlightActionID.hashText,
+            "url": MoonlightActionID.urlText,
+            "date": MoonlightActionID.convertTimestamp,
+            "summarize": MoonlightActionID.summarizeText,
+            "timer": MoonlightActionID.startTimer,
+            "color": MoonlightActionID.openColorPicker,
+        ]
+        do {
+            let command = try SlashCommandParser().parse(raw.isEmpty ? item.sampleInput : raw)
+            guard let actionID = aliases[command.name] else {
+                errorMessage = "Moonlight has no /\(command.name) command yet."
+                outputText = nil
+                outputStatus = .failed
+                return
+            }
+            if actionID == MoonlightActionID.openColorPicker {
+                MoonlightColorPanelPresenter.shared.present(isolatingFromMainWindow: false)
+                outputText = "System Color Picker opened."
+                outputStatus = .succeeded
+                return
+            }
+            var parameters = ActionParameters.empty
+            if let key = item.parameterKey, !selectedParameterValue.isEmpty {
+                parameters = ActionParameters(values: [key: selectedParameterValue])
+            }
+            // `color` não tem parâmetro; base64/hash/url reutilizam o Picker
+            // do cartão quando a chave coincide, senão usam o default do domínio.
+            let execution = await model.execute(
+                actionID: actionID,
+                input: command.arguments,
+                parameters: parameters.values.isEmpty ? .empty : parameters
+            )
+            if let execution {
+                outputStatus = execution.status
+                if execution.status == .succeeded {
+                    outputText = execution.detail
+                } else {
+                    errorMessage = execution.detail
+                    outputText = nil
+                }
+            } else if let modelError = model.errorMessage {
+                errorMessage = modelError
+                outputStatus = .failed
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            outputText = nil
+            outputStatus = .failed
+        }
     }
 
     private func saveToNotes() {
