@@ -52,11 +52,25 @@ public struct MenuBarActiveAppSection: View {
         }
     }
 
+    /// Both ways in, because neither one works every time.
+    ///
+    /// macOS shows the accessibility prompt once per app. After the user has
+    /// answered it, asking again is silent — the button looked broken — so the
+    /// Settings pane is offered next to it rather than hidden behind a second
+    /// press.
     private var permissionRequest: some View {
         VStack(alignment: .leading, spacing: 6) {
-            caption("Moonlight needs accessibility access to read this app's shortcuts.")
-            Button("Allow Access") {
-                model.requestShortcutsPermission()
+            caption("Moonlight needs accessibility access to read this app's shortcuts. Switch Moonlight on under Privacy & Security › Accessibility.")
+            HStack(spacing: 12) {
+                Button("Allow Access") {
+                    model.requestShortcutsPermission()
+                }
+                .help("Ask macOS for accessibility access")
+
+                Button("Open System Settings") {
+                    model.openShortcutsPermissionSettings()
+                }
+                .help("Open Privacy & Security › Accessibility")
             }
             .buttonStyle(.link)
         }

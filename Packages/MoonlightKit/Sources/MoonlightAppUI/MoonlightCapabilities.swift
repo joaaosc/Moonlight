@@ -36,13 +36,25 @@ public struct MoonlightCapability: Sendable, Equatable, Identifiable {
         self.detail = detail
     }
 
-    /// Accessibility is not used by any current feature. Reporting it as unused
-    /// keeps the list honest instead of implying a pending request.
-    public static func accessibility() -> MoonlightCapability {
-        MoonlightCapability(
+    /// Accessibility is what the menu bar reads the active app's shortcuts
+    /// with. Reported as unused it looked optional, and a user looking for why
+    /// the section is empty found nothing here.
+    ///
+    /// "Denied" and "not requested" are told apart by the app's own record of
+    /// having asked: the system answers whether the permission is held, never
+    /// whether it was refused.
+    public static func accessibility(defaults: UserDefaults = .standard) -> MoonlightCapability {
+        let status: Status = if AXIsProcessTrusted() {
+            .granted
+        } else if defaults.bool(forKey: ActiveAppShortcutsReader.hasAskedDefaultsKey) {
+            .denied
+        } else {
+            .notDetermined
+        }
+        return MoonlightCapability(
             name: "Accessibility",
-            status: AXIsProcessTrusted() ? .granted : .notUsedYet,
-            detail: "No Moonlight feature reads or controls other apps' windows today."
+            status: status,
+            detail: "Needed to read the active app's keyboard shortcuts in the menu bar. Granted under Privacy & Security in System Settings."
         )
     }
 

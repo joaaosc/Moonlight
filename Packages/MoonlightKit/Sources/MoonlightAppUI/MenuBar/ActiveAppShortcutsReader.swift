@@ -27,14 +27,64 @@ public struct ActiveAppShortcutsReader: Sendable {
         AXIsProcessTrusted()
     }
 
-    /// Asks macOS to show the accessibility prompt.
+    /// Where the answer is remembered that the system prompt was spent.
+    ///
+    /// macOS presents the accessibility prompt once per app. Every call after
+    /// that returns normally and shows nothing, so a button wired only to the
+    /// prompt does nothing at all from the second press onwards — which is
+    /// exactly what it looks like to the user. The app cannot read that state
+    /// back out of the system, so it records its own ask.
+    static let hasAskedDefaultsKey = "MoonlightHasAskedForAccessibility"
+
+    /// The Accessibility list in System Settings.
+    static let settingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+    )
+
+    /// Takes the user to where the permission can be granted.
+    ///
+    /// The first press asks the system to prompt, which is the shortest path
+    /// when it still works. Afterwards the prompt is spent, so the press opens
+    /// the Settings pane instead: the same destination the prompt's own button
+    /// leads to, and the only one that keeps working.
     ///
     /// The key is spelled out rather than read from `kAXTrustedCheckOptionPrompt`:
     /// that symbol is a mutable global, which strict concurrency rejects, and
     /// its value is a documented constant.
-    public static func requestPermission() {
-        let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
+    @MainActor
+    public static func requestPermission(defaults: UserDefaults = .standard) {
+        switch permissionStep(consuming: defaults) {
+        case .prompt:
+            let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(options)
+        case .settings:
+            openSettings()
+        }
+    }
+
+    /// What pressing the button should do.
+    enum PermissionStep: Equatable {
+        /// Ask the system to prompt: only the first ask is ever shown.
+        case prompt
+        /// Open the Settings pane, because the prompt would show nothing.
+        case settings
+    }
+
+    /// Decides the step and records that the ask happened.
+    ///
+    /// Separated from carrying it out so the rule can be tested without
+    /// prompting the machine running the tests or opening its System Settings.
+    static func permissionStep(consuming defaults: UserDefaults) -> PermissionStep {
+        guard !defaults.bool(forKey: hasAskedDefaultsKey) else { return .settings }
+        defaults.set(true, forKey: hasAskedDefaultsKey)
+        return .prompt
+    }
+
+    /// Opens the Accessibility list, where Moonlight has to be switched on.
+    @MainActor
+    public static func openSettings() {
+        guard let settingsURL else { return }
+        NSWorkspace.shared.open(settingsURL)
     }
 
     /// Reads the shortcuts of the application with this process identifier.

@@ -81,6 +81,12 @@ public final class MoonlightMenuBarModel {
         ActiveAppShortcutsReader.requestPermission()
     }
 
+    /// Opens the Accessibility list directly, for when the prompt is spent.
+    public func openShortcutsPermissionSettings() {
+        ActiveAppShortcutsReader.openSettings()
+    }
+
+
     /// The favourites, resolved against the catalogue and ordered by title.
     public func favorites(in palette: MoonlightToolPaletteModel) -> [MenuBarFavorite] {
         palette.descriptors

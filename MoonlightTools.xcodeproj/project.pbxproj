@@ -12,6 +12,7 @@
 		15C40E739DE86C90C65F9C82 /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = B87671C131546AA0B7436969 /* MoonlightIntents */; };
 		1F8C8FEF7082C406B5B0ADEB /* MoonlightServicesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BA1557F492B57B93136A9E /* MoonlightServicesProvider.swift */; };
 		28278E8196A487CBC848193C /* MoonlightShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = E671C8FC9DB69821172C5E35 /* MoonlightShortcuts */; };
+		2FA52B5D5DFC0E1DB0C8344F /* AccessibilityPermissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90919EC37AA73D0B89C4E03 /* AccessibilityPermissionTests.swift */; };
 		32CD912224DECF13C0C87DD8 /* MoonlightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A5A2E0DEDF40DF11AAA115 /* MoonlightApp.swift */; };
 		3984A5F2987C8ED7BE4309B5 /* MoonlightIntents in Frameworks */ = {isa = PBXBuildFile; productRef = 8D64454EB5944F9D2F12B3DC /* MoonlightIntents */; };
 		3B586A3FCDF4A446B3F2A9AA /* MoonlightSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA3A3537DD98016F24F29D /* MoonlightSettingsView.swift */; };
@@ -106,6 +107,7 @@
 		B8D2FA192AB21BB2AA466273 /* Moonlight.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = Moonlight.icon; sourceTree = "<group>"; };
 		C4A5A2E0DEDF40DF11AAA115 /* MoonlightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightApp.swift; sourceTree = "<group>"; };
 		C79A0D76CC483DEE6409B748 /* MoonlightAppIntentsExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightAppIntentsExtension.swift; sourceTree = "<group>"; };
+		D90919EC37AA73D0B89C4E03 /* AccessibilityPermissionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermissionTests.swift; sourceTree = "<group>"; };
 		E7C5389720D6ADE8D156E795 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		E81597C71ACA6974EE67ACCF /* MoonlightWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonlightWidgetBundle.swift; sourceTree = "<group>"; };
 		ED523EC3B37FBB14FB35907A /* MoonlightAppIntentsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = MoonlightAppIntentsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -194,6 +196,7 @@
 		548B8776BE04E9F7D16B2185 /* MoonlightTests */ = {
 			isa = PBXGroup;
 			children = (
+				D90919EC37AA73D0B89C4E03 /* AccessibilityPermissionTests.swift */,
 				8244761B0AF89382EFC2AE16 /* MoonlightToolPaletteTests.swift */,
 				956CD5578FE8B5B2F6B732FD /* SmokeTests.swift */,
 			);
@@ -472,6 +475,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FA52B5D5DFC0E1DB0C8344F /* AccessibilityPermissionTests.swift in Sources */,
 				85709AA9C0981B3198249081 /* MoonlightToolPaletteTests.swift in Sources */,
 				E381ABD38A95D99E81B61BF0 /* SmokeTests.swift in Sources */,
 			);
