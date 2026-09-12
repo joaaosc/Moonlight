@@ -9,9 +9,17 @@ import Testing
 private struct FakeApplicationsDirectory {
     let root: URL
 
+    /// The suffix that keeps these bundles out of the Spotlight index.
+    ///
+    /// These fixtures are real application bundles, and Spotlight indexes any
+    /// bundle it can see. A path component ending in `.noindex` is excluded
+    /// from indexing, which is the same convention Xcode uses for its own
+    /// build products.
+    private static let excludedFromIndexing = ".noindex"
+
     init() throws {
         root = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appending(path: "moonlight-launcher-tests-\(UUID().uuidString)")
+            .appending(path: "moonlight-launcher-tests-\(UUID().uuidString)\(Self.excludedFromIndexing)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     }
 
@@ -43,7 +51,37 @@ private struct FakeApplicationsDirectory {
     }
 
     func remove() {
+        Self.unregisterFromLaunchServices(root)
         try? FileManager.default.removeItem(at: root)
+    }
+
+    /// Drops the fixtures from the Launch Services database before deleting
+    /// them.
+    ///
+    /// Reading a bundle registers it: `Bundle(url:)` and `displayName(atPath:)`
+    /// both go through Launch Services, so exercising the catalogue against
+    /// these fixtures adds one record each. Deleting the directory does not
+    /// remove the record — it outlives the file, so every run used to leave
+    /// another set behind, and `.noindex` does not prevent it. Launch Services
+    /// publishes no unregister call, so this uses the tool the system ships
+    /// for it. Best effort: a failure here leaves stale records, not a failed
+    /// test.
+    private static func unregisterFromLaunchServices(_ url: URL) {
+        let tool = URL(
+            fileURLWithPath: "/System/Library/Frameworks/CoreServices.framework"
+                + "/Versions/A/Frameworks/LaunchServices.framework"
+                + "/Versions/A/Support/lsregister"
+        )
+        guard FileManager.default.isExecutableFile(atPath: tool.path) else { return }
+
+        let process = Process()
+        process.executableURL = tool
+        // `-R` descends into the bundles, which is where the records come from.
+        process.arguments = ["-u", "-R", url.path]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return }
+        process.waitUntilExit()
     }
 }
 
