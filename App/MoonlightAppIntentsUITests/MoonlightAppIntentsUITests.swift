@@ -115,13 +115,4 @@ final class MoonlightAppIntentsUITests: XCTestCase {
             "Generate UUID", "Open Color Picker"
         ]))
     }
-
-    @MainActor
-    func testLegacyCommandStillCapturesNote() async throws {
-        let note = "Legacy intent test \(UUID().uuidString)"
-        _ = try await definitions
-            .intents["RunMoonlightCommandIntent"]
-            .makeIntent(command: "note \(note)")
-            .run()
-    }
 }

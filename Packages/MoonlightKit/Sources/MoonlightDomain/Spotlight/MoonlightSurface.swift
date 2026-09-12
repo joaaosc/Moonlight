@@ -74,22 +74,6 @@ public enum MoonlightSurfaceRegistry {
         additionalKeywords: ["tools", "palette", "launcher", "open moonlight tools"]
     )
 
-    /// The same window as `tools`, reached with the focus forced.
-    ///
-    /// Separate from `tools` because the two answer different questions:
-    /// `omt` asks for the tool catalogue, `omw` asks for the window itself,
-    /// wherever the keyboard currently is. Opening `omt` while another app
-    /// holds activation can leave the panel visible but not typed into; this
-    /// alias exists to guarantee the caret.
-    public static let window = MoonlightSurface(
-        id: MoonlightSurfaceID.window,
-        alias: "omw",
-        title: "Window",
-        summary: "Open the Moonlight window and focus it.",
-        symbolName: "macwindow",
-        additionalKeywords: ["window", "focus", "open moonlight window"]
-    )
-
     /// The grid of installed applications.
     ///
     /// Earns its alias the same way the others do: Spotlight already finds
@@ -104,7 +88,11 @@ public enum MoonlightSurfaceRegistry {
         additionalKeywords: ["launcher", "apps", "applications", "launchpad", "grid"]
     )
 
-    public static let standard: [MoonlightSurface] = [tools, window, launcher]
+    /// `window` is deliberately absent: it published a second alias for the
+    /// same panel `tools` already opens, differing only in forcing the caret.
+    /// One window earns one alias; the identifier stays known so the retired
+    /// index item is withdrawn rather than left answering.
+    public static let standard: [MoonlightSurface] = [tools, launcher]
 
     public static func surface(id: String) -> MoonlightSurface? {
         standard.first { $0.id == id }

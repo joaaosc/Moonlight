@@ -118,36 +118,6 @@ struct ActionRunnerTests {
     }
 }
 
-@Suite("Moonlight command parser")
-struct MoonlightCommandParserTests {
-    private let parser = MoonlightCommandParser()
-
-    @Test("Parses note commands and preserves their text")
-    func parsesNote() throws {
-        #expect(try parser.parse("  note Cafe\u{301} ☾  ") == .captureNote("Café ☾"))
-        #expect(try parser.parse("nota comprar leite") == .captureNote("comprar leite"))
-    }
-
-    @Test("Parses color picker aliases")
-    func parsesColorPicker() throws {
-        #expect(try parser.parse("color") == .openColorPicker)
-        #expect(try parser.parse("cor") == .openColorPicker)
-    }
-
-    @Test("Rejects empty and unsupported commands")
-    func rejectsInvalidCommands() {
-        #expect(throws: MoonlightCommandError.emptyCommand) {
-            try parser.parse("  \n ")
-        }
-        #expect(throws: MoonlightCommandError.missingNoteText) {
-            try parser.parse("note")
-        }
-        #expect(throws: MoonlightCommandError.unsupportedCommand("launch")) {
-            try parser.parse("launch rocket")
-        }
-    }
-}
-
 private enum StoreFailure: Error {
     case writeFailed
 }

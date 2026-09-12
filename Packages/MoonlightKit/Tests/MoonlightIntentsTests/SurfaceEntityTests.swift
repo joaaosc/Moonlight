@@ -35,11 +35,13 @@ struct MoonlightSurfaceEntityTests {
         #expect(try await query.entities(matching: "OMT").map(\.id) == [MoonlightSurfaceID.tools])
     }
 
-    @Test("Typing the alias resolves the window surface")
-    func windowAliasQuery() async throws {
+    @Test("The retired window alias resolves to nothing")
+    func retiredWindowAliasQuery() async throws {
         let query = MoonlightSurfaceEntityQuery()
 
-        #expect(try await query.entities(matching: "omw").map(\.id) == [MoonlightSurfaceID.window])
+        // `omw` opened the same panel as `omt`. It is no longer published, so
+        // the alias must stop answering rather than open a second route.
+        #expect(try await query.entities(matching: "omw").isEmpty)
     }
 
     @Test("A shared prefix keeps every surface available")
@@ -48,7 +50,6 @@ struct MoonlightSurfaceEntityTests {
         let ids = try await query.entities(matching: "om").map(\.id)
         let expected = Set([
             MoonlightSurfaceID.tools,
-            MoonlightSurfaceID.window,
             MoonlightSurfaceID.launcher,
         ])
 

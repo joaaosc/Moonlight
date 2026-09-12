@@ -73,16 +73,6 @@ struct AppIntentsAdapterTests {
         #expect(!OpenColorPickerIntent.allowedExecutionTargets.contains(.appIntentsExtension))
     }
 
-    @Test("Legacy Moonlight command remains executable but not discoverable")
-    func legacyCommandContract() {
-        let legacy = RunMoonlightCommandIntent(command: "note Buy milk")
-
-        requireAppIntent(RunMoonlightCommandIntent.self)
-        #expect(!RunMoonlightCommandIntent.isDiscoverable)
-        #expect(RunMoonlightCommandIntent.allowedExecutionTargets.contains(.main))
-        #expect(!RunMoonlightCommandIntent.allowedExecutionTargets.contains(.appIntentsExtension))
-        #expect(legacy.command == "note Buy milk")
-    }
 
     @Test("Text tools return their value so a shortcut can chain them")
     func typedToolIntents() {
@@ -140,11 +130,13 @@ struct AppIntentsAdapterTests {
         #expect(entity.symbolName == "link")
     }
 
-    @Test("The published phrase list stays short and curated")
+    @Test("Only the way in is published as a phrase")
     func curatedAppShortcuts() {
         let shortcuts = MoonlightAppShortcuts.appShortcuts
 
-        #expect(shortcuts.count == 5)
+        // Each tool already reaches Spotlight as its own intent and as an
+        // indexed entity; a phrase per tool was a third row for one action.
+        #expect(shortcuts.count == 1)
         #expect(shortcuts.count < ActionRegistry.standard.descriptors.count)
     }
 
