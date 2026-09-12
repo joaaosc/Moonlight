@@ -38,11 +38,9 @@ public struct MoonlightToolPaletteView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: MoonlightGlassMetrics.contentSpacing) {
             header
-            if !isGlassPanel || model.isEditing {
-                Divider()
-            }
+            Divider()
 
             if let catalogError = model.catalogErrorMessage {
                 errorLabel(catalogError)
@@ -56,8 +54,15 @@ public struct MoonlightToolPaletteView: View {
                     .transition(.opacity)
             }
         }
-        .padding(isGlassPanel ? MoonlightGlassMetrics.contentPadding : 16)
-        .frame(minWidth: 480, idealWidth: 640, minHeight: 420, idealHeight: 520)
+        .padding(MoonlightGlassMetrics.contentPadding)
+        .frame(
+            minWidth: MoonlightGlassMetrics.paletteMinimumSize.width,
+            idealWidth: MoonlightGlassMetrics.paletteSize.width,
+            maxWidth: .infinity,
+            minHeight: MoonlightGlassMetrics.paletteMinimumSize.height,
+            idealHeight: MoonlightGlassMetrics.paletteSize.height,
+            maxHeight: .infinity
+        )
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.14), value: model.isEditing)
         .onAppear { restoreFocus() }
         .onChange(of: model.isEditing) { restoreFocus() }
@@ -70,18 +75,14 @@ public struct MoonlightToolPaletteView: View {
         HStack(spacing: 10) {
             if model.isEditing {
                 backButton
-            } else if !isGlassPanel {
+            } else {
                 Image(systemName: "moon.stars")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MoonlightGlassPalette.glyph)
                     .accessibilityHidden(true)
             }
 
-            // In the launcher the search field below is the title: repeating
-            // the app's name above it would be chrome with nothing to say.
-            if model.isEditing || !isGlassPanel {
-                Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
-                    .font(isGlassPanel ? .title3.weight(.semibold) : .headline)
-            }
+            Text(model.isEditing ? (model.selectedDescriptor?.title ?? "Moonlight") : "Moonlight")
+                .font(.headline)
 
             Spacer(minLength: 0)
 
@@ -91,8 +92,11 @@ public struct MoonlightToolPaletteView: View {
                     .accessibilityLabel("Running tool")
             }
         }
-        // The search field is right below in the catalogue, so a button that
-        // only moves focus there would be a second control for one action.
+        // The header is also the panel's grab bar. A palette is a list that
+        // fills its window, so without a stated drag area a large panel had
+        // nowhere left to be moved by.
+        .frame(minHeight: MoonlightGlassMetrics.dragHandleHeight)
+        .moonlightWindowDrag(isEnabled: isGlassPanel)
     }
 
     @ViewBuilder
@@ -126,7 +130,7 @@ public struct MoonlightToolPaletteView: View {
                     // instead of a bordered form control with a focus ring
                     // drawn around it.
                     .textFieldStyle(.plain)
-                    .font(isGlassPanel ? .title2 : .title3)
+                    .font(MoonlightGlassMetrics.searchFont)
                     .accessibilityLabel("Search tools")
                     .focused($focusedField, equals: .search)
                 .onSubmit { activateSelectedTool() }
@@ -145,17 +149,12 @@ public struct MoonlightToolPaletteView: View {
                     return .handled
                 }
             }
-            .padding(.horizontal, isGlassPanel ? 14 : 10)
-            .padding(.vertical, isGlassPanel ? 11 : 8)
-            // The search field is the one control shaped as a capsule; every
-            // other field in the panel is a rounded rectangle.
-            .background {
-                if isGlassPanel {
-                    GlassFieldBackground(shape: Capsule(style: .continuous))
-                } else {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quinary)
-                }
-            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            // A capsule wherever the palette is shown — in the panel and in
+            // the menu bar popover alike. The search field is Moonlight's
+            // signature control, so it keeps one shape.
+            .moonlightFieldBackground(Capsule())
 
             if let commandLineState = model.commandLineState {
                 commandLinePlaceholder(commandLineState)
@@ -174,8 +173,16 @@ public struct MoonlightToolPaletteView: View {
                             row(for: descriptor)
                             .padding(.vertical, 4)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                            .contentShape(.rect)
                             .listRowSeparator(.hidden)
+                            // Moonlight's own selection, not the system's flat
+                            // table highlight: the one place in the catalogue
+                            // where colour carries meaning.
+                            .listRowBackground(
+                                model.selectedID == descriptor.id
+                                    ? MoonlightSelectionBackground()
+                                    : nil
+                            )
                             .tag(descriptor.id)
                             .id(descriptor.id)
                             .onTapGesture(count: 2) {
@@ -203,8 +210,16 @@ public struct MoonlightToolPaletteView: View {
             }
             Divider()
             HStack(spacing: 6) {
-                KeyHint(symbol: "arrow.up.arrow.down", action: "Select with the arrow keys")
-                KeyHint(symbol: "arrow.right.to.line", action: "Complete with Tab")
+                KeyHint(
+                    symbol: "arrow.up.arrow.down",
+                    label: "Select",
+                    description: "Select with the arrow keys"
+                )
+                KeyHint(
+                    symbol: "arrow.right.to.line",
+                    label: "Complete",
+                    description: "Complete with Tab"
+                )
                 if let sourceContext = model.sourceContext {
                     // Where the invocation came from: context, not a title.
                     Text(sourceContext.name)
@@ -219,7 +234,11 @@ public struct MoonlightToolPaletteView: View {
                 Button {
                     activateSelectedTool()
                 } label: {
-                    KeyHint(symbol: "return", action: "Open the selected tool")
+                    KeyHint(
+                        symbol: "return",
+                        label: "Open",
+                        description: "Open the selected tool"
+                    )
                 }
                 .buttonStyle(.plain)
                 .disabled(model.selectedDescriptor == nil || model.isWorking)
@@ -243,7 +262,14 @@ public struct MoonlightToolPaletteView: View {
                 .font(.body)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 26, height: 26)
-                .foregroundStyle(isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                // Colour marks the row being chosen, and nothing else in the
+                // list: a tinted glyph on every row would be a palette of
+                // twelve competing accents.
+                .foregroundStyle(
+                    isSelected
+                        ? AnyShapeStyle(MoonlightGlassPalette.glyph)
+                        : AnyShapeStyle(.secondary)
+                )
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -307,10 +333,7 @@ public struct MoonlightToolPaletteView: View {
                     .scrollContentBackground(.hidden)
                     .padding(10)
                     .frame(minHeight: 120, maxHeight: .infinity)
-                    .moonlightFieldBackground(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous),
-                        isGlass: isGlassPanel
-                    )
+                    .moonlightFieldBackground(MoonlightGlassMetrics.fieldShape)
                     .accessibilityLabel("Input for \(descriptor.title)")
                     .disabled(model.isWorking)
             }
@@ -357,17 +380,14 @@ public struct MoonlightToolPaletteView: View {
                     }
                 }
                 .padding(12)
-                .moonlightFieldBackground(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous),
-                    isGlass: isGlassPanel
-                )
+                .moonlightFieldBackground(MoonlightGlassMetrics.fieldShape)
             }
 
             if let error = model.errorMessage { errorLabel(error) }
             if !model.acceptsInput(descriptor) { Spacer(minLength: 0) }
             Divider()
             HStack(spacing: 6) {
-                KeyHint(symbol: "escape", action: "Back to tools")
+                KeyHint(symbol: "escape", label: "Back", description: "Back to tools")
                 Spacer()
                 // Inside the editor there is a form to submit, so the default
                 // button is the right control — unlike the catalogue, where

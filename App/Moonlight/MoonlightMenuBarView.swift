@@ -42,9 +42,16 @@ struct MoonlightMenuBarView: View {
                 .help("Quit Moonlight")
             }
             .buttonStyle(.borderless)
-            .padding(12)
+            .padding(MoonlightGlassMetrics.contentPadding)
         }
-        .frame(width: 600, height: 570)
+        // The popover takes its size from the palette's own metrics rather
+        // than from a number typed here, so the menu bar and the floating
+        // panel stay the same surface at the same size.
+        .frame(
+            width: MoonlightGlassMetrics.paletteSize.width,
+            height: MoonlightGlassMetrics.paletteSize.height
+                + MoonlightGlassMetrics.contentPadding * 2
+        )
         .onAppear {
             coordinator.prepareMenuBarPalette()
             menuBarToken = coordinator.registerMenuBar(dismiss: { dismiss() })

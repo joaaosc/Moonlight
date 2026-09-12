@@ -45,7 +45,10 @@ public final class MoonlightToolPalettePresenter {
         }
 
         let panel = MoonlightGlassPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 520)
+            contentRect: NSRect(
+                origin: .zero,
+                size: MoonlightGlassMetrics.paletteSize
+            )
         )
         panel.identifier = NSUserInterfaceItemIdentifier(Self.panelIdentifier)
         panel.title = "Moonlight Tools"
@@ -53,7 +56,10 @@ public final class MoonlightToolPalettePresenter {
         panel.hidesOnDeactivate = false
         panel.level = .floating
         panel.isReleasedWhenClosed = false
-        panel.contentMinSize = NSSize(width: 480, height: 420)
+        panel.contentMinSize = NSSize(
+            width: MoonlightGlassMetrics.paletteMinimumSize.width,
+            height: MoonlightGlassMetrics.paletteMinimumSize.height
+        )
         panel.contentView = Self.makeContentView(model: model)
         panel.center()
         panel.setFrameAutosaveName("MoonlightToolPalette")

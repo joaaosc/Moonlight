@@ -18,7 +18,7 @@ public struct MoonlightLauncherView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: MoonlightGlassMetrics.contentPadding) {
             searchField
 
             if let failure = model.failure {
@@ -96,16 +96,15 @@ public struct MoonlightLauncherView: View {
 
             TextField("Search", text: $model.query)
                 .textFieldStyle(.plain)
-                .font(.title3)
+                .font(MoonlightGlassMetrics.searchFont)
                 .focused($isSearchFocused)
                 .onSubmit { Task { await launchSelection() } }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .moonlightFieldBackground(
-            RoundedRectangle(cornerRadius: 12, style: .continuous),
-            isGlass: true
-        )
+        .padding(.vertical, 11)
+        // The same capsule the palette's search field wears: one control, one
+        // shape, wherever Moonlight asks to be searched.
+        .moonlightFieldBackground(Capsule())
         .frame(maxWidth: 520)
     }
 
@@ -263,13 +262,26 @@ public struct MoonlightLauncherView: View {
     /// nowhere near anything the user is looking at.
     private var footer: some View {
         HStack(spacing: 10) {
-            KeyHint(symbol: "arrow.up.and.down.and.arrow.left.and.right", action: "Select")
-            KeyHint(symbol: "return", action: "Open")
+            KeyHint(
+                symbol: "arrow.up.and.down.and.arrow.left.and.right",
+                label: "Select",
+                description: "Select with the arrow keys"
+            )
+            KeyHint(symbol: "return", label: "Open", description: "Open the selected app")
             if model.pageCount > 1 {
-                KeyHint(symbol: "arrow.right.to.line", action: "Next page")
+                KeyHint(
+                    symbol: "arrow.right.to.line",
+                    label: "Next page",
+                    description: "Go to the next page with Tab"
+                )
             }
-            KeyHint(symbol: "escape", action: "Close")
+            KeyHint(symbol: "escape", label: "Close", description: "Close the launcher")
         }
+        // A strip, not four loose glyphs: on a full screen the row needs an
+        // edge of its own or it reads as debris over the wallpaper.
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .moonlightFieldBackground(Capsule())
         .frame(maxWidth: .infinity, alignment: .center)
     }
 

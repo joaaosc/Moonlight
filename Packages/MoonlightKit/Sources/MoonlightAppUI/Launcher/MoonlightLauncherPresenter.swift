@@ -92,7 +92,9 @@ public final class MoonlightLauncherPresenter {
             rootView: MoonlightLauncherView(model: model) { [weak self] in
                 self?.dismiss()
             }
-            .moonlightGlassSurface()
+            // Denser than the palette: a full-screen surface at the palette's
+            // transparency lets the desktop read straight through the icons.
+            .moonlightGlassSurface(emphasis: .immersive)
         )
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = .clear
