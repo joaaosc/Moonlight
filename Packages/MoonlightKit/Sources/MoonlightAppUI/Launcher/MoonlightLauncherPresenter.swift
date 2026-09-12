@@ -101,7 +101,16 @@ public final class MoonlightLauncherPresenter {
         return hostingView
     }
 
-    /// The screen under the pointer, falling back to the main one.
+    /// How much of the screen the launcher takes, and the floor it keeps on a
+    /// small display. A panel covering every pixel reads as a mode the user
+    /// fell into; one inset from the edges reads as a panel over their work.
+    private enum Metrics {
+        static let screenFraction = CGSize(width: 0.74, height: 0.76)
+        static let minimumSize = CGSize(width: 900, height: 620)
+    }
+
+    /// A centred panel on the screen under the pointer, falling back to the
+    /// main one.
     ///
     /// `visibleFrame` rather than `frame`: covering the menu bar would need a
     /// window level that sits above the system's own UI, and a launcher is not
@@ -110,6 +119,24 @@ public final class MoonlightLauncherPresenter {
         let location = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(location, $0.frame, false) }
             ?? NSScreen.main
-        return screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+        let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+
+        // Never larger than the screen it sits on: the minimum is a floor for
+        // big displays, not a size to force onto small ones.
+        let width = min(
+            visible.width,
+            max(visible.width * Metrics.screenFraction.width, Metrics.minimumSize.width)
+        )
+        let height = min(
+            visible.height,
+            max(visible.height * Metrics.screenFraction.height, Metrics.minimumSize.height)
+        )
+
+        return NSRect(
+            x: visible.midX - width / 2,
+            y: visible.midY - height / 2,
+            width: width,
+            height: height
+        ).integral
     }
 }

@@ -35,6 +35,18 @@ public struct MoonlightLauncherView: View {
         }
         .padding(MoonlightGlassMetrics.contentPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Behind the grid, so a swipe anywhere over the page turns it while
+        // the tiles keep their own dragging.
+        .background {
+            LauncherPageSwipe { direction in
+                guard model.openFolder == nil, !model.isSearching else { return }
+                if direction > 0 {
+                    model.goToNextPage()
+                } else {
+                    model.goToPreviousPage()
+                }
+            }
+        }
         .overlay {
             if let folder = model.openFolder {
                 folderOverlay(folder)
