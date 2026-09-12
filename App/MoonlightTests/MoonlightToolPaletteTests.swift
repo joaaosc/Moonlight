@@ -460,3 +460,64 @@ struct MoonlightCommandPrefixTests {
         #expect(model.query == "/json")
     }
 }
+
+@Suite("Active app shortcuts")
+struct ActiveAppShortcutsTests {
+    @Test("Command is implied unless the mask says otherwise")
+    func impliedCommand() {
+        #expect(ActiveAppShortcutsReader.keyEquivalent(character: "n", modifiers: 0) == "⌘N")
+    }
+
+    @Test("Modifiers render in the order macOS writes them")
+    func modifierOrder() {
+        // Control, Option, Shift, then Command — the order the menu bar uses.
+        #expect(
+            ActiveAppShortcutsReader.keyEquivalent(character: "a", modifiers: 0x01 | 0x02 | 0x04)
+                == "⌃⌥⇧⌘A"
+        )
+    }
+
+    @Test("Bit 3 drops Command instead of adding a modifier")
+    func commandlessShortcut() {
+        #expect(ActiveAppShortcutsReader.keyEquivalent(character: "f", modifiers: 0x08) == "F")
+        #expect(
+            ActiveAppShortcutsReader.keyEquivalent(character: "f", modifiers: 0x08 | 0x01) == "⇧F"
+        )
+    }
+}
+
+@Suite("Menu bar favourites")
+@MainActor
+struct MoonlightMenuBarModelTests {
+    @Test("Favourites carry the tool's alias, not its identifier")
+    func favoritesCarryAlias() {
+        let palette = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        let descriptor = try? #require(
+            palette.descriptors.first { $0.id == MoonlightActionID.formatJSON }
+        )
+        palette.toggleFavorite(try! #require(descriptor))
+
+        let favorites = MoonlightMenuBarModel().favorites(in: palette)
+
+        #expect(favorites.map(\.id) == [MoonlightActionID.formatJSON])
+        // `json`, not `format-json`: the alias is what the user types.
+        #expect(favorites.first?.alias == "json")
+    }
+
+    @Test("Nothing starred means nothing listed")
+    func noFavorites() {
+        let palette = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+
+        #expect(MoonlightMenuBarModel().favorites(in: palette).isEmpty)
+    }
+
+    @Test("Moonlight in front leaves no app to read")
+    func moonlightInFrontHasNoActiveApp() {
+        let model = MoonlightMenuBarModel()
+
+        model.capture(frontmostApplication: nil, ownBundleIdentifier: "com.joaocosta.Moonlight")
+
+        #expect(model.activeApp == nil)
+        #expect(model.shortcuts.isEmpty)
+    }
+}

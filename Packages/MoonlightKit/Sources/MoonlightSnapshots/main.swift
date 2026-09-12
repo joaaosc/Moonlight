@@ -125,6 +125,30 @@ enum MoonlightSnapshots {
         launcherSearchModel.preload(apps: (try? awaitApps(installedApps)) ?? [])
         launcherSearchModel.query = "ca"
 
+        let menuBarModel = MoonlightMenuBarModel(
+            activeAppName: "WhatsApp",
+            shortcuts: [
+                ActiveAppShortcut(menuTitle: "File", title: "New Chat", keys: "⌘N"),
+                ActiveAppShortcut(menuTitle: "Edit", title: "Search", keys: "⌘F"),
+                ActiveAppShortcut(menuTitle: "Chat", title: "Archive Chat", keys: "⌘⇧A"),
+            ]
+        )
+
+        let menuBarFavorites = [
+            MenuBarFavorite(
+                id: MoonlightActionID.captureNote,
+                title: "Capture Note",
+                summary: "Keep text as a durable Moonlight note",
+                alias: "note"
+            ),
+            MenuBarFavorite(
+                id: MoonlightActionID.generateUUID,
+                title: "Generate UUID",
+                summary: "Generate a random version 4 UUID",
+                alias: "uuid"
+            ),
+        ]
+
         let quicklinksModel = MoonlightQuicklinksModel(
             store: nil,
             cache: QuicklinkCache(quicklinks: [
@@ -177,6 +201,14 @@ enum MoonlightSnapshots {
             ("app-launcher-search", CGSize(width: 1100, height: 720), AnyView(
                 MoonlightLauncherView(model: launcherSearchModel)
                     .moonlightGlassSurface(emphasis: .immersive)
+            )),
+            ("menu-bar", CGSize(width: 640, height: 420), AnyView(
+                VStack(alignment: .leading, spacing: MoonlightGlassMetrics.contentSpacing) {
+                    MenuBarActiveAppSection(model: menuBarModel)
+                    MenuBarFavoritesSection(favorites: menuBarFavorites) { _ in }
+                    Spacer(minLength: 0)
+                }
+                .padding(MoonlightGlassMetrics.contentPadding)
             )),
             ("settings-shortcuts", CGSize(width: 560, height: 460), AnyView(
                 ShortcutBindingsView(model: shortcutsModel)

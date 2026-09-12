@@ -24,6 +24,9 @@ public enum MoonlightGlassMetrics {
     /// The size a floating palette opens at, and the floor it may shrink to.
     public static let paletteSize = CGSize(width: 640, height: 560)
     public static let paletteMinimumSize = CGSize(width: 480, height: 420)
+    /// The menu bar popover: the palette's width, so the two surfaces line up,
+    /// but shorter — it lists what is true right now, not a whole catalogue.
+    public static let menuBarHeight: CGFloat = 420
 
     public static var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: cornerRadius)
