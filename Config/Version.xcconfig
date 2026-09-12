@@ -10,7 +10,7 @@
 // Local builds number themselves from the commit count. Xcode Cloud numbers its
 // own builds and starts at 1000, so the two never share a value.
 
-MARKETING_VERSION = 2.0.1
+MARKETING_VERSION = 3.0.0
 
 // The floor. A checkout with no generated file still builds and still produces
 // a valid CFBundleVersion; it just does not claim a number it did not earn.
