@@ -22,77 +22,50 @@ public enum FileExecutionStoreError: Error, Equatable, LocalizedError, Sendable 
     }
 }
 
+/// Names the shared container and announces writes to it.
+///
+/// A change has to reach the other Moonlight processes — the host, the App
+/// Intents extension and the widget each hold their own copy of the state — so
+/// every write posts a Darwin notification, which is the only cross-process
+/// channel a sandboxed process may use without an entitlement. Each store also
+/// posted the same event through `DistributedNotificationCenter`; nothing ever
+/// observed those names, so every write paid for a second broadcast that was
+/// delivered to no one.
 public enum MoonlightStorage {
     public static let appGroupIdentifier = "33FPG9442W.com.joaocosta.Moonlight"
-    public static let historyDidChangeNotification = Notification.Name(
-        "com.joaocosta.Moonlight.execution-history-did-change"
-    )
+
     public static let historyDidChangeDarwinName =
         "com.joaocosta.Moonlight.execution-history-did-change"
-
-    public static let bindingsDidChangeNotification = Notification.Name(
-        "com.joaocosta.Moonlight.shortcut-bindings-did-change"
-    )
     public static let bindingsDidChangeDarwinName =
         "com.joaocosta.Moonlight.shortcut-bindings-did-change"
-
-    public static let notesDidChangeNotification = Notification.Name(
-        "com.joaocosta.Moonlight.notes-did-change"
-    )
     public static let notesDidChangeDarwinName =
         "com.joaocosta.Moonlight.notes-did-change"
-
-    public static let quicklinksDidChangeNotification = Notification.Name(
-        "com.joaocosta.Moonlight.quicklinks-did-change"
-    )
     public static let quicklinksDidChangeDarwinName =
         "com.joaocosta.Moonlight.quicklinks-did-change"
-
-    public static let terminalCommandsDidChangeNotification = Notification.Name(
-        "com.joaocosta.Moonlight.terminal-commands-did-change"
-    )
     public static let terminalCommandsDidChangeDarwinName =
         "com.joaocosta.Moonlight.terminal-commands-did-change"
 
     static func postQuicklinksDidChange() {
-        post(
-            name: quicklinksDidChangeNotification,
-            darwinName: quicklinksDidChangeDarwinName
-        )
+        post(quicklinksDidChangeDarwinName)
     }
 
     static func postTerminalCommandsDidChange() {
-        post(
-            name: terminalCommandsDidChangeNotification,
-            darwinName: terminalCommandsDidChangeDarwinName
-        )
+        post(terminalCommandsDidChangeDarwinName)
     }
 
     static func postNotesDidChange() {
-        post(name: notesDidChangeNotification, darwinName: notesDidChangeDarwinName)
+        post(notesDidChangeDarwinName)
     }
 
     static func postBindingsDidChange() {
-        post(
-            name: bindingsDidChangeNotification,
-            darwinName: bindingsDidChangeDarwinName
-        )
+        post(bindingsDidChangeDarwinName)
     }
 
     static func postHistoryDidChange() {
-        post(
-            name: historyDidChangeNotification,
-            darwinName: historyDidChangeDarwinName
-        )
+        post(historyDidChangeDarwinName)
     }
 
-    private static func post(name: Notification.Name, darwinName: String) {
-        DistributedNotificationCenter.default().postNotificationName(
-            name,
-            object: nil,
-            userInfo: nil,
-            deliverImmediately: true
-        )
+    private static func post(_ darwinName: String) {
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             CFNotificationName(rawValue: darwinName as CFString),
