@@ -61,18 +61,18 @@ xcodebuild -exportArchive \
 
 APP="$EXPORT_DIR/Moonlight.app"
 
-echo "==> Unregistering build copies so they do not shadow the installed app"
-bash "$(dirname "$0")/clean-app-registrations.sh" >/dev/null 2>&1 || true
-# The archive leaves a second bundle behind; both it and the export carry the
-# same identifier as the installed app.
-LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-ARCHIVED_APP="build.noindex/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates/Moonlight/InstallationBuildProductsLocation/Applications/Moonlight.app"
-[ -d "$ARCHIVED_APP" ] && "$LSREGISTER" -u "$ARCHIVED_APP" 2>/dev/null
-rm -rf build.noindex/DerivedData/Build/Intermediates.noindex/ArchiveIntermediates
+# The archive leaves a third bundle behind, under the intermediates. Found
+# rather than spelled out: the workspace build location decides where the
+# intermediates go and it overrides -derivedDataPath.
+ARCHIVE_INTERMEDIATES="$(find "$BUILD_DIR" build.noindex -maxdepth 4 -type d -name ArchiveIntermediates 2>/dev/null | head -1)"
+[ -n "$ARCHIVE_INTERMEDIATES" ] && rm -rf "$ARCHIVE_INTERMEDIATES"
 
 # Two bundles with the same identifier confuse Launch Services and Spotlight,
-# which is what makes several "Moonlight" entries appear in search.
-"$LSREGISTER" -u "$APP" 2>/dev/null || true
+# which is what makes several "Moonlight" entries appear in search. Run this
+# after the intermediates are gone, so their registrations are dropped in the
+# same pass as the archive's and the export's.
+echo "==> Unregistering build copies so they do not shadow the installed app"
+bash "$(dirname "$0")/clean-app-registrations.sh" >/dev/null 2>&1 || true
 
 echo "==> Verifying the signature"
 # --strict without --deep: the modern check, which also validates the nested

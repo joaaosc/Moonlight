@@ -87,11 +87,10 @@ else
         build
 fi
 
-if [ -n "$SKIP_BUILD" ]; then
-    APP="$(newest_built_app || true)"
-else
-    APP="$ROOT/$DERIVED/Build/Products/$CONFIGURATION/Moonlight.app"
-fi
+# Always by timestamp, never by name: the workspace build location decides
+# where the product lands, and it overrides -derivedDataPath, so the path this
+# build wrote to is not the one the flag above names.
+APP="$(newest_built_app || true)"
 
 if [ -z "${APP:-}" ] || [ ! -d "$APP" ]; then
     echo "No compiled Moonlight.app found for configuration $CONFIGURATION." >&2
