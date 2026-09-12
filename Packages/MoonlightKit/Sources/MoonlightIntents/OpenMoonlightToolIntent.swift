@@ -2,7 +2,11 @@ import AppIntents
 import MoonlightDomain
 
 public struct OpenMoonlightToolIntent: OpenIntent {
-    public static let title: LocalizedStringResource = "Open Tool"
+    /// Spotlight builds its shorthand from the initials of this title, and
+    /// "Open Tool" produced the same `omt` as `OpenMoonlightIntent` — two rows
+    /// in Spotlight carrying one badge. This one runs a named tool; the other
+    /// opens the catalogue, so the title says which.
+    public static let title: LocalizedStringResource = "Run Moonlight Tool"
     public static let allowedExecutionTargets: IntentExecutionTargets = [.main]
 
     @Parameter(title: "Tool")
