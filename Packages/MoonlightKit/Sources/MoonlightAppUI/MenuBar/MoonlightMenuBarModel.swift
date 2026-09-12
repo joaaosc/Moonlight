@@ -5,9 +5,11 @@ import Observation
 /// What the menu bar popover shows: the app the user was in, its own
 /// shortcuts, and Moonlight's favourites under them.
 ///
-/// The frontmost application has to be read before Moonlight activates —
-/// afterwards the app in front is Moonlight — so `capture()` is called by the
-/// coordinator at invocation time and `load()` only uses what it kept.
+/// The frontmost application has to be read from before Moonlight activated —
+/// afterwards the app in front is Moonlight, and clicking the status item has
+/// already activated it by the time this content exists. `capture()` therefore
+/// reads `FrontmostApplicationMonitor`, which tracks activations as they
+/// happen, and `load()` only uses what it kept.
 @MainActor
 @Observable
 public final class MoonlightMenuBarModel {
@@ -39,9 +41,9 @@ public final class MoonlightMenuBarModel {
         isPermittedToReadShortcuts = true
     }
 
-    /// Records which app was in front. Call before Moonlight takes activation.
+    /// Records which app the user was in.
     public func capture(
-        frontmostApplication: NSRunningApplication? = NSWorkspace.shared.frontmostApplication,
+        frontmostApplication: NSRunningApplication? = FrontmostApplicationMonitor.shared.origin(),
         ownBundleIdentifier: String? = Bundle.main.bundleIdentifier
     ) {
         activeApp = MoonlightSourceContext.current(

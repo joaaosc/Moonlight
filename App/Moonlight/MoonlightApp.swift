@@ -48,6 +48,10 @@ struct MoonlightApp: App {
         let environment = MoonlightProcess.install(Self.composeEnvironment())
         let coordinator = MoonlightPresentationCoordinator(environment: environment)
         self.coordinator = coordinator
+        // Has to begin before the first surface is shown: every one of them is
+        // invoked from another app, and the answer to which one is only
+        // available while that app is still in front.
+        FrontmostApplicationMonitor.shared.start()
         hotKeyCenter.start {
             coordinator.presentPalette(isolatingFromMainWindow: true)
         }

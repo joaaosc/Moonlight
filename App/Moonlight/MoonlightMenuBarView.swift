@@ -58,8 +58,9 @@ struct MoonlightMenuBarView: View {
         // one left most of the panel empty, because what it lists is short.
         .frame(width: MoonlightGlassMetrics.paletteSize.width)
         .onAppear {
-            // Before anything activates Moonlight: afterwards the app in front
-            // is Moonlight itself and the origin is lost.
+            // Reads the remembered origin, not the live frontmost application:
+            // clicking the status item activated Moonlight before this content
+            // existed, so asking the workspace now would only name Moonlight.
             model.capture()
             coordinator.prepareMenuBarPalette()
             menuBarToken = coordinator.registerMenuBar(dismiss: { dismiss() })

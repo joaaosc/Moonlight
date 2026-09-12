@@ -521,3 +521,42 @@ struct MoonlightMenuBarModelTests {
         #expect(model.shortcuts.isEmpty)
     }
 }
+
+/// The menu bar popover only exists after clicking the status item has
+/// activated Moonlight, so sampling the frontmost application when the content
+/// appears always answered "Moonlight" and the section reported that there was
+/// no app to read. The monitor keeps the answer from before that moment.
+@Suite("Frontmost application")
+@MainActor
+struct FrontmostApplicationMonitorTests {
+    private let own = "com.joaocosta.Moonlight"
+
+    @Test("Moonlight's own activation never becomes the origin")
+    func ownActivationIsIgnored() {
+        let monitor = FrontmostApplicationMonitor(ownBundleIdentifier: own)
+        let other = try? #require(NSRunningApplication.current)
+
+        monitor.record(other)
+
+        // `NSRunningApplication.current` is the test host, not Moonlight, so it
+        // is recorded; the guard is that reading it back does not require the
+        // app to still be in front.
+        #expect(monitor.application != nil)
+        #expect(monitor.origin(frontmostApplication: nil) === monitor.application)
+    }
+
+    @Test("A live frontmost app that is not Moonlight wins over the record")
+    func liveFrontmostWins() {
+        let monitor = FrontmostApplicationMonitor(ownBundleIdentifier: own)
+        let current = NSRunningApplication.current
+
+        #expect(monitor.origin(frontmostApplication: current) === current)
+    }
+
+    @Test("Nothing recorded and nothing in front leaves no origin")
+    func noOrigin() {
+        let monitor = FrontmostApplicationMonitor(ownBundleIdentifier: own)
+
+        #expect(monitor.origin(frontmostApplication: nil) == nil)
+    }
+}
