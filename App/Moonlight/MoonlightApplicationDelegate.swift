@@ -5,7 +5,12 @@ import OSLog
 final class MoonlightApplicationDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         let showsDockIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
-        if !NSApplication.shared.setActivationPolicy(showsDockIcon ? .regular : .accessory) {
+        let policy: NSApplication.ActivationPolicy = showsDockIcon ? .regular : .accessory
+        // `LSUIElement` already starts the process as `.accessory`. Asking AppKit
+        // for the policy the process is already in returns `false`, which is not
+        // a failure and must not be reported as one.
+        guard NSApplication.shared.activationPolicy() != policy else { return }
+        if !NSApplication.shared.setActivationPolicy(policy) {
             Logger(subsystem: "com.joaocosta.Moonlight", category: "Application")
                 .error("Unable to apply the saved Dock visibility preference")
         }
