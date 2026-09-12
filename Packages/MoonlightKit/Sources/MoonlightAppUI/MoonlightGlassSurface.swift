@@ -1,37 +1,23 @@
 import SwiftUI
 
-/// Shared geometry for Moonlight's floating surfaces. One value, so the panel
-/// corner, the content clip and the border never drift apart by a point.
-public enum MoonlightGlassMetrics {
-    public static let cornerRadius: CGFloat = 18
-    public static let contentPadding: CGFloat = 18
-
-    public static var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-    }
-}
-
-/// The two lights Moonlight's glass surfaces are lit by. Named rather than
-/// inlined so every surface warms to the same colour.
-enum MoonlightGlassPalette {
-    static let duskIndigo = Color(red: 0.33, green: 0.28, blue: 0.86)
-    static let emberRose = Color(red: 0.66, green: 0.24, blue: 0.40)
-}
-
 /// The chrome Moonlight's floating windows share: one rounded Liquid Glass
-/// slab, a soft colour wash and a hairline edge.
+/// slab, a faint tint and a hairline edge.
 ///
-/// This is the controls layer, not a content background: it wraps a transient
-/// launcher panel that floats over whatever the user was doing, which is the
-/// case Liquid Glass is meant for. Regular content inside keeps its normal
-/// materials.
+/// This is the controls layer, not a content background: it wraps transient
+/// panels that float over whatever the user was doing, which is the case
+/// Liquid Glass is meant for. Regular content inside keeps its own materials.
 public struct MoonlightGlassSurface<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
+    private let emphasis: MoonlightGlassEmphasis
     private let content: Content
 
-    public init(@ViewBuilder content: () -> Content) {
+    public init(
+        emphasis: MoonlightGlassEmphasis = .floating,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.emphasis = emphasis
         self.content = content()
     }
 
@@ -54,32 +40,20 @@ public struct MoonlightGlassSurface<Content: View>: View {
             }
     }
 
-    /// The colour behind the glass. Two diffuse pools rather than a linear
-    /// ramp, so the panel reads as lit from its corners instead of as a
-    /// gradient rectangle.
-    ///
-    /// With Reduce Transparency on, the wash becomes the panel's actual
-    /// background: the system flattens the glass, and a nearly clear layer
-    /// would leave the content sitting on bare desktop.
+    /// What sits between the desktop and the content: a neutral scrim to hold
+    /// the content legible, then one flat tint to warm the material. Flat
+    /// rather than a gradient — a directional wash is what made these panels
+    /// read as a different app from the window next to them.
     private var wash: some View {
         ZStack {
             if reduceTransparency {
                 Color(nsColor: .windowBackgroundColor)
+            } else if emphasis.scrimOpacity > 0 {
+                Color(nsColor: .windowBackgroundColor)
+                    .opacity(emphasis.scrimOpacity)
             }
 
-            RadialGradient(
-                colors: [MoonlightGlassPalette.duskIndigo.opacity(indigoOpacity), .clear],
-                center: .topLeading,
-                startRadius: 0,
-                endRadius: 620
-            )
-
-            RadialGradient(
-                colors: [MoonlightGlassPalette.emberRose.opacity(roseOpacity), .clear],
-                center: .bottomTrailing,
-                startRadius: 0,
-                endRadius: 620
-            )
+            MoonlightGlassPalette.tint.opacity(tintOpacity)
         }
     }
 
@@ -94,21 +68,18 @@ public struct MoonlightGlassSurface<Content: View>: View {
         )
     }
 
-    // Light mode gets a fainter wash: the same opacity that reads as depth over
+    // Light mode gets a fainter tint: the same opacity that reads as depth over
     // a dark desktop reads as a stain over a bright one.
-    private var indigoOpacity: Double {
-        colorScheme == .dark ? 0.50 : 0.22
+    private var tintOpacity: Double {
+        colorScheme == .dark ? emphasis.tintOpacity.dark : emphasis.tintOpacity.light
     }
-
-    private var roseOpacity: Double {
-        colorScheme == .dark ? 0.38 : 0.16
-    }
-
 }
 
 extension View {
     /// Wraps the view in Moonlight's floating glass chrome.
-    public func moonlightGlassSurface() -> some View {
-        MoonlightGlassSurface { self }
+    public func moonlightGlassSurface(
+        emphasis: MoonlightGlassEmphasis = .floating
+    ) -> some View {
+        MoonlightGlassSurface(emphasis: emphasis) { self }
     }
 }
