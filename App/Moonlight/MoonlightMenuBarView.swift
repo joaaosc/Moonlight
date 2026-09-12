@@ -18,6 +18,10 @@ struct MoonlightMenuBarView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var model = MoonlightMenuBarModel()
     @State private var menuBarToken: MoonlightPresentationCoordinator.MenuBarToken?
+    /// What the sections actually take, measured rather than assumed: the list
+    /// is one app's shortcuts and a few favourites, and its length changes with
+    /// whatever is in front.
+    @State private var contentHeight: CGFloat = MoonlightGlassMetrics.menuBarMinimumHeight
 
     private var favorites: [MenuBarFavorite] {
         model.favorites(in: coordinator.paletteModel)
@@ -37,18 +41,22 @@ struct MoonlightMenuBarView: View {
                     }
                 }
                 .padding(MoonlightGlassMetrics.contentPadding)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    contentHeight = height
+                }
             }
             .scrollIndicators(.hidden)
+            .frame(height: scrollHeight)
 
             Divider()
             footer
         }
-        // The same width as the floating palette, so the two surfaces line up;
-        // the height is the popover's own, which a short list should not fill.
-        .frame(
-            width: MoonlightGlassMetrics.paletteSize.width,
-            height: MoonlightGlassMetrics.menuBarHeight
-        )
+        // The same width as the floating palette, so the two surfaces line up.
+        // The height is the content's, between a floor and a ceiling: a fixed
+        // one left most of the panel empty, because what it lists is short.
+        .frame(width: MoonlightGlassMetrics.paletteSize.width)
         .onAppear {
             // Before anything activates Moonlight: afterwards the app in front
             // is Moonlight itself and the origin is lost.
@@ -66,6 +74,14 @@ struct MoonlightMenuBarView: View {
                 coordinator.unregisterMenuBar(menuBarToken)
             }
         }
+    }
+
+    /// The scroll area's height: the content's, clamped.
+    private var scrollHeight: CGFloat {
+        min(
+            max(contentHeight, MoonlightGlassMetrics.menuBarMinimumHeight),
+            MoonlightGlassMetrics.menuBarHeight
+        )
     }
 
     private var footer: some View {

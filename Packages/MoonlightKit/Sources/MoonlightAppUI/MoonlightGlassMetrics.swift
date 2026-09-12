@@ -26,7 +26,14 @@ public enum MoonlightGlassMetrics {
     public static let paletteMinimumSize = CGSize(width: 480, height: 420)
     /// The menu bar popover: the palette's width, so the two surfaces line up,
     /// but shorter — it lists what is true right now, not a whole catalogue.
+    ///
+    /// A ceiling rather than a height. What the popover lists is short and
+    /// varies — one app's shortcuts and a handful of favourites — so a fixed
+    /// height left the panel mostly empty; it grows with its content up to
+    /// here and scrolls past it.
     public static let menuBarHeight: CGFloat = 420
+    /// The floor, so a nearly empty popover is still a panel and not a sliver.
+    public static let menuBarMinimumHeight: CGFloat = 120
 
     public static var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: cornerRadius)
