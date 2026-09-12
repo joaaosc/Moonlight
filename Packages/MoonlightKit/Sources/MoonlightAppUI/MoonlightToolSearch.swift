@@ -1,3 +1,5 @@
+import MoonlightDomain
+
 public struct MoonlightToolSearch: Sendable {
     public init() {}
 
@@ -20,9 +22,12 @@ public struct MoonlightToolSearch: Sendable {
         }.map(\.0)
     }
 
+    /// Drops the command prefix before matching. A tool's alias is the same
+    /// name whether it was typed bare or as a command, so `/clean` and `clean`
+    /// must reach the same row.
     private func normalized(_ query: String) -> String {
         var text = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if text.hasPrefix("\\") { text.removeFirst() }
+        if text.first == SlashCommand.prefix { text.removeFirst() }
         return text
     }
 

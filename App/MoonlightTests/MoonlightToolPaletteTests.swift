@@ -382,9 +382,14 @@ struct MoonlightPaletteCommandLineTests {
     @Test("A well formed command with no implementation is reported as unpublished")
     func unpublishedCommand() {
         let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
-        model.query = "/note Buy milk"
+        // Not `/note`: that alias belongs to Capture Note, and a command the
+        // catalogue answers to is no longer unpublished.
+        model.query = "/nosuchcommand Buy milk"
 
-        #expect(model.commandLineState == .unpublished(SlashCommand(name: "note", arguments: "Buy milk")))
+        #expect(
+            model.commandLineState
+                == .unpublished(SlashCommand(name: "nosuchcommand", arguments: "Buy milk"))
+        )
     }
 
     @Test("A malformed command is reported as invalid rather than as no results")
@@ -419,5 +424,39 @@ struct MoonlightPaletteCommandLineTests {
 
         #expect(model.query == "/note Buy milk")
         #expect(!model.isEditing)
+    }
+}
+
+@Suite("The command prefix is the same everywhere")
+@MainActor
+struct MoonlightCommandPrefixTests {
+    @Test("A tool's own alias typed as a command reaches the tool")
+    func aliasTypedAsCommandFindsTheTool() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "/note"
+
+        // The catalogue and the command line share one field, so they must
+        // share one namespace: reporting "no /note command" while Capture Note
+        // sits in the list under the alias `note` is the bug this covers.
+        #expect(model.commandLineState == nil)
+        #expect(model.filteredDescriptors.contains { $0.id == MoonlightActionID.captureNote })
+    }
+
+    @Test("A name no tool answers to is still reported as unpublished")
+    func unknownCommandStaysUnpublished() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "/nosuchcommand"
+
+        #expect(model.commandLineState == .unpublished(SlashCommand(name: "nosuchcommand")))
+    }
+
+    @Test("Completion writes the slash the field accepts")
+    func completionUsesTheSlash() {
+        let model = MoonlightToolPaletteModel(client: .inMemory(store: InMemoryExecutionStore()))
+        model.query = "js"
+        model.selectedID = MoonlightActionID.formatJSON
+
+        #expect(model.completeSelection())
+        #expect(model.query == "/json")
     }
 }

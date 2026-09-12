@@ -177,10 +177,21 @@ public final class MoonlightToolPaletteModel {
                 // A published command is handled by its own route, not here.
                 return nil
             }
+            // Every tool in the catalogue is reachable as a command under its
+            // own alias. Without this the catalogue and the command line were
+            // two namespaces sharing one field: `/clean` reported that no such
+            // command existed while `clean` listed the tool right below it.
+            guard !matchesCatalogue(command.name) else { return nil }
             return .unpublished(command)
         } catch {
             return .invalid(error.localizedDescription)
         }
+    }
+
+    /// Whether a typed command name reaches a tool. A prefix is enough: the
+    /// user is still typing, and the list below is already narrowing to it.
+    private func matchesCatalogue(_ name: String) -> Bool {
+        catalog.presentations.contains { $0.alias.hasPrefix(name) }
     }
 
     public var filteredDescriptors: [ActionDescriptor] {
@@ -249,7 +260,7 @@ public final class MoonlightToolPaletteModel {
     /// Completes a local command. Does not intercept Spotlight's Tab behavior.
     public func completeSelection() -> Bool {
         guard !query.isEmpty, let descriptor = selectedDescriptor else { return false }
-        let completion = "\\" + alias(for: descriptor)
+        let completion = String(SlashCommand.prefix) + alias(for: descriptor)
         guard query != completion else { return false }
         query = completion
         selectedID = descriptor.id

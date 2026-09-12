@@ -285,7 +285,7 @@ public struct MoonlightToolPaletteView: View {
             Spacer(minLength: 8)
 
             if isSelected {
-                Text("\\" + model.alias(for: descriptor))
+                Text(String(SlashCommand.prefix) + model.alias(for: descriptor))
                     .font(.caption.monospaced())
                     .foregroundStyle(.tertiary)
             }
