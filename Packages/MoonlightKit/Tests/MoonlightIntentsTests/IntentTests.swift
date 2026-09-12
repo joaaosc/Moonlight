@@ -52,6 +52,10 @@ struct AppIntentsAdapterTests {
 
         requireOpenIntent(OpenMoonlightToolIntent.self)
         #expect(OpenMoonlightToolIntent.isDiscoverable)
+        // Restricting the target to the app is not enough on its own: the app
+        // is an accessory, so a foreground presentation has to be asked for
+        // explicitly or the system never brings it forward.
+        #expect(OpenMoonlightToolIntent.supportedModes.contains(.foreground(.immediate)))
         #expect(OpenMoonlightToolIntent.allowedExecutionTargets.contains(.main))
         #expect(!OpenMoonlightToolIntent.allowedExecutionTargets.contains(.appIntentsExtension))
         // Composed at runtime: the built-in tools are always published, and the
@@ -173,6 +177,28 @@ struct AppIntentsAdapterTests {
         #expect(probe.colorPresentationCount == 1)
         #expect(probe.palettePresentationCount == 1)
         #expect(probe.presentedActionID == MoonlightActionID.formatJSON)
+    }
+
+    /// Moonlight is an accessory app: it has no scene the system can bring
+    /// forward on its own, so an intent that ends in a window Moonlight puts on
+    /// screen has to name a foreground mode. One that does not is started in
+    /// the background and waits for a transition that never arrives, which
+    /// Shortcuts reports as being unable to communicate with the app.
+    @Test(
+        "Every intent that presents a surface asks for the foreground",
+        arguments: [
+            ("OpenMoonlightIntent", OpenMoonlightIntent.supportedModes),
+            ("OpenMoonlightToolIntent", OpenMoonlightToolIntent.supportedModes),
+            ("OpenMoonlightSurfaceIntent", OpenMoonlightSurfaceIntent.supportedModes),
+            ("OpenColorPickerIntent", OpenColorPickerIntent.supportedModes),
+        ]
+    )
+    func presentingIntentsRunInForeground(intent: (name: String, modes: IntentModes)) {
+        #expect(
+            intent.modes.contains(.foreground(.immediate)),
+            "\(intent.name) presents a Moonlight surface without asking for the foreground"
+        )
+        #expect(!intent.modes.contains(.background))
     }
 
 }
