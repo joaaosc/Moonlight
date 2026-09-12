@@ -35,15 +35,21 @@ for argument in "$@"; do
     esac
 done
 
-# Two DerivedData trees hold a product: the one in the repository, used by
-# xcodebuild here and in release.sh, and the global one Xcode writes to when the
-# build is started from its interface. Picking either by name installs the wrong
-# bundle half the time, so --skip-build picks the most recently built one, which
-# is what "the build that just finished" means in both cases.
+# Three trees can hold a product: the one xcodebuild writes here and in
+# release.sh, the one Xcode writes when the build is started from its interface
+# (build.noindex/Products, set as the workspace build location so no app bundle
+# lands in an indexed directory), and the global DerivedData that older
+# checkouts still used. Picking one by name installs the wrong bundle half the
+# time, so --skip-build picks the most recently built one, which is what "the
+# build that just finished" means in every case.
 newest_built_app() {
     local candidates=()
-    local repository_app="$ROOT/$DERIVED/Build/Products/$CONFIGURATION/Moonlight.app"
-    [ -d "$repository_app" ] && candidates+=("$repository_app")
+    local candidate_app
+    for candidate_app in \
+        "$ROOT/$DERIVED/Build/Products/$CONFIGURATION/Moonlight.app" \
+        "$ROOT/build.noindex/Products/$CONFIGURATION/Moonlight.app"; do
+        [ -d "$candidate_app" ] && candidates+=("$candidate_app")
+    done
 
     local global_app
     for global_app in "$HOME/Library/Developer/Xcode/DerivedData"/Moonlight*Tools-*/Build/Products/"$CONFIGURATION"/Moonlight.app; do
