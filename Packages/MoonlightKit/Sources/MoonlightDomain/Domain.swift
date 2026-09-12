@@ -10,6 +10,8 @@ public enum MoonlightActionID {
     public static let hashText = "hash-text"
     public static let urlText = "url-text"
     public static let convertTimestamp = "convert-timestamp"
+    public static let summarizeText = "summarize-text"
+    public static let startTimer = "start-timer"
 }
 
 public struct ActionDescriptor: Codable, Equatable, Identifiable, Sendable {
@@ -295,6 +297,8 @@ public struct ActionRegistry: Sendable {
         HashTextAction(),
         TransformURLAction(),
         ConvertTimestampAction(),
+        SummarizeTextAction(),
+        StartTimerAction(),
     ]
 
     public static let standard = ActionRegistry(handlers: standardHandlers)
